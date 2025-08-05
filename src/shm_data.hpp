@@ -1,0 +1,767 @@
+#ifndef SHARED_MEMORY_DEF_HPP
+#define SHARED_MEMORY_DEF_HPP
+
+#include <Windows.h>
+
+#include "YKCat2.h"
+
+#define MAX_COMMANDS 1024
+
+typedef enum { MANUAL, AUTO, ERROR_MODE_STATE, MAX_MODE_STATES } MODE_STATE_TYPE;  // 模式状态机：状态
+
+enum class MACHINE_FSM_CMD_TYPE { CMD_NONE, EDGE_PIERCE_LOCATION, EDGE_PIERCE, LOAD_UNLOAD_WHEEL, CENTER_PIERCE_LOCATION, CENTER_PIERCE, ONE_CLICK_FEEDING, ONE_CLICK_UNLOADING };  // 被控类型枚举
+
+// 模式状态机事件
+typedef enum {
+    MODE_EVENT_NONE,
+    MODE_EVENT_MANUAL,
+    MODE_EVENT_AUTO,
+} MODE_FSM_EVENT_TYPE;
+
+// 主状态机事件
+typedef enum {
+    MAIN_EVENT_NONE,
+    MAIN_EVENT_INIT,
+    MAIN_EVENT_INIT_ERROR,
+    MAIN_EVENT_CONFIG,
+    MAIN_EVENT_CONFIG_ERROR,
+    MAIN_EVENT_ERROR_RESET,
+    MAIN_EVENT_MOTOR_ON,
+    MAIN_EVENT_MOTOR_OFF,
+    MAIN_EVENT_CONTROL_ON,
+    MAIN_EVENT_CONTROL_OFF,
+    MAIN_EVENT_ERROR,
+    MAIN_EVENT_EME_STOP,
+    MAIN_EVENT_EME_STOP_CLEAR,
+    MAIN_FSM_MAX_EVENTS
+} MAIN_FSM_EVENT_TYPE;
+
+// 主状态类型枚举
+typedef enum {
+    UNINIT,
+    UNCONFIG,
+    ERROR_MAIN_STATE,
+    MOTOR_OFF,
+    READY,
+    MOTION,
+    EME_STOP,
+    MAX_MAIN_STATES
+} MAIN_STATE_TYPE;
+
+
+// 数字输入io
+typedef enum INPUT_SIGNAL_NAME {
+    // I0
+    EME_STOP_1,
+    SAFETY_CIRCUIT_RESET_1,
+    SAFETY_CIRCUIT,
+    MANUAL_WIRE_FEEDING,
+    IN_I0_4,
+    IN_I0_5,
+    IN_IO_6,
+    IN_IO_7,
+
+    // I1
+    EDGE_ADVANCE_RETREAT_LOW,
+    EDGE_ADVANCE_RETREAT_UP,
+    EDGE_LIFT_LOW,
+    EDGE_LIFT_UP,
+    EDGE_EXTEND_RETRACT_LOW,
+    EDGE_EXTEND_RETRACT_UP,
+    EDGE_ROTATING_LIFT,
+    EDGE_ROTATING_RIGHT,
+
+    // I2
+    CENTER_ADVANCE_RETREA_LOW,
+    CENTER_ADVANCE_RETREA_UP,
+    CENTER_LIFT_LOW,
+    CENTER_LIFT_UP,
+    FUSE_STRUT_LOW,
+    FUSE_STRUT_UP,
+    FREE_WHEEL_LOCAT,
+    WIRE_PRESS_WHEEL_MECHANISM_B80_HELP,
+
+    // I3
+    WHEEL_SET_IS_FULL,
+    LAYING_LOW,
+    LAYING_UP,
+    EDGE_FIXED_CLAW_CLAMPING,
+    EDGE_ACTIVE_CLAW_CLAMPING,
+    EDGE_GUIDE_CLAMPING,
+    EDGE_ACTIVE_CLAW_DRIVE_ORIGIN,
+    CENTER_FIXED_CLAW_CLAMPING,
+
+    // I4
+    CENTER_ACTIVE_CLAW_CLAMPING,
+    CENTER_GUIDE_CLAMPING,
+    CENTER_ACTIVE_CLAW_DRIVE_ORIGIN,
+    EDGE_PULL_TAB_MECHANISM_LIFT_ORIGIN,
+    EDGE_PULL_TAB_ADVANCE_RETREAT_ORIGIN,
+    EDGE_PULL_TAB_LIFT_ORIGIN,
+    EDGE_GUIDE_RING_LIFT_ORIGIN,
+    EDGE_GUIDE_RING_CLAMPING_ORIGIN,
+
+    // I5
+    WIRE_PRESS_WHEEL_B80,
+    WIRE_PRESS_WHEEL_B40,
+    WIRE_PRESS_WHEEL_ORIGIN,
+    EDGE_WIRE_DRAW_MECHANISM_ORIGIN,
+    EDGE_WIRE_DRAW_ADVANCE_RETREAT_ORIGIN,
+    EDGE_WIRE_DRAW_ORIGIN,
+    WIRE_WIND_MECHANISM_LOCAT,
+    I_WHEEL_WIRE_WIND_IN_POS,
+
+    // I6
+    EDGE_FIND_HOLE,
+    CENTER_FIND_HOLE,
+    FUSED_GUIDE_UPPER,
+    FUSED_GUIDE_ORIGIN,
+    FUSED_MECHANISM_UPPER,
+    FUSED_MECHANISM_ORIGIN,
+    ROTATING_PICK_WHEEL_UPPER,
+    ROTATING_PICK_WHEEL_MOTOR_ORIGIN,
+
+    // I7
+    ROTATING_PICK_WHEEL_ADVANCE_RETREAT_EXTEND_STATE,
+    ROTATING_PICK_WHEEL_ADVANCE_RETREAT_ORIGIN,
+    WIRE_WIND_WHEEL_PRESS_MECHANISM_B80,
+    WIRE_WIND_WHEEL_PRESS_MECHANISM_B40,
+    WIRE_WIND_WHEEL_PRESS_POSITION,
+    WIRE_WIND_WHEEL_PRESS_ORIGIN,
+    AIR_PRESSURE_SENSOR,
+    WIRE_WIND_WHEEL_IN_POSITION,
+
+    // I8
+    FEED_FUSED_MECHANISM_POS_HIGH,
+    FEED_FUSED_MECHANISM_POS_LOW,
+    FEED_FUSED_ADVANCE_RETREAT_ORIGIN,
+    FEED_FUSED_ADVANCE_RETREAT_WORK_POS,
+    BLOCKER_1_RELEASE_DETECTED,
+    BLOCKER_2_RELEASE_DETECTED,
+    BLOCKER_3_RELEASE_DETECTED,
+    BLOCKER_4_RELEASE_DETECTED,
+
+    // I9
+    FLYWHEEL_BOW_POSITION_DETECTED,
+    DOUBLE_SPEED_CHAIN_FULL_WHEEL_TOOLING_POS,
+    DOUBLE_SPEED_CHAIN_TOOLING_LOAD_UNLOAD_POS,
+    DOUBLE_SPEED_CHAIN_TOOLING_EMPTY_WHEEL_POS,
+    FEED_WHEEL_CHECKING_STATION_1,
+    FEED_WHEEL_CHECKING_STATION_2,
+    FEED_WHEEL_CHECKING_STATION_3,
+    WHEEL_SET_SM14_ORIGIN_HELP,
+
+    // I10
+    FEED_WHEEL_LEFT_RELEASE,
+    FEED_WHEEL_LEFT_CLAMP,
+    FEED_WHEEL_RIGHT_RELEASE,
+    FEED_WHEEL_RIGHT_CLAMP,
+    CRADLE_FLIP_LOCK_LEFT_RELEASE,
+    CRADLE_FLIP_LOCK_LEFT_LOCK_ON,
+    CRADLE_FLIP_LOCK_RIGHT_RELEASE,
+    CRADLE_FLIP_LOCK_RIGHT_LOCK_ON,
+
+    // I11
+    LEFT_FRONT_DOOR_OPEN,
+    LEFT_FRONT_DOOR_CLOSE,
+    RIGHT_FRONT_DOOR_CLOSE,
+    RIGHT_FRONT_DOOR_OPEN,
+    LEFT_REAR_DOOR_OPEN,
+    LEFT_REAR_DOOR_CLOSE,
+    RIGHT_REAR_DOOR_CLOSE,
+    RIGHT_REAR_DOOR_OPEN,
+
+    // I12
+    BIN_DOOR_LEFT_CLOSE,
+    BIN_DOOR_LEFT_OPEN,
+    BIN_DOOR_RIGHT_CLOSE,
+    BIN_DOOR_RIGHT_OPEN,
+    BIN_DOOR_OPEN_LEFT_RELEASE,
+    BIN_DOOR_OPEN_LEFT_LOCK_ON,
+    BIN_DOOR_OPEN_RIGHT_RELEASE,
+    BIN_DOOR_OPEN_RIGHT_LOCK_ON,
+
+    // I13
+    BIN_DOOR_CLOSE_LEFT_RELEASE,
+    BIN_DOOR_CLOSE_LEFT_LOCK_ON,
+    BIN_DOOR_CLOSE_RIGHT_RELEASE,
+    BIN_DOOR_CLOSE_RIGHT_LOCK_ON,
+    SAFETY_LIGHT_CURTAIN_CHECKING,
+    SAFETY_LIGHT_CURTAIN_CHECKING_2,
+    MAIN_METER_MEASURE,
+    AUX_METER_MEASURE,
+
+    // I14
+    WIRE_BREAK_ALARM,
+    WIRE_ROPE_INSPECTION_ALARM,
+    CRADLE_BIN_FAN_OVERHEAT_ALARM,
+    SPINDLE_MOTOR_FAN_OVERHEAT_ALARM,
+    ELECTRICAL_CABINET_DOOR_OPEN_ALARM,
+    LUBRICANT_LEVEL_LOW_ALARM,
+    CHILLER_ALARM,
+    MAIN_CABINET_AXIAL_FAN_ALARM,
+
+    // I15
+    EME_STOP_2,
+    SAFETY_CIRCUIT_RESET_2,
+    CRADLE_BIN_LID_OPEN,
+    CRADLE_BIN_DOOR_AUTO_MANUAL_MODE,
+    IN_15_4,
+    IN_15_5,
+    IN_15_6,
+    IN_15_7,
+
+    // I16
+    WIRE_BIN_BRAKE_CHECK,
+    LOCK_WIRE_DRAWING_CHECK,
+    WIRE_BIN_AXIS_FAN_FAULT_ALARM,
+    IN_I16_3,
+    IN_I16_4,
+    IN_I16_5,
+    IN_I16_6,
+    IN_I16_7,
+
+    // I17
+    IN_17_0,
+    IN_17_1,
+    IN_17_2,
+    IN_17_3,
+    IN_17_4,
+    IN_17_5,
+    IN_17_6,
+    IN_17_7,
+
+    // I18
+    IN_18_0,
+    IN_18_1,
+    IN_18_2,
+    IN_18_3,
+    IN_18_4,
+    IN_18_5,
+    IN_18_6,
+    IN_18_7,
+
+    // I19
+    IN_19_0,
+    IN_19_1,
+    IN_19_2,
+    IN_19_3,
+    IN_19_4,
+    IN_19_5,
+    IN_19_6,
+    IN_19_7,
+
+    IN_MAX
+} INPUT_SIGNAL_NAME;
+
+// 数字输出io
+typedef enum OUTPUT_SIGNAL_NAME {
+    // Q0
+    SAFETY_CIRCUIT_RESET = IN_MAX,
+    YELLOW_LIGHT,
+    GREEN_LIGHT,
+    RED_LIGHT,
+    BUZZER,
+    OUT_Q0_5,
+    OUT_Q0_6,
+    OUT_Q0_7,
+
+    // Q1
+    ELECTRICAL_BOX_FAN_1_2,
+    ELECTRICAL_BOX_FAN_3_4,
+    ELECTRICAL_BOX_FAN_5_6,
+    ELECTRICAL_BOX_FAN_7_8,
+    OUT_Q1_4,
+    OUT_Q1_5,
+    OUT_Q1_6,
+    OUT_Q1_7,
+
+    // Q2
+    OUT_Q2_0,
+    OUT_Q2_1,
+    OUT_Q2_2,
+    OUT_Q2_3,
+    OUT_Q2_4,
+    OUT_Q2_5,
+    OUT_Q2_6,
+    OUT_Q2_7,
+
+    // Q3
+    OUT_Q3_0,
+    OUT_Q3_1,
+    OUT_Q3_2,
+    OUT_Q3_3,
+    OUT_Q3_4,
+    OUT_Q3_5,
+    OUT_Q3_6,
+    OUT_Q3_7,
+
+    // Q12
+    CRADLE_BIN_FAN,
+    FEED_FUSED_MECHANISM_LOW,
+    FEED_FUSED_MECHANISM_UP,
+    POWER_SYSTEM_SUPPLY,
+    SPINDLE_MOTOR_FAN,
+    GREASE_PUMP_CONTROL,
+    CHILLER_POWER_SUPPLY,
+    CHILLER_POWER_CONTROL,
+
+    // Q13
+    CONTROL_CABINET_COOLING_FAN,
+    OUT_13_1,
+    OUT_13_2,
+    OUT_13_3,
+    OUT_13_4,
+    OUT_13_5,
+    OUT_13_6,
+    OUT_13_7,
+
+    // Q14
+    OUT_14_0,
+    OUT_14_1,
+    OUT_14_2,
+    OUT_14_3,
+    OUT_14_4,
+    OUT_14_5,
+    OUT_14_6,
+    OUT_14_7,
+
+    // Q15
+    OUT_15_0,
+    OUT_15_1,
+    OUT_15_2,
+    OUT_15_3,
+    OUT_15_4,
+    OUT_15_5,
+    OUT_15_6,
+    OUT_15_7,
+
+    OUT_MAX
+} OUTPUT_SIGNAL_NAME;
+
+// 阀岛输出IO
+typedef enum VALVE_OUTPUT_NAME {
+    // Q4
+    BIDIRECTIONAL_VALVE_LIFT_B80_B40_TURN,
+    BIDIRECTIONAL_VALVE_LOW_B80_B40_TURN,
+    BIDIRECTIONAL_VALVE_LIFT_WIRE_WIND_PRESS_WHEEL_CYLINDER,
+    BIDIRECTIONAL_VALVE_LOW_WIRE_WIND_PRESS_WHEEL_CYLINDER,
+    INDUCE_VALVE_LIFT_WIRE_PRESS_WHEEL_B80,
+    INDUCE_VALVE_LOW_WIRE_PRESS_WHEEL_B40,
+    EDGE_FIXED_CLAW,
+    EDGE_ACTIVE_CLAW,
+
+    // Q5
+    EDGE_ACTIVE_CLAW_DRIVE,
+    EDGE_GUIDE,
+    CENTER_FIXED_CLAW,
+    CENTER_ACTIVE_CLAW,
+    CENTER_ACTIVE_CLAW_DRIVE,
+    CENTER_GUIDE,
+    EDGE_PULL_TAB_MECHANISM_LIFT,
+    EDGE_PULL_TAB_ADVANCE_RETREAT,
+
+    // Q6
+    EDGE_PULL_TAB_UP_DOWN,
+    EDGE_GUIDE_RING_MECHANISM_LIFT,
+    OUT_Q6_2,
+    OUT_Q6_3,
+    OUT_Q6_4,
+    OUT_Q6_5,
+    OUT_Q6_6,
+    OUT_Q6_7,
+
+    // Q7
+    OUT_Q7_0,
+    OUT_Q7_1,
+    OUT_Q7_2,
+    OUT_Q7_3,
+    OUT_Q7_4,
+    OUT_Q7_5,
+    OUT_Q7_6,
+    OUT_Q7_7,
+
+    // Q8
+    BIDIRECTIONAL_VALVE_LIFT_PICK_WHEEL_LIFT,
+    BIDIRECTIONAL_VALVE_LOW_PICK_WHEEL_LIFT,
+    OUT_Q8_2,
+    OUT_Q8_3,
+    OUT_Q8_4,
+    OUT_Q8_5,
+    PICK_WHEEL_ADVANCE_RETREAT,
+    WIRE_PRESS_WHEEL_EXTEND_RETRACT,
+
+    // Q9
+    FUSED_GUIDE,
+    FUSED_GUIDE_MECHANISM_LIFT,
+    DISCHARGE_FUSED_CLAW,
+    WIRE_DRAW_MECHANISM_LIFT,
+    WIRE_DRAW_MECHANISM_ADVANCE_RETREAT,
+    WIRE_DRAW_AIR_CLAW,
+    EDGE_ACTIVE_CLAW_ANTI_DETACH,
+    CENTER_ACTIVE_CLAW_ANTI_DETACH,
+
+    // Q10
+    GUIDE_RING_OPEN_CLOSE,
+    OUT_Q10_1,
+    OUT_Q10_2,
+    OUT_Q10_3,
+    OUT_Q10_4,
+    OUT_Q10_5,
+    OUT_Q10_6,
+    OUT_Q10_7,
+
+    // Q11
+    OUT_Q11_0,
+    OUT_Q11_1,
+    OUT_Q11_2,
+    OUT_Q11_3,
+    OUT_Q11_4,
+    OUT_Q11_5,
+    OUT_Q11_6,
+    OUT_Q11_7,
+
+    // Q16
+    BIDIRECTIONAL_VALVE_CLOSE_CRADLE_BIN_FRONT_DOOR_OPEN,
+    BIDIRECTIONAL_VALVE_OPEN_CRADLE_BIN_FRONT_DOOR_OPEN,
+    BIDIRECTIONAL_VALVE_CLOSE_CRADLE_BIN_REAR_DOOR_OPEN,
+    BIDIRECTIONAL_VALVE_OPEN_CRADLE_BIN_REAR_DOOR_OPEN,
+    BIDIRECTIONAL_VALVE_CLOSE_CRADLE_BIN_TOP_COVER,
+    BIDIRECTIONAL_VALVE_OPEN_CRADLE_BIN_TOP_COVER,
+    BIDIRECTIONAL_VALVE_LOWER_CRADLE_FLIP_LOCK_MECHANISM,
+    BIDIRECTIONAL_VALVE_UP_CRADLE_FLIP_LOCK_MECHANISM,
+
+    // Q17
+    BIDIRECTIONAL_VALVE_RETREAT_FEED_FUSED_ADVANCE_RETREAT,
+    BIDIRECTIONAL_VALVE_ADVANCE_FEED_FUSED_ADVANCE_RETREAT,
+    BIDIRECTIONAL_VALVE_RELEASE_FEED_WHEEL_LOCK,
+    BIDIRECTIONAL_VALVE_CLAW_FEED_WHEEL_LOCK,
+    BIDIRECTIONAL_VALVE_LOCK_CRADLE_BIN_TOP_COVER_OPEN_LOCK,
+    BIDIRECTIONAL_VALVE_RELEASE_CRADLE_BIN_TOP_COVER_OPEN_LOCK,
+    BIDIRECTIONAL_VALVE_LOCK_CRADLE_BIN_TOP_COVER_CLOSE_LOCK,
+    BIDIRECTIONAL_VALVE_RELEEASE_CRADLE_BIN_TOP_COVER_CLOSE_LOCK,
+
+    // Q18
+    OUI_Q18_0,
+    OUI_Q18_1,
+    DOUBLE_SPEED_CHAIN_STOP_1,
+    DOUBLE_SPEED_CHAIN_STOP_2,
+    FEED_FUSED_PNEUMATIC_GRIPPER,
+    SPINDLE_AIR_BRAKE,
+    OUI_Q18_6,
+    OUI_Q18_7,
+
+    // Q19
+    OUI_Q19_0,
+    OUI_Q19_1,
+    OUI_Q19_2,
+    OUI_Q19_3,
+    OUI_Q19_4,
+    OUI_Q19_5,
+    OUI_Q19_6,
+    OUI_Q19_7,
+
+    VALVE_MAX
+} VALVE_OUTPUT_NAME;
+
+typedef enum VALVE { valve_a, valve_b, valve_c } VALVE;
+
+// 电机类型
+typedef enum {
+    CARDLE_BIN_FAN_MOTOR,  // 摇篮风仓机
+    MAIN_SPINDLE,          // 主轴
+    MAIN_DRAWING,          // 牵引
+    MAIN_TORSION,          // 虚捻
+    LOAD_ROTATING_MOTOR,   // 上料旋转电机
+
+    LIFTING_CYLINDER_MOTOR_1,  // 顶升电缸电机1
+    LIFTING_CYLINDER_MOTOR_2,  // 顶升电缸电机2
+    DUAL_SPEED_CHAIN_MOTOR,    // 倍速链电机
+    FUSED_LIFT_MOTOR,          // 熔断器升降架电机
+    MAIN_WINDING,              // 收线电机
+
+    MAIN_LAYING,                 // 排线电机
+    ROTATING_PICK_WHEEL_MOTOR,   // 取轮旋转电机
+    EDGE_ADVANCE_RETREAT_MOTOR,  // 边穿进退电机
+    EDGE_LIFT_MOTOR,             // 边穿升降电机
+    EDGE_EXTEND_RETRACT_MOTOR,   // 边穿伸缩电机
+
+    EDGE_ROTATING_MOTOR,           // 边穿旋转电机
+    CENTER_ADVANCE_RETREAT_MOTOR,  // 中穿进退电机
+    CENTER_LIFT_MOTOR,             // 中穿升降电机
+    EXTENDABLE_ROD_MOTOR,          // 撑杆进退电机
+    FREE_WHEEL_LOCATOR,            // 空轮定位电机
+
+    MAX_MOTOR_TYPE_NUM,
+} MOTOR_TYPE;
+
+// 电机手动控制命令
+struct MOTOR_MANUAL_CONTROL {
+    typedef enum {
+        MANUAL_CONTROL_CMD_NONE,   // 空
+        FORWARD_JOGING,            // 正点动
+        REVERSE_JOGING,            // 反点动
+        RELEASE_BRAKE,             // 松闸
+        ENGAGE_BRAKE,              // 抱闸
+        RETURN_TO_ZERO,            // 回零
+        ABSOLUTE_POSITION_MOTION,  // 绝对移动
+        STOP,
+        MANUAL_MOTOR_ON,                    // 上使能
+        MANUAL_MOTOR_OFF,                   // 去使能
+        CLEAR_DRV_WARN,                     // 清除驱动报警
+        CLEAR_AXIS_WARN,                    // 清楚轴错误
+    } MANUAL_CONTROL_CMD;                   // 手动控制命令
+    MANUAL_CONTROL_CMD manual_control_cmd;  // 命令类型
+    MOTOR_TYPE motor_type;                  // 被控电机
+    double speed;                           // 速度
+    double manual_acceleration;             // 加速度
+    double manual_pos;                      // 位置
+};
+
+// io手动控制命令
+struct IO_MANUAL_CONTROL {
+    int output_signal_name;  // 输出IO，0 <= output_signal_name < VALVE_MAX，IN_MAX <= output_signal_name <= OUT_MAX
+    YKE_BOOL value;
+};
+
+// 命令数据
+struct COMMOND_GROUPS {
+    enum class CMD_TYPE { MODE_CMD, MAIN_CMD, MOTOR_MANUAL_CONTROL_CMD, IO_MANUAL_CONTROL_CMD };  // 被控类型枚举
+    CMD_TYPE cmd_type;                                                                            // 被控类型
+    MODE_FSM_EVENT_TYPE mode_fsm_event_type;                                                      // 模式状态机事件
+    MAIN_FSM_EVENT_TYPE main_fsm_event_type;                                                      // 主状态机事件
+    MOTOR_MANUAL_CONTROL motor_manual_control;                                                    // 手动控制电机事件
+    IO_MANUAL_CONTROL io_manual_control;                                                          // 手动控制IO事件
+};  // 命令数据
+
+struct RINGBUFFER {
+    using Type = COMMOND_GROUPS;
+    int read_index;                     // 读指针
+    int write_index;                    // 写指针
+    COMMOND_GROUPS data[MAX_COMMANDS];  // 环形队列
+};
+
+// 电机数据
+struct MOTOR_DATA {
+    UINT32 physical_id;                 // 对应的物理ID
+    UINT32 ECAT_id;                     // 对应的站序号
+    double acceleration;                // 加速度
+    double emg_deceleration;            // 急停减速度
+    double smooth_deceleration;         // 缓停减速度
+    double max_speed;                   // 最大速度
+    double min_speed;                   // 最小速度
+    double running_speed;               // 运行速度
+    double negative_limit;              // 正限位
+    double positive_limit;              // 反限位
+    INT32 zero_position;                // 零点
+    double position;                    // 位置
+    double ratio;                       // 传动比
+    double follow_ratio;                // 跟随比
+    double torque_limit;                // 转矩
+    double encoder_resolution_counter;  // 编码器分辨率
+    double displacement_equivalent;     // 位移当量
+};
+
+// 电机反馈数据
+struct MOTOR_FDB_DATA {
+    YKE_BOOL motor_power_state;  // 使能状态
+    YKE_BOOL motor_is_homed;     // 是否回原点
+    UINT32 motor_is_active;      // FALSE为空闲，TRUE为运行
+    YKE_BOOL motor_is_done;      // 指令完成情况
+    double running_speed;
+    double acceleration;
+    double position;
+    double follow_ratio;
+    double encoder_resolution_counter;
+};
+
+struct MotorData {
+    int data_id;
+    int motor_id;
+    double running_speed;
+    double acceleration;
+    double position;
+    double follow_ratio;
+    double encoder_resolution_counter;
+    size_t create_at;
+};
+
+// 状态机反馈数据
+struct FSM_STATE_FDB {
+    MODE_STATE_TYPE mode;
+    MAIN_STATE_TYPE main;
+    MACHINE_FSM_CMD_TYPE machine_fsm;
+};
+
+// io数据
+struct IO_DATA {
+    int digital_logic_to_physical[224];
+    int valve_logic_to_physical[96];
+    int valve_station[3];
+};
+
+// 计米轮数据
+struct WHEEL_DATA {
+    double total_meters_fdb;
+    double master_meters_fdb;
+    double slave_meters_fdb;
+    double start_length_ref;
+    double feeding_length_ref;
+    double finish_length_ref;
+};
+
+// 配置状态
+enum class CONFIG_STATE {
+    CONFIG_UNLOAD,
+    CONFIG_SUCCESS,
+    CONFIG_ERROR,
+};
+
+// 配置项
+struct CONFIG {
+    CONFIG_STATE config_state;
+    MOTOR_DATA motor_config[20];
+    IO_DATA io_config;
+    WHEEL_DATA wheel_config;  // 计米轮
+};
+
+// 反馈数据
+struct FDB_DATA {
+    MOTOR_FDB_DATA motor_fdb[20];
+    FSM_STATE_FDB fsm_fdb;
+    WHEEL_DATA wheel_fdb;
+    double atm_fdb;
+    double pull_fdb;
+    double temperature[4];
+    double tremors[2];
+};
+
+struct IO {
+    UINT8 digital_input[20];  // 数字输入
+    UINT8 digital_output[8];  // 数字输出
+    UINT8 valve_output[12];   // 阀岛输出
+};
+
+struct PID {
+    double Kp;
+    double Ki;
+    double Kd;
+};
+
+struct Datas {
+    using Type = MotorData;
+    int read_index;        // 读指针
+    int write_index;       // 写指针
+    MotorData data[1024];  // 环形队列
+};
+
+struct RECIPE_DATA
+{
+    typedef enum
+    {
+        create_recipe,
+        select_recipe,
+        delete_recipe,
+        apply_current_parameters
+    }RECIPE_CONTROL;
+    RECIPE_CONTROL recipe_control;
+    char recipe_name;
+    double laying_fixed_length;
+    double laying_upper;
+    double laying_height;
+    double laying_inferior;
+    double laying_spacing;
+    double line_diameter;
+    double R_angle_compensation_radius;
+};
+
+struct MECHINE_FSM_CMD {
+    MACHINE_FSM_CMD_TYPE machine_fsm_cmd_view;
+    MACHINE_FSM_CMD_TYPE machine_fsm_cmd_planner;
+};
+
+typedef enum
+{
+    STATE_OK,
+    STATE_ERROR
+}M_TO_P_STATE;
+
+// 共享内存数据
+struct ShareMemData {
+    UINT32 sys_exit_cmd;
+
+    /// <summary>
+    /// 本结构体大小
+    /// </summary>
+    UINT32 cb_size;
+
+    /// <summary>
+    /// 保留
+    /// </summary>
+    UINT32 res;
+
+    /// <summary>
+    /// 1:ProR系统运行中
+    /// </summary>
+    UINT32 sys_running;
+
+    /// <summary>
+    /// 心跳
+    /// </summary>
+    UINT32 heart;
+
+    /// <summary>
+    /// YKCAT2库加载成功
+    /// </summary>
+    YKE_RESULT_CODE ykm_code;
+
+    CONFIG config;        // 配置
+    RINGBUFFER buffer_P;  // P进程缓冲区
+    RINGBUFFER buffer_M;  // M进程缓冲区
+    Datas datas;          // 数据缓冲区
+    FDB_DATA feedback;
+    IO io;
+    PID pid;
+
+    RECIPE_DATA recipe_data;
+    MECHINE_FSM_CMD machine_fsm_cmd;
+    M_TO_P_STATE M_to_P_state;
+};
+
+static ShareMemData shmdata{};
+
+namespace Enum2Str {
+#define ENUM_TO_STRING_CASE(enum_value) \
+    case enum_value:                    \
+        return #enum_value;
+
+inline const char *to_string(MODE_STATE_TYPE state) {
+    switch (state) {
+        ENUM_TO_STRING_CASE(MANUAL)
+        ENUM_TO_STRING_CASE(AUTO)
+        ENUM_TO_STRING_CASE(ERROR_MODE_STATE)
+        ENUM_TO_STRING_CASE(MAX_MODE_STATES)
+        default:
+            return "UNKNOWN_MODE_STATE";
+    }
+}
+
+inline const char *to_string(MAIN_STATE_TYPE state) {
+    switch (state) {
+        ENUM_TO_STRING_CASE(UNINIT)
+        ENUM_TO_STRING_CASE(UNCONFIG)
+        ENUM_TO_STRING_CASE(ERROR_MAIN_STATE)
+        ENUM_TO_STRING_CASE(MOTOR_OFF)
+        ENUM_TO_STRING_CASE(READY)
+        ENUM_TO_STRING_CASE(MOTION)
+        ENUM_TO_STRING_CASE(EME_STOP)
+        ENUM_TO_STRING_CASE(MAX_MAIN_STATES)
+        default:
+            return "UNKNOWN_MAIN_STATE";
+    }
+}
+
+#undef ENUM_TO_STRING_CASE
+
+}  // namespace Enum2Str
+#endif  // SHARED_MEMORY_DEF_HPP
