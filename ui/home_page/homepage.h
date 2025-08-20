@@ -22,6 +22,7 @@ public:
 
 private slots:
     void on_pushButton_14_clicked();
+    void on_lineEdit_editingFinished();
 
 private:
     Ui::HomePage *ui;
