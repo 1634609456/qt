@@ -122,7 +122,10 @@ public:
         if (index.column() == 0 || index.column() == 1 || index.column() == 2) {
             return false;
         }
-
+        // 如果输入为空，则保持原值
+        if (!value.isValid() || value.toString().trimmed().isEmpty()) {
+            return false;
+        }
         auto &row = dataStorage_[index.row()];
         bool ok = false;
 

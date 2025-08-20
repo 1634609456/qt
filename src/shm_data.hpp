@@ -728,7 +728,6 @@ struct ShareMemData {
     M_TO_P_STATE M_to_P_state;
 };
 
-static ShareMemData shmdata{};
 
 namespace Enum2Str {
 #define ENUM_TO_STRING_CASE(enum_value) \

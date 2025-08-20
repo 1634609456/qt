@@ -1,0 +1,951 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+
+namespace YKCat2
+{
+	#region 数据类型
+	#endregion
+
+	#region 枚举定义
+	/// <summary>
+	/// 函数返回值定义
+	/// </summary>
+	public enum NOS_RESULT_CODE
+	{
+		/// <summary>
+		/// 正常
+		/// </summary>
+		[Description("正常")]
+		NOS_RET_OK = 0x00,
+
+		/// <summary>
+		/// 不支持的函数
+		/// </summary>
+		[Description("不支持的函数")]
+		NOS_RET_FUN = 0x01,
+
+		/// <summary>
+		/// 函数执行失败
+		/// </summary>
+		[Description("函数执行失败")]
+		NOS_RET_FAIL = 0x02,
+
+		/// <summary>
+		/// 参数为空
+		/// </summary>
+		[Description("参数为空")]
+		NOS_RET_NULL = 0x04,
+
+		/// <summary>
+		/// 参数越界
+		/// </summary>
+		[Description("参数越界")]
+		NOS_RET_PARA = 0x05,
+
+		/// <summary>
+		/// 执行前先调用NOS_InitShareMemory初始化共享内存
+		/// </summary>
+		[Description("执行前先调用NOS_InitShareMemory初始化共享内存")]
+		NOS_RET_SMEM = 0x06,
+
+		/// <summary>
+		/// 当前操作需要管理员权限
+		/// </summary>
+		[Description("当前操作需要管理员权限")]
+		NOS_RET_ADMIN = 0x07,
+
+		/// <summary>
+		/// 接收数据超时
+		/// </summary>
+		[Description("接收数据超时")]
+		NOS_RET_TIMEOUT = 0x10,
+
+		/// <summary>
+		/// MODBUS指令命令不匹配
+		/// </summary>
+		[Description("MODBUS指令命令不匹配")]
+		NOS_RET_CMD = 0x11,
+
+		/// <summary>
+		/// 等待命令完成
+		/// </summary>
+		[Description("等待命令完成")]
+		NOS_RET_WAIT = 0x12,
+
+		/// <summary>
+		/// 通讯未连接
+		/// </summary>
+		[Description("通讯未连接")]
+		NOS_RET_CONNECT = 0x13,
+
+		/// <summary>
+		/// 通讯未初始化
+		/// </summary>
+		[Description("通讯未初始化")]
+		NOS_RET_INIT = 0x14,
+
+		/// <summary>
+		/// 通讯绑定失败
+		/// </summary>
+		[Description("通讯绑定失败")]
+		NOS_RET_BIND = 0x15,
+
+		/// <summary>
+		/// 通讯监听失败
+		/// </summary>
+		[Description("通讯监听失败")]
+		NOS_RET_LISTEN = 0x16,
+	};
+
+	/// <summary>
+	/// BOOL类型
+	/// </summary>
+	public enum NOS_BOOL
+	{
+		/// <summary>
+		/// 假
+		/// </summary>
+		[Description("假")]
+		NOS_FALSE = 0,
+
+		/// <summary>
+		/// 真
+		/// </summary>
+		[Description("真")]
+		NOS_TRUE = 1,
+	};
+
+	/// <summary>
+	/// 节点选择
+	/// </summary>
+	public enum NOS_NODE
+	{
+		/// <summary>
+		/// 节点A
+		/// </summary>
+		[Description("节点A")]
+		NOS_ECAT_A = 0,
+
+		/// <summary>
+		/// 节点B
+		/// </summary>
+		[Description("节点B")]
+		NOS_ECAT_B = 1,
+
+		/// <summary>
+		/// 节点C
+		/// </summary>
+		[Description("节点C")]
+		NOS_ECAT_C = 2,
+
+		/// <summary>
+		/// 节点D
+		/// </summary>
+		[Description("节点D")]
+		NOS_ECAT_D = 3,
+
+		/// <summary>
+		/// 节点E
+		/// </summary>
+		[Description("节点E")]
+		NOS_NODE_E = 4,
+
+		/// <summary>
+		/// 节点F
+		/// </summary>
+		[Description("节点F")]
+		NOS_NODE_F = 5,
+
+		/// <summary>
+		/// 节点G
+		/// </summary>
+		[Description("节点G")]
+		NOS_NODE_G = 6,
+
+		/// <summary>
+		/// 节点H
+		/// </summary>
+		[Description("节点H")]
+		NOS_NODE_H = 7,
+	};
+
+	/// <summary>
+	/// 事件类型
+	/// </summary>
+	public enum NOS_EVENT_CODE
+	{
+		/// <summary>
+		/// 超时时间已到
+		/// </summary>
+		[Description("超时时间已到")]
+		NOS_WAIT_TIMEOUT = 258,
+
+		/// <summary>
+		/// 
+		/// </summary>
+		[Description("")]
+		NOS_WAIT_FOREVER = -1,
+
+		/// <summary>
+		/// 无效的句柄
+		/// </summary>
+		[Description("无效的句柄")]
+		NOS_WAIT_FAILED = NOS_WAIT_FOREVER,
+
+		/// <summary>
+		/// 
+		/// </summary>
+		[Description("")]
+		NOS_STATUS_ABANDONED_WAIT_0 = 0x00000080,
+
+		/// <summary>
+		/// 指定事件被删除
+		/// </summary>
+		[Description("指定事件被删除")]
+		NOS_WAIT_ABANDONED_0 = NOS_STATUS_ABANDONED_WAIT_0+0,
+
+		/// <summary>
+		/// 
+		/// </summary>
+		[Description("")]
+		NOS_STATUS_WAIT_0 = 0x00000000,
+
+		/// <summary>
+		/// 指定事件被激活
+		/// </summary>
+		[Description("指定事件被激活")]
+		NOS_WAIT_OBJECT_0 = NOS_STATUS_WAIT_0+0,
+	};
+
+	/// <summary>
+	/// socket选项
+	/// </summary>
+	public enum NOS_OptionType
+	{
+		/// <summary>
+		/// turn on debugging info recording
+		/// </summary>
+		[Description("turn on debugging info recording")]
+		NOS_SO_DEBUG = 0x0001,
+
+		/// <summary>
+		/// socket has had listen
+		/// </summary>
+		[Description("socket has had listen")]
+		NOS_SO_ACCEPTCONN = 0x0002,
+
+		/// <summary>
+		/// allow local address reuse
+		/// </summary>
+		[Description("allow local address reuse")]
+		NOS_SO_REUSEADDR = 0x0004,
+
+		/// <summary>
+		/// keep connections alive
+		/// </summary>
+		[Description("keep connections alive")]
+		NOS_SO_KEEPALIVE = 0x0008,
+
+		/// <summary>
+		/// just use interface addresses
+		/// </summary>
+		[Description("just use interface addresses")]
+		NOS_SO_DONTROUTE = 0x0010,
+
+		/// <summary>
+		/// permit sending of broadcast msgs
+		/// </summary>
+		[Description("permit sending of broadcast msgs")]
+		NOS_SO_BROADCAST = 0x0020,
+
+		/// <summary>
+		/// bypass hardware when possible
+		/// </summary>
+		[Description("bypass hardware when possible")]
+		NOS_SO_USELOOPBACK = 0x0040,
+
+		/// <summary>
+		/// linger on close if data present
+		/// </summary>
+		[Description("linger on close if data present")]
+		NOS_SO_LINGER = 0x0080,
+
+		/// <summary>
+		/// leave received OOB data in line
+		/// </summary>
+		[Description("leave received OOB data in line")]
+		NOS_SO_OOBINLINE = 0x0100,
+
+		/// <summary>
+		/// allow local address port reuse
+		/// </summary>
+		[Description("allow local address port reuse")]
+		NOS_SO_REUSEPORT = 0x0200,
+
+		/// <summary>
+		/// timestamp received dgram traffic
+		/// </summary>
+		[Description("timestamp received dgram traffic")]
+		NOS_SO_TIMESTAMP = 0x0400,
+
+		/// <summary>
+		/// send buffer size
+		/// </summary>
+		[Description("send buffer size")]
+		NOS_SO_SNDBUF = 0x1001,
+
+		/// <summary>
+		/// receive buffer size
+		/// </summary>
+		[Description("receive buffer size")]
+		NOS_SO_RCVBUF = 0x1002,
+
+		/// <summary>
+		/// send low-water mark
+		/// </summary>
+		[Description("send low-water mark")]
+		NOS_SO_SNDLOWAT = 0x1003,
+
+		/// <summary>
+		/// receive low-water mark
+		/// </summary>
+		[Description("receive low-water mark")]
+		NOS_SO_RCVLOWAT = 0x1004,
+
+		/// <summary>
+		/// send timeout
+		/// </summary>
+		[Description("send timeout")]
+		NOS_SO_SNDTIMEO = 0x1005,
+
+		/// <summary>
+		/// receive timeout
+		/// </summary>
+		[Description("receive timeout")]
+		NOS_SO_RCVTIMEO = 0x1006,
+	};
+
+	/// <summary>
+	/// socket关闭策略
+	/// </summary>
+	public enum NOS_ShutDownFlag
+	{
+		/// <summary>
+		/// shut down the reading side
+		/// </summary>
+		[Description("shut down the reading side")]
+		NOS_SHUT_RD = 0,
+
+		/// <summary>
+		/// shut down the writing side
+		/// </summary>
+		[Description("shut down the writing side")]
+		NOS_SHUT_WR = 1,
+
+		/// <summary>
+		/// shut down both sides
+		/// </summary>
+		[Description("shut down both sides")]
+		NOS_SHUT_RDWR = 2,
+	};
+
+	/// <summary>
+	/// 消息控制策略
+	/// </summary>
+	public enum NOS_MsgFlag
+	{
+		/// <summary>
+		/// 非阻塞
+		/// </summary>
+		[Description("非阻塞")]
+		NOS_MSG_DONTWAIT = 0x000000080,
+	};
+	#endregion
+
+	/// <summary>
+	/// NoSys
+	/// </summary>
+	public class NoSys
+	{
+		#region 基本
+		/// <summary>
+		/// 获取内部版本号
+		/// </summary>
+		/// <param name="ver"></param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_GetVersion(out UInt32 ver);
+
+		/// <summary>
+		/// 获取系统时钟(微秒单位)
+		/// </summary>
+		/// <param name="tick"></param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_GetUsTick(out ulong tick);
+
+		/// <summary>
+		/// 微秒延时，分辨率为实时系统的最小调度周期
+		/// </summary>
+		/// <param name="us">微秒单位</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_SleepUs(UInt32 us);
+
+		/// <summary>
+		/// 选中节点
+		/// </summary>
+		/// <param name="node">节点</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_SetNode(NOS_NODE node);
+
+		/// <summary>
+		/// 设置进程名称
+		/// </summary>
+		/// <param name="name">名称,最多12个英文字符</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_SetRtaName(Byte[] name);
+		#endregion
+
+		#region 共享内存
+		/// <summary>
+		/// 共享内存初始化
+		/// </summary>
+		/// <param name="rta_name">进程名称，12个英文字符以内</param>
+		/// <param name="handle">保留，固定填0</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_InitShareMemory(Byte[] rta_name, ulong handle);
+
+		/// <summary>
+		/// 创建共享内存
+		/// </summary>
+		/// <param name="name">共享内存名称，8个英文字符以内</param>
+		/// <param name="size">内存大小，字节单位</param>
+		/// <param name="addr">返回内存地址</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_CreateShareMemory(Byte[] name, UInt32 size, out ulong addr);
+
+		/// <summary>
+		/// 打开共享内存
+		/// </summary>
+		/// <param name="nodeIndex">创建共享内存进程所在的节点</param>
+		/// <param name="rta_name">进程名称</param>
+		/// <param name="mem_name">共享内存名称</param>
+		/// <param name="addr">首地址</param>
+		/// <param name="rtos">FALSE:windows创建的内存 TRUE:rtos创建的内存</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_OpenShareMemory(NOS_NODE nodeIndex, Byte[] rta_name, Byte[] mem_name, out ulong addr, NOS_BOOL rtos);
+
+		/// <summary>
+		/// 读共享内存
+		/// </summary>
+		/// <param name="addr">共享内存首地址</param>
+		/// <param name="offset">偏移量，字节单位</param>
+		/// <param name="data">缓冲区，存放读入数据</param>
+		/// <param name="num">读取数量，字节单位</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_ReadShareMemory(ulong addr, UInt32 offset, Byte[] data, UInt32 num);
+
+		/// <summary>
+		/// 写共享内存
+		/// </summary>
+		/// <param name="addr">共享内存首地址</param>
+		/// <param name="offset">偏移量，字节单位</param>
+		/// <param name="data">缓冲区，存放写入数据</param>
+		/// <param name="num">写入数量，字节单位</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_WriteShareMemory(ulong addr, UInt32 offset, Byte[] data, UInt32 num);
+		#endregion
+
+		#region 事件
+		/// <summary>
+		/// 创建事件
+		/// </summary>
+		/// <param name="ManualReset">0:当一个等待线程被释放后，系统自动重置事件 1:使用ResetEvent手动将事件重置为无信号状态。</param>
+		/// <param name="bInitialState">指定初始状态 0:无信号 1:有信号</param>
+		/// <param name="name">事件名称，仅限于英文字符</param>
+		/// <param name="handle">返回的事件句柄</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_CreateEvent(UInt32 ManualReset, UInt32 bInitialState, Byte[] name, out ulong handle);
+
+		/// <summary>
+		/// 打开由NOS_CreateEvent创建的事件
+		/// </summary>
+		/// <param name="name">事件名称</param>
+		/// <param name="handle">返回的事件句柄</param>
+		/// <param name="rtos">0:windows创建的事件 1:rtos创建的事件</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_OpenEvent(Byte[] name, out ulong handle, NOS_BOOL rtos);
+
+		/// <summary>
+		/// 关闭事件句柄
+		/// </summary>
+		/// <param name="handle">事件句柄</param>
+		/// <param name="rtos">FALSE:windows创建的事件 TRUE:rtos创建的事件</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_CloseEvent(ulong handle, NOS_BOOL rtos);
+
+		/// <summary>
+		/// 将指定的事件对象设置为有信号，然后在释放适当数量的等待线程后将其重置为无信号。
+		/// </summary>
+		/// <param name="handle">事件句柄</param>
+		/// <param name="rtos">FALSE:windows创建的事件 TRUE:rtos创建的事件</param>
+		/// <returns>0:失败 非0:成功</returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_PulseEvent(ulong handle, NOS_BOOL rtos);
+
+		/// <summary>
+		/// 将事件置为无信号状态
+		/// </summary>
+		/// <param name="handle">事件句柄</param>
+		/// <param name="rtos">FALSE:windows创建的事件 TRUE:rtos创建的事件</param>
+		/// <returns>0:失败 非0:成功</returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_ResetEvent(ulong handle, NOS_BOOL rtos);
+
+		/// <summary>
+		/// 将事件置为有信号状态
+		/// </summary>
+		/// <param name="handle">事件句柄</param>
+		/// <param name="rtos">FALSE:windows创建的事件 TRUE:rtos创建的事件</param>
+		/// <returns>0:失败 非0:成功</returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_SetEvent(ulong handle, NOS_BOOL rtos);
+
+		/// <summary>
+		/// 等待单个事件
+		/// </summary>
+		/// <param name="hHandle">事件句柄</param>
+		/// <param name="rtos">FALSE:windows创建的事件 TRUE:rtos创建的事件</param>
+		/// <param name="dwMilliseconds">超时时间(毫秒单位), INFINITE(0xFFFFFFFF)为永不超时</param>
+		/// <param name="result">返回代码</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_WaitForSingleObject(ulong hHandle, NOS_BOOL rtos, UInt32 dwMilliseconds, out NOS_EVENT_CODE result);
+
+		/// <summary>
+		/// 等待多个事件
+		/// </summary>
+		/// <param name="nCount">事件数量</param>
+		/// <param name="lpHandles">事件句柄</param>
+		/// <param name="rtos">FALSE:windows创建的事件 TRUE:rtos创建的事件</param>
+		/// <param name="dwMillisecond">超时时间(毫秒单位), INFINITE(0xFFFFFFFF)为永不超时</param>
+		/// <param name="result">返回代码</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_WaitForMultipleObjects(ulong[] lpHandles, NOS_BOOL rtos, UInt32 nCount, UInt32 dwMillisecond, out NOS_EVENT_CODE result);
+		#endregion
+
+		#region 线程
+		#endregion
+
+		#region 互斥量
+		/// <summary>
+		/// 创建互斥量
+		/// </summary>
+		/// <param name="name">名称</param>
+		/// <param name="bInitialState">FALSE:创建时不获取权限 TRUE:创建时获取权限</param>
+		/// <param name="handle">返回句柄</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_CreateMutex(Byte[] name, NOS_BOOL bInitialState, out ulong handle);
+
+		/// <summary>
+		/// 打开互斥量
+		/// </summary>
+		/// <param name="name">互斥量名称</param>
+		/// <param name="handle">返回句柄</param>
+		/// <param name="rtos">FALSE:windows创建的互斥量 TRUE:rtos创建的互斥量</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_OpenMutex(Byte[] name, out ulong handle, NOS_BOOL rtos);
+
+		/// <summary>
+		/// 获取互斥量
+		/// </summary>
+		/// <param name="handle">互斥量句柄</param>
+		/// <param name="rtos">FALSE:windows创建的互斥量 TRUE:rtos创建的互斥量</param>
+		/// <param name="timeout">超时时间 小于0代表一直等待</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_WaitMutex(ulong handle, NOS_BOOL rtos, double timeout);
+
+		/// <summary>
+		/// 释放互斥量
+		/// </summary>
+		/// <param name="handle">互斥量句柄</param>
+		/// <param name="rtos">FALSE:windows创建的互斥量 TRUE:rtos创建的互斥量</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_ReleaseMutex(ulong handle, NOS_BOOL rtos);
+
+		/// <summary>
+		/// 关闭互斥量句柄
+		/// </summary>
+		/// <param name="handle">互斥量句柄</param>
+		/// <param name="rtos">FALSE:windows创建的互斥量 TRUE:rtos创建的互斥量</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_CloseMutex(ulong handle, NOS_BOOL rtos);
+		#endregion
+
+		#region 日志
+		/// <summary>
+		/// 创建日志服务
+		/// runtime端创建
+		/// </summary>
+		/// <param name="channel">通道序号[0,32)</param>
+		/// <param name="size">缓冲区尺寸,最大1Mbyte</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_CreateLogger(UInt32 channel, UInt32 size);
+
+		/// <summary>
+		/// 打开日志服务
+		/// </summary>
+		/// <param name="nodeIndex">创建共享内存进程所在的节点</param>
+		/// <param name="rta_name">进程名称</param>
+		/// <param name="channel">通道序号[0,32)</param>
+		/// <param name="rtos">FALSE:windows创建的日志 TRUE:rtos创建的日志</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_OpenLogger(NOS_NODE nodeIndex, Byte[] rta_name, UInt32 channel, NOS_BOOL rtos);
+
+		/// <summary>
+		/// 写日志,无多线程锁
+		/// runtime端写入
+		/// </summary>
+		/// <param name="channel">通道序号[0,32)</param>
+		/// <param name="msg">消息</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_WriteLogger(UInt32 channel, Byte[] msg);
+
+		/// <summary>
+		/// 读日志,有多线程锁
+		/// windows端读取
+		/// </summary>
+		/// <param name="channel">通道序号[0,32)</param>
+		/// <param name="msg">消息缓冲区</param>
+		/// <param name="buff_size">缓冲区大小,字节单位</param>
+		/// <param name="revd_size">实际接收到的数据数量,字节单位</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_ReadLogger(UInt32 channel, Byte[] msg, UInt32 buff_size, out UInt32 revd_size);
+		#endregion
+
+		#region TCP/UDP
+		/// <summary>
+		/// 创建UDP句柄
+		/// </summary>
+		/// <param name="handle">返回句柄</param>
+		/// <param name="flags">控制标记(NOS_MsgFlag)，按位定义</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_UdpCreate(out ulong handle, UInt32 flags);
+
+		/// <summary>
+		/// UDP绑定端口
+		/// </summary>
+		/// <param name="handle">句柄</param>
+		/// <param name="port">端口</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_UdpBind(ulong handle, UInt32 port);
+
+		/// <summary>
+		/// UDP发送数据
+		/// </summary>
+		/// <param name="handle">socket句柄</param>
+		/// <param name="ipaddr">目标ip地址</param>
+		/// <param name="ipport">目标端口</param>
+		/// <param name="buffer">数据缓冲区</param>
+		/// <param name="size">发送数据大小，字节单位</param>
+		/// <param name="sendNum">实际发送数据大小，字节单位</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_UdpSend(ulong handle, Byte[] ipaddr, UInt32 ipport, Byte[] buffer, UInt32 size, out Int32 sendNum);
+
+		/// <summary>
+		/// UDP接收数据
+		/// </summary>
+		/// <param name="handle">socket句柄</param>
+		/// <param name="buffer">数据缓冲区</param>
+		/// <param name="size">数据缓冲区大小，字节单位</param>
+		/// <param name="ipaddr">目标ip地址</param>
+		/// <param name="ipport">目标端口</param>
+		/// <param name="revNum">实际接收数据大小，字节单位</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_UdpRecv(ulong handle, Byte[] buffer, UInt32 size, Byte[] ipaddr, out UInt32 ipport, out Int32 revNum);
+
+		/// <summary>
+		/// 连接TCP服务器
+		/// </summary>
+		/// <param name="ipaddr">IP地址</param>
+		/// <param name="ipport">IP端口</param>
+		/// <param name="flags">控制标记(NOS_MsgFlag)，按位定义</param>
+		/// <param name="handle">返回句柄</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_TcpClientConnect(Byte[] ipaddr, UInt32 ipport, UInt32 flags, out ulong handle);
+
+		/// <summary>
+		/// TCP服务器初始化
+		/// </summary>
+		/// <param name="port">端口</param>
+		/// <param name="nBackLog">socket</param>
+		/// <param name="flags">控制标记(NOS_MsgFlag)，按位定义</param>
+		/// <param name="handle">socket句柄</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_TcpServerInit(UInt32 port, UInt32 nBackLog, UInt32 flags, out ulong handle);
+
+		/// <summary>
+		/// 接收连接
+		/// </summary>
+		/// <param name="handle">socket句柄</param>
+		/// <param name="newHandle">新的句柄</param>
+		/// <param name="clientIpaddr">客户端IP</param>
+		/// <param name="clientPort">客户端端口</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_TcpServerAccept(ulong handle, out ulong newHandle, Byte[] clientIpaddr, out UInt32 clientPort);
+
+		/// <summary>
+		/// 设置socket
+		/// </summary>
+		/// <param name="handle">socket句柄</param>
+		/// <param name="optionName"></param>
+		/// <param name="value"></param>
+		/// <param name="valueLen"></param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_SetSocketOption(ulong handle, NOS_OptionType optionName, out Int32 value, Int32 valueLen);
+
+		/// <summary>
+		/// 发送
+		/// </summary>
+		/// <param name="handle">socket句柄</param>
+		/// <param name="buffer">发送buffer</param>
+		/// <param name="bufferLen">待发送长度，字节单位</param>
+		/// <param name="sendNum">实际发送长度，字节单位</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_TcpSend(ulong handle, Byte[] buffer, UInt32 bufferLen, out Int32 sendNum);
+
+		/// <summary>
+		/// 接收
+		/// </summary>
+		/// <param name="handle">socket句柄</param>
+		/// <param name="buffer">接收buffer</param>
+		/// <param name="bufferLen">待接收长度，字节单位</param>
+		/// <param name="revdNum">实际接收的数据长度，字节单位</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_TcpRecv(ulong handle, Byte[] buffer, UInt32 bufferLen, out Int32 revdNum);
+
+		/// <summary>
+		/// 关闭socket
+		/// </summary>
+		/// <param name="handle">socket句柄</param>
+		/// <param name="flag"></param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_CloseSocket(ulong handle, NOS_ShutDownFlag flag);
+		#endregion
+
+		#region Modbus
+		/// <summary>
+		/// Modbus服务器初始化
+		/// </summary>
+		/// <param name="port">端口</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_MBusServerInit(UInt32 port);
+
+		/// <summary>
+		/// 传入Modbus客户端读写字寄存器操作函数
+		/// </summary>
+		/// <param name="ReadFun">读函数(MBusReadWord)</param>
+		/// <param name="WriteFun">写函数(MbusWriteWord)</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_MBusServerSetWordOp(ulong ReadFun, ulong WriteFun);
+
+		/// <summary>
+		/// 传入Modbus客户端读写位寄存器操作函数
+		/// </summary>
+		/// <param name="ReadFun">读函数(MBusReadBit)</param>
+		/// <param name="WriteFun">写函数(MBusWriteBit)</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_MBusServerSetBitOp(ulong ReadFun, ulong WriteFun);
+
+		/// <summary>
+		/// Modbus客户端初始化
+		/// </summary>
+		/// <param name="ipaddr">服务端ip地址</param>
+		/// <param name="ipport">务端端口</param>
+		/// <param name="flags">控制标记(NOS_MsgFlag)，按位定义</param>
+		/// <param name="timeout">接收超时时间(ms)</param>
+		/// <param name="handle">返回句柄</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_MbusClientConnect(Byte[] ipaddr, UInt32 ipport, UInt32 flags, UInt32 timeout, out ulong handle);
+
+		/// <summary>
+		/// Modbus客户端关闭
+		/// </summary>
+		/// <param name="handle">句柄</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_MbusClientClose(ulong handle);
+
+		/// <summary>
+		/// 读字寄存器
+		/// </summary>
+		/// <param name="handle">句柄</param>
+		/// <param name="slave">站号</param>
+		/// <param name="index">寄存器索引</param>
+		/// <param name="data">读取数据</param>
+		/// <param name="num">寄存器数量</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_MbusClientReadWord(ulong handle, UInt32 slave, UInt32 index, UInt16[] data, UInt32 num);
+
+		/// <summary>
+		/// 写字寄存器
+		/// </summary>
+		/// <param name="handle">句柄</param>
+		/// <param name="slave">站号</param>
+		/// <param name="index">寄存器索引</param>
+		/// <param name="data">写入数据</param>
+		/// <param name="num">寄存器数量</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_MbusClientWriteWord(ulong handle, UInt32 slave, UInt32 index, UInt16[] data, UInt32 num);
+
+		/// <summary>
+		/// 读位寄存器
+		/// </summary>
+		/// <param name="handle">句柄</param>
+		/// <param name="slave">站号</param>
+		/// <param name="index">寄存器索引</param>
+		/// <param name="data">读取数据</param>
+		/// <param name="num">寄存器数量</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_MbusClientReadBit(ulong handle, UInt32 slave, UInt32 index, UInt16[] data, UInt32 num);
+
+		/// <summary>
+		/// 写位寄存器
+		/// </summary>
+		/// <param name="handle">句柄</param>
+		/// <param name="slave">站号</param>
+		/// <param name="index">寄存器索引</param>
+		/// <param name="data">写入数据</param>
+		/// <param name="num">寄存器数量</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_MbusClientWriteBit(ulong handle, UInt32 slave, UInt32 index, UInt16[] data, UInt32 num);
+		#endregion
+
+		#region 串口
+		/// <summary>
+		/// 打开串口 未实现
+		/// </summary>
+		/// <param name="com_name">串口名称</param>
+		/// <param name="handle">返回句柄</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_OpenComm(Byte[] com_name, out Int32 handle);
+
+		/// <summary>
+		/// 关闭串口
+		/// </summary>
+		/// <param name="handle">串口句柄</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_CloseComm(Int32 handle);
+
+		/// <summary>
+		/// 串口设置
+		/// </summary>
+		/// <param name="handle">串口句柄</param>
+		/// <param name="baud"></param>
+		/// <param name="parity"></param>
+		/// <param name="dataBit"></param>
+		/// <param name="stopBit"></param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_SetCommConfig(Int32 handle, UInt32 baud, UInt32 parity, UInt32 dataBit, UInt32 stopBit);
+
+		/// <summary>
+		/// 从串口读数据
+		/// </summary>
+		/// <param name="handle">串口句柄</param>
+		/// <param name="buffer">缓冲区</param>
+		/// <param name="size">缓冲区大小</param>
+		/// <param name="reved">实际接收的数量</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_ReadComm(Int32 handle, Byte[] buffer, UInt32 size, out UInt32 reved);
+
+		/// <summary>
+		/// 数据发送
+		/// </summary>
+		/// <param name="handle">串口句柄</param>
+		/// <param name="buffer">缓冲区</param>
+		/// <param name="size">缓冲区大小</param>
+		/// <param name="reved">实际接收的数量</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_WriteComm(Int32 handle, Byte[] buffer, UInt32 size, out UInt32 reved);
+
+		/// <summary>
+		/// 串口缓冲区设置
+		/// </summary>
+		/// <param name="handle">串口句柄</param>
+		/// <param name="inQueue">输入缓冲区大小</param>
+		/// <param name="outQueue">输出缓冲区大小</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_SetupComm(Int32 handle, UInt32 inQueue, UInt32 outQueue);
+
+		/// <summary>
+		/// 发送缓存数据
+		/// </summary>
+		/// <param name="handle">串口句柄</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_FlushCommBuffers(Int32 handle);
+
+		/// <summary>
+		/// 清除缓冲区
+		/// </summary>
+		/// <param name="handle">串口句柄</param>
+		/// <param name="flags">标记</param>
+		/// <returns></returns>
+		[DllImport("NoSys.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern NOS_RESULT_CODE NOS_PurgeComm(Int32 handle, UInt32 flags);
+		#endregion
+
+	}
+}
+
+
+
+

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Def.h>
 #include <QHeaderView>
 #include <QLabel>
 #include <QPixmap>
@@ -11,6 +12,8 @@
 #include "config_page.hpp"
 #include "data_monitor_page.hpp"
 #include "param_page.hpp"
+#include "form/form.h"
+#include "home_page/homepage.h"
 
 class MainWindow : public ElaWindow {
     Q_OBJECT
@@ -59,10 +62,8 @@ inline void MainWindow::_setup_ui() {
 
 inline void MainWindow::_init_content() {
     auto *status_bar = new ElaStatusBar(this);
-    {
-        fsm_feb_text_->setAlignment(Qt::AlignCenter);
-
-        status_bar->addWidget(fsm_feb_text_);
+    {        
+        status_bar->addWidget(fsm_feb_text_, 99);
         this->setStatusBar(status_bar);
 
         auto *refresh = new QTimer(this);
@@ -85,6 +86,8 @@ inline void MainWindow::_init_content() {
         });
     }
 
+    this->addPageNode("test主页", new Form(this), ElaIconType::None);
+    this->addPageNode("电机主页", new HomePage(this), ElaIconType::House);
     this->addPageNode("参数调试", data_monitor_page_, 0, ElaIconType::ScrewdriverWrench);
     this->addPageNode("数据监控", chart_page_, 0, ElaIconType::ChartMixed);
     this->addPageNode("参数设置", param_page_, 0, ElaIconType::Ruler);

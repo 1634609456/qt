@@ -64,6 +64,11 @@ private:
     std::unique_ptr<webview::webview> other_webview_;
     QWidget *chart_other_widget_{};
     QJsonArray other_datas_;
+    
+    QWidget *container_test_widget_{};
+    std::unique_ptr<webview::webview> test_webview_;
+    QWidget *chart_test_widget_{};
+    QJsonArray test_datas_;
 
     std::optional<DBWriter<MotorData>> db_writer_;
     RingBuffer<Datas> datas_{nullptr};
@@ -73,22 +78,34 @@ inline ChartPage::ChartPage(QWidget *parent)
     : QWidget(parent),
       stack_(new QStackedWidget(this)),
       pivot_(new ElaPivot(this)),
+
       container_smmp_widget_(new QWidget()),
       smmp_webview_(std::make_unique<webview::webview>(true, reinterpret_cast<HWND>(container_smmp_widget_->winId()))),
       chart_smmp_widget_{QWidget::createWindowContainer(
           QWindow::fromWinId(reinterpret_cast<WId>(reinterpret_cast<HWND>(smmp_webview_->widget().value()))),
           container_smmp_widget_)},
+
       container_mmsp_widget_(new QWidget()),
       mmsp_webview_(std::make_unique<webview::webview>(true, reinterpret_cast<HWND>(container_mmsp_widget_->winId()))),
       chart_mmsp_widget_{QWidget::createWindowContainer(
           QWindow::fromWinId(reinterpret_cast<WId>(reinterpret_cast<HWND>(mmsp_webview_->widget().value()))),
           container_mmsp_widget_)},
+
       container_other_widget_(new QWidget()),
       other_webview_(
           std::make_unique<webview::webview>(true, reinterpret_cast<HWND>(container_other_widget_->winId()))),
       chart_other_widget_{QWidget::createWindowContainer(
           QWindow::fromWinId(reinterpret_cast<WId>(reinterpret_cast<HWND>(other_webview_->widget().value()))),
-          container_other_widget_)} {
+          container_other_widget_)}
+          
+
+                ,container_test_widget_(new QWidget()),
+      test_webview_(
+          std::make_unique<webview::webview>(true, reinterpret_cast<HWND>(container_test_widget_->winId()))),
+      chart_test_widget_{QWidget::createWindowContainer(
+          QWindow::fromWinId(reinterpret_cast<WId>(reinterpret_cast<HWND>(test_webview_->widget().value()))),
+          container_test_widget_)}
+          {
     this->_init_content();
 
 
@@ -103,12 +120,14 @@ inline ChartPage::~ChartPage() {
     delete container_smmp_widget_;
     delete container_mmsp_widget_;
     delete container_other_widget_;
+    delete container_test_widget_;
 }
 
 inline void ChartPage::_init_content() {
     pivot_->appendPivot("单电机多参数");
     pivot_->appendPivot("多电机单参数");
     pivot_->appendPivot("性能监控");
+    pivot_->appendPivot("Test图表");
     pivot_->setPivotSpacing(8);
     pivot_->setCurrentIndex(0);
     connect(pivot_, &ElaPivot::pivotClicked, stack_, &QStackedWidget::setCurrentIndex);
@@ -274,6 +293,40 @@ inline void ChartPage::_init_content() {
         stack_->addWidget(chart_other_widget_);
     }
 
+    {
+
+         test_webview_->set_virtual_hostname("charts", "./res");
+         test_webview_->navigate("http://charts/test-data.html");
+
+         auto *update_chart_timer = new QTimer(this);
+        connect(update_chart_timer, &QTimer::timeout, [this]() {
+            const static auto &data = ShmManager::get_instance().get_data()->feedback;
+            QJsonObject data_json;
+            data_json["vibrationData"] = QJsonArray{data.tremors[0], data.tremors[1]};
+            data_json["temperatureData"] =
+                QJsonArray{data.temperature[0], data.temperature[1], data.temperature[2], data.temperature[3]};
+
+            test_datas_.append(data_json);
+
+            if (test_datas_.size() > 1000 / sampling_time) {
+                QString data_str{QJsonDocument(test_datas_).toJson(QJsonDocument::Compact)};
+                test_webview_->eval("updateChartData(" + data_str.toStdString() + ");");
+                test_datas_ = QJsonArray();
+            }
+        });
+
+        connect(&ShmManager::get_instance(), &ShmManager::loaded, [update_chart_timer, this](bool success) {
+            if (success) {
+                update_chart_timer->start(sampling_time);
+            } else {
+                update_chart_timer->stop();
+            }
+        });
+
+        stack_->addWidget(chart_test_widget_);
+    }
+
+    
     auto *collect_btn = new ElaToggleButton("连接数据库", this);
     {
         collect_btn->setFixedWidth(128);
@@ -284,11 +337,14 @@ inline void ChartPage::_init_content() {
         connect(collect_btn, &ElaToggleButton::toggled, [this, collect_btn, collect_timer](bool checked) {
             if (!db_writer_.has_value()) {
                 // 第一次点击：连接数据库
+
+                // 创建文件夹
                 QDir db_dir("db");
                 if (!db_dir.exists()) {
                     db_dir.mkpath(".");
                 }
 
+                // 数据库文件命名
                 db_writer_.emplace(QString("db/twister_%1 .db")
                                        .arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"))
                                        .toStdString());
@@ -315,6 +371,7 @@ inline void ChartPage::_init_content() {
                 // 后续点击：控制数据采集
                 if (checked) {
                     collect_btn->setText("数据采集中...");
+                    // 时间间隔50ms
                     collect_timer->start(50);
                 } else {
                     collect_btn->setText("采集数据");

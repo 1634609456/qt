@@ -1,0 +1,1049 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>NoExt.Net</name>
+    </assembly>
+    <members>
+        <member name="T:YKCat2.NEE_RESULT_CODE">
+            <summary>
+            函数返回值定义
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_RESULT_CODE.NEE_RET_OK">
+            <summary>
+            正常
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_RESULT_CODE.NEE_RET_LOAD">
+            <summary>
+            未成功调用NEM_SysLoadLib函数
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_RESULT_CODE.NEE_RET_OPEN_MEM">
+            <summary>
+            打开共享内存失败
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_RESULT_CODE.NEE_RET_MATCH">
+            <summary>
+            内存接口定义不匹配
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_RESULT_CODE.NEE_RET_FUN">
+            <summary>
+            不支持的功能
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_RESULT_CODE.NEE_RET_INS_PARA">
+            <summary>
+            无效的指令参数
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_RESULT_CODE.NEE_RET_OPEN_EVENT">
+            <summary>
+            打开事件失败
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_RESULT_CODE.NEE_RET_ACTIVE">
+            <summary>
+            当前运动已在运动
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_RESULT_CODE.NEE_RET_DYNC_MEM_OV">
+            <summary>
+            动态内存分配失败
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_RESULT_CODE.NEE_RET_API_BUFFER_INIT">
+            <summary>
+            API缓冲区通道未初始化
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_RESULT_CODE.NEE_RET_API_BUFFER_SIZE">
+            <summary>
+            API缓冲区尺寸不能修改
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_RESULT_CODE.NEE_RET_ARCFOLLOW_GROUP_INIT">
+            <summary>
+            坐标系弧度跟随坐标系已初始化
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_RESULT_CODE.NEE_RET_ARCFOLLOW_GROUP_DEINIT">
+            <summary>
+            坐标系弧度跟随坐标系未初始化
+            </summary>
+        </member>
+        <member name="T:YKCat2.NEE_MC_ERROR">
+            <summary>
+            运行错误代码
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_MC_ERROR.NEX_ERR_OK">
+            <summary>
+            无错误
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_MC_ERROR.NEX_ERR_END">
+            <summary>
+            定义结束
+            </summary>
+        </member>
+        <member name="T:YKCat2.NEE_BOOL">
+            <summary>
+            布尔数据
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_BOOL.NEE_FALSE">
+            <summary>
+            否
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_BOOL.NEE_TRUE">
+            <summary>
+            是
+            </summary>
+        </member>
+        <member name="T:YKCat2.NEE_CONVEYOR_SYNC_STATUS">
+            <summary>
+            传送带跟随同步状态
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_CONVEYOR_SYNC_STATUS.NEE_CONVEYOR_SYNC_NOTCOMPLETED">
+            <summary>
+            同步中
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_CONVEYOR_SYNC_STATUS.NEE_CONVEYOR_SYNC_FIALED">
+            <summary>
+            同步失败
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_CONVEYOR_SYNC_STATUS.NEE_CONVEYOR_SYNC_SUCCESSFUL">
+            <summary>
+            同步成功
+            </summary>
+        </member>
+        <member name="T:YKCat2.NEE_DIRECTION">
+            <summary>
+            运动方向
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_DIRECTION.NEX_DIRECTION_POSITIVE">
+            <summary>
+            正方向运动
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_DIRECTION.NEX_DIRECTION_NEGATIVE">
+            <summary>
+            负方向运动
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_DIRECTION.NEX_DIRECTION_NONE">
+            <summary>
+            无效
+            </summary>
+        </member>
+        <member name="T:YKCat2.NEE_TEST_DEMO">
+            <summary>
+            测试demo
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_TEST_DEMO.NEE_DEMO_WCMDPOS">
+            <summary>
+            每周期更新规划位置(自加0.001)
+            </summary>
+        </member>
+        <member name="T:YKCat2.NEE_API_BUFFER_WARN">
+            <summary>
+            API缓冲区指令执行错误时的处理方式
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_API_BUFFER_WARN.NEE_API_BUFFER_CONTINUE">
+            <summary>
+            继续运行
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_API_BUFFER_WARN.NEE_API_BUFFER_STOP">
+            <summary>
+            停止
+            </summary>
+        </member>
+        <member name="T:YKCat2.NEE_CIRCULAR_AUX_MODE">
+            <summary>
+            圆弧辅助点模式
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_CIRCULAR_AUX_MODE.NEE_CIRCULAR_BORDER">
+            <summary>
+            指定圆弧上一点
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_CIRCULAR_AUX_MODE.NEE_CIRCULAR_CENTER">
+            <summary>
+            指定圆心
+            </summary>
+        </member>
+        <member name="T:YKCat2.NEE_CIRCULAR_PATH_CHOICE">
+            <summary>
+            圆弧路径选择
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_CIRCULAR_PATH_CHOICE.NEE_CIRCULAR_CLOCKWISE">
+            <summary>
+            顺时针,圆心模式使用
+            </summary>
+        </member>
+        <member name="F:YKCat2.NEE_CIRCULAR_PATH_CHOICE.NEE_CIRCULAR_COUNTERCLOCKWISE">
+            <summary>
+            逆时针,圆心模式使用
+            </summary>
+        </member>
+        <member name="T:YKCat2.NES_NTFErrorStatus">
+            <summary>
+            NTF错误状态
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_NTFErrorStatus.err_type">
+            <summary>
+            错误类型 二进制 第一位：轴错误 第二位：坐标系错误 第三位：总线错误 第四位：系统错误 第五位：API错误
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_NTFErrorStatus.err_code">
+            <summary>
+            错误代码
+            </summary>
+        </member>
+        <member name="T:YKCat2.NES_POINT3">
+            <summary>
+            3坐标值
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_POINT3.x">
+            <summary>
+            X坐标
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_POINT3.y">
+            <summary>
+            Y坐标
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_POINT3.z">
+            <summary>
+            Z坐标
+            </summary>
+        </member>
+        <member name="T:YKCat2.NES_DigitalIO">
+            <summary>
+            数字输出配置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_DigitalIO.enable">
+            <summary>
+            是否启用IO输出
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_DigitalIO.byte_offset">
+            <summary>
+            字节偏移
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_DigitalIO.bit_offset">
+            <summary>
+            位偏移[0,7)
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_DigitalIO.inv">
+            <summary>
+            FALSE=不取反 TRUE=取反
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_DigitalIO.enable_delay">
+            <summary>
+            是否启用延时输出时间
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_DigitalIO.delay_ms">
+            <summary>
+            输出延时时间
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_DigitalIO.res">
+            <summary>
+            保留
+            </summary>
+        </member>
+        <member name="T:YKCat2.NES_MoveGateConfig">
+            <summary>
+            门形运动配置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.lift_axis">
+            <summary>
+            抬升轴
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.drop_axis">
+            <summary>
+            下降轴
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.line_axis_num">
+            <summary>
+            平移轴数量,最多支持为32轴
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.event_channel">
+            <summary>
+            事件通道号,门形运动需要占用连续的六个通道,event_channel为连续通道号中的起始通道号
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.line_axis_list">
+            <summary>
+            平移轴,支持32轴
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.drop_stop_pos">
+            <summary>
+            下降轴停止位置,绝对位置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.lift_pos">
+            <summary>
+            门形运动抬升总高度,绝对位置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.soft_start_pos">
+            <summary>
+            门形运动软启动高度,绝对位置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.soft_stop_pos">
+            <summary>
+            门形运动软着陆高度,绝对位置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.lift_safe_pos">
+            <summary>
+            上升安全位高度,绝对位置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.drop_safe_pos">
+            <summary>
+            下降安全位高度,绝对位置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.line_pos">
+            <summary>
+            平移轴运动距离,绝对位置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.soft_start_vel">
+            <summary>
+            软启动目标速度
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.soft_stop_vel">
+            <summary>
+            软着陆目标速度
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.lift_vel">
+            <summary>
+            上升速度
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.drop_vel">
+            <summary>
+            下降速度
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.liftDigitalIO">
+            <summary>
+            上升轴IO配置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.dropDigitalIO">
+            <summary>
+            下降轴IO配置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.lineDigitalIO">
+            <summary>
+            平移轴IO配置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.io_lift_pos">
+            <summary>
+            上升轴io输出位置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.io_drop_pos">
+            <summary>
+            下降轴io输出位置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.io_line_pos">
+            <summary>
+            平移轴io输出位置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.io_line_axis">
+            <summary>
+            触发输出的平移轴号
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateConfig.res">
+            <summary>
+            保留
+            </summary>
+        </member>
+        <member name="T:YKCat2.NES_MoveGateStatus">
+            <summary>
+            门形运动状态
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateStatus.active">
+            <summary>
+            运动状态
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateStatus.done">
+            <summary>
+            运动完成状态
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveGateStatus.ntfErrorStatus">
+            <summary>
+            报警状态
+            </summary>
+        </member>
+        <member name="T:YKCat2.NES_MoveConveyorConfig">
+            <summary>
+            传送带跟随配置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveConveyorConfig.start_position">
+            <summary>
+            传送带跟随编码器锁存值
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveConveyorConfig.conveyor_axis">
+            <summary>
+            传送带跟随绑定的轴号
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveConveyorConfig.direction">
+            <summary>
+            传送带移动方向
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveConveyorConfig.angle_xy">
+            <summary>
+            传送带投影至xOy平面与x轴的夹角,使用弧度制表示
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveConveyorConfig.angle_xyz">
+            <summary>
+            传送带与xOy平面之间的夹角,使用弧度制表示
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveConveyorConfig.distance">
+            <summary>
+            传送带跟随同步过程,允许同步的最远距离[DOUBLE_MIN,DOUBLE_MAX](unit)
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveConveyorConfig.follow_axis_num">
+            <summary>
+            跟随轴数量,轴数量为1时,x轴直线模式；轴数量为2时,xy平面模式,轴数量为3时xyz空间模式
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveConveyorConfig.follow_axis_list">
+            <summary>
+            跟随机械手同步虚拟轴轴组,用于跟随传送带实现同步,传入参数前需要先绑定机械手加工虚拟轴,最终实物轴通过跟随同步虚拟轴和加工虚拟轴实现运动
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveConveyorConfig.act_axis_list">
+            <summary>
+            机械手实际轴组
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveConveyorConfig.virtual_axis">
+            <summary>
+            用于计算使用虚拟轴,用于实现传送带同步
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveConveyorConfig.follow_axis_offset">
+            <summary>
+            机械手相对于传送带锁存起点的偏置量,此时机械手必须置于传送带上方
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveConveyorConfig.res">
+            <summary>
+            保留
+            </summary>
+        </member>
+        <member name="T:YKCat2.NES_MoveConveyorStatus">
+            <summary>
+            传送带跟随状态
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveConveyorStatus.conveyor_sync_status">
+            <summary>
+            传送带跟随同步状态
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveConveyorStatus.ntfErrorStatus">
+            <summary>
+            报警状态
+            </summary>
+        </member>
+        <member name="T:YKCat2.NES_MoveReciprocatingConfig">
+            <summary>
+            往复运动+IO翻转配置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveReciprocatingConfig.run_rtos">
+            <summary>
+            是否在rtos下运行
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveReciprocatingConfig.axis_index">
+            <summary>
+            轴号
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveReciprocatingConfig.output_byte_index">
+            <summary>
+            翻转输出byte
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveReciprocatingConfig.output_bit_index">
+            <summary>
+            翻转输出bit
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveReciprocatingConfig.input_byte_index">
+            <summary>
+            翻转输入byte
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveReciprocatingConfig.input_bit_index">
+            <summary>
+            翻转输入bit
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveReciprocatingConfig.loop_count">
+            <summary>
+            循环次数
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveReciprocatingConfig.io_inversion_count">
+            <summary>
+            IO翻转次数
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveReciprocatingConfig.position_a">
+            <summary>
+            位置A
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveReciprocatingConfig.position_b">
+            <summary>
+            位置B
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveReciprocatingConfig.res">
+            <summary>
+            保留
+            </summary>
+        </member>
+        <member name="T:YKCat2.NES_MoveReciprocatingStatus">
+            <summary>
+            往复运动+IO翻转状态
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveReciprocatingStatus.axis_index">
+            <summary>
+            轴号
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveReciprocatingStatus.loop_index">
+            <summary>
+            已循环次数
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveReciprocatingStatus.total_loop_index">
+            <summary>
+            总共已循环次数
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveReciprocatingStatus.io_inversion_index">
+            <summary>
+            IO已翻转次数
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveReciprocatingStatus.function_phase">
+            <summary>
+            流程状态
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveReciprocatingStatus.function_path_time">
+            <summary>
+            单次往复耗时
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveReciprocatingStatus.sleep_cost_time">
+            <summary>
+            Sleep 1ms 耗时
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveReciprocatingStatus.res">
+            <summary>
+            保留
+            </summary>
+        </member>
+        <member name="T:YKCat2.NES_ApiBufferConfig">
+            <summary>
+            API缓冲区配置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_ApiBufferConfig.node">
+            <summary>
+            运行节点
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_ApiBufferConfig.buff_size">
+            <summary>
+            缓冲区大小,字节单位
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_ApiBufferConfig.warn_do">
+            <summary>
+            指令错误时的处理方式
+            </summary>
+        </member>
+        <member name="T:YKCat2.NES_ApiBufferStatus">
+            <summary>
+            API缓冲区状态
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_ApiBufferStatus.active">
+            <summary>
+            运行中
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_ApiBufferStatus.pause">
+            <summary>
+            已暂停
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_ApiBufferStatus.write_index">
+            <summary>
+            写入端指令索引
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_ApiBufferStatus.exec_index">
+            <summary>
+            执行端指令索引
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_ApiBufferStatus.current_mask">
+            <summary>
+            当前执行这里的Mark
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_ApiBufferStatus.error_code">
+            <summary>
+            错误代码
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_ApiBufferStatus.error_index">
+            <summary>
+            发生错误的指令索引
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_ApiBufferStatus.done">
+            <summary>
+            保留
+            </summary>
+        </member>
+        <member name="T:YKCat2.NES_MoveArcFollowConfig">
+            <summary>
+            坐标系弧度跟随圆弧运动指令配置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveArcFollowConfig.workpieceStartPosPoint3">
+            <summary>
+            被加工工件圆弧起点坐标
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveArcFollowConfig.rotate_angle">
+            <summary>
+            相对圆弧起点坐标水平方向旋转角度,单位为度,范围大于0
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveArcFollowConfig.cirCenterPosPoint3">
+            <summary>
+            圆弧圆心坐标
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveArcFollowConfig.circular_path_choice">
+            <summary>
+            被加工工件圆弧运动方向选择
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveArcFollowConfig.max_velocity">
+            <summary>
+            加工头运动目标速度
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveArcFollowConfig.max_acceleration">
+            <summary>
+            加工头运动目标加速度
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveArcFollowConfig.max_jerk">
+            <summary>
+            加工头运动目标加加速度
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveArcFollowConfig.onDigitalIO">
+            <summary>
+            位置输出开io配置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveArcFollowConfig.io_on_output_angle">
+            <summary>
+            加工旋转指定角度开启io输出
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveArcFollowConfig.offDigitalIO">
+            <summary>
+            位置输出关io配置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_MoveArcFollowConfig.io_off_output_angle">
+            <summary>
+            加工剩余指定弧度关闭io输出
+            </summary>
+        </member>
+        <member name="T:YKCat2.NES_ArcFollowGroupConfig">
+            <summary>
+            ArcFollow坐标系机器配置
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_ArcFollowGroupConfig.group_index">
+            <summary>
+            坐标系号
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_ArcFollowGroupConfig.axis_list">
+            <summary>
+            用于加工的四个轴,axis_list[0]:X轴轴号,axis_list[1]:Y轴轴号,axis_list[2]:Z轴轴号,axis_list[3]:R轴轴号
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_ArcFollowGroupConfig.tool_length">
+            <summary>
+            刀头与R轴中心连线投影于xy平面的长度
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_ArcFollowGroupConfig.start_angle">
+            <summary>
+            起始位置刀头与R轴中心连线投影于xy平面的方向与y轴方向夹角,范围为[-180,180]
+            </summary>
+        </member>
+        <member name="T:YKCat2.NES_ArcFollowGroupStatus">
+            <summary>
+            坐标系弧度跟随坐标系状态
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_ArcFollowGroupStatus.inited">
+            <summary>
+            初始化状态 false:未初始化 true:已初始化
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_ArcFollowGroupStatus.active">
+            <summary>
+            运动状态 false:未运动 true:正在运动
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_ArcFollowGroupStatus.done">
+            <summary>
+            完成状态 false:运动未完成 true:运动已完成
+            </summary>
+        </member>
+        <member name="F:YKCat2.NES_ArcFollowGroupStatus.ntfErrorStatus">
+            <summary>
+            报警状态
+            </summary>
+        </member>
+        <member name="T:YKCat2.NoExt">
+            <summary>
+            NoExt
+            </summary>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_GetSysVersion(System.Int32,System.UInt32@)">
+            <summary>
+            获取当前库版本
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接标识</param>
+            <param name="version">当前版本号</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_SysLoadLib(System.Int32)">
+            <summary>
+            打开和Runtime(ProR)之间的通讯通道
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接标识</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_SysUnloadLib(System.Int32)">
+            <summary>
+            释放系统资源，程序退出时调用
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接标识</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_ReadLogger(System.Int32,System.Byte[],System.UInt32,System.UInt32@)">
+            <summary>
+            读取runtime日志
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接标识</param>
+            <param name="msg">缓冲区</param>
+            <param name="buff_size">缓冲区大小，字节单位</param>
+            <param name="revd_size">读回数据大小，字节单位</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_GetSleep1CostTime(System.Int32,System.Double@)">
+            <summary>
+            获取系统 Sleep 1ms所花费的时间
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接标识</param>
+            <param name="time">系统 Sleep 1ms所花费的时间</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_SetMoveReciprocatingConfig(System.Int32,YKCat2.NES_MoveReciprocatingConfig)">
+            <summary>
+            配置往复运动+IO翻转参数
+            功能演示使用
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接标识</param>
+            <param name="config">往复运动+IO翻转配置参数</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_ReadMoveReciprocatingStatus(System.Int32,YKCat2.NES_MoveReciprocatingStatus@)">
+            <summary>
+            获取往复运动+IO翻转状态
+            功能演示使用
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接标识</param>
+            <param name="config">往复运动+IO翻转状态信息</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_SetMoveGateConfig(System.Int32,System.UInt32,YKCat2.NES_MoveGateConfig)">
+            <summary>
+            配置门形运动参数
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接标识</param>
+            <param name="channel">通道号 支持[0,GATE_MOVEMENT_NUM)通道号</param>
+            <param name="config">门形运动配置</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_GetMoveGateConfig(System.Int32,System.UInt32,YKCat2.NES_MoveGateConfig@)">
+            <summary>
+            获取门形运动参数
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接标识</param>
+            <param name="channel">通道号 支持[0,GATE_MOVEMENT_NUM)通道号</param>
+            <param name="config">门形运动配置</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_StartMoveGate(System.Int32,System.UInt32)">
+            <summary>
+            启动门形运动
+            </summary>
+            <param name="handle">标识0:共享内存 其他:通讯链接</param>
+            <param name="channel">通道号 支持[0,GATE_MOVEMENT_NUM)通道号</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_StopMoveGate(System.Int32,System.UInt32)">
+            <summary>
+            停止门形运动
+            </summary>
+            <param name="handle">标识0:共享内存 其他:通讯链接</param>
+            <param name="channel">通道号 支持[0,GATE_MOVEMENT_NUM)通道号</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_ReadMoveGateStatus(System.Int32,System.UInt32,YKCat2.NES_MoveGateStatus@)">
+            <summary>
+            获取门形运动状态
+            </summary>
+            <param name="handle">标识0:共享内存 其他:通讯链接</param>
+            <param name="channel">通道号 支持[0,GATE_MOVEMENT_NUM)通道号</param>
+            <param name="status">门形运动状态</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_ClearMoveGateStatus(System.Int32,System.UInt32)">
+            <summary>
+            清除门形运动状态
+            </summary>
+            <param name="handle">标识0:共享内存 其他:通讯链接</param>
+            <param name="channel">通道号 支持[0,GATE_MOVEMENT_NUM)通道号</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_SetMoveConveyorConfig(System.Int32,System.UInt32,YKCat2.NES_MoveConveyorConfig)">
+            <summary>
+            设置传送带跟随配置
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接</param>
+            <param name="channel">通道号 支持[0,GATE_MOVEMENT_NUM)通道号</param>
+            <param name="config">传送带跟随配置</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_GetMoveConveyorConfig(System.Int32,System.UInt32,YKCat2.NES_MoveConveyorConfig@)">
+            <summary>
+            获取传送带跟随配置
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接</param>
+            <param name="channel">通道号 支持[0,GATE_MOVEMENT_NUM)通道号</param>
+            <param name="config">传送带跟随配置</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_StartMoveConveyor(System.Int32,System.UInt32)">
+            <summary>
+            启动传送带跟随
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接</param>
+            <param name="channel">通道号 支持[0,GATE_MOVEMENT_NUM)通道号</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_StopMoveConveyor(System.Int32,System.UInt32)">
+            <summary>
+            停止传送带跟随
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接</param>
+            <param name="channel">通道号 支持[0,GATE_MOVEMENT_NUM)通道号</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_ReadMoveConveyorStatus(System.Int32,System.UInt32,YKCat2.NES_MoveConveyorStatus@)">
+            <summary>
+            获取传送带跟随状态
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接</param>
+            <param name="channel">通道号 支持[0,GATE_MOVEMENT_NUM)通道号</param>
+            <param name="status">传送带跟随状态</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_InitApiBuffer(System.Int32,System.UInt32,YKCat2.NES_ApiBufferConfig)">
+            <summary>
+            API缓冲区初始化
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接</param>
+            <param name="channel">缓冲区通道</param>
+            <param name="config">缓冲区大小，字节单位</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_StartApiBuffer(System.Int32,System.UInt32)">
+            <summary>
+            启动API缓冲区运行
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接</param>
+            <param name="channel">缓冲区通道</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_StopApiBuffer(System.Int32,System.UInt32)">
+            <summary>
+            停止API缓冲区运行
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接</param>
+            <param name="channel">缓冲区通道</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_PauseApiBuffer(System.Int32,System.UInt32)">
+            <summary>
+            暂停API缓冲区运行
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接</param>
+            <param name="channel">缓冲区通道</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_ReadApiBufferStatus(System.Int32,System.UInt32,YKCat2.NES_ApiBufferStatus@)">
+            <summary>
+            获取API缓冲区状态
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接</param>
+            <param name="channel">缓冲区通道</param>
+            <param name="status"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_MoveArcFollow(System.Int32,System.UInt32,YKCat2.NES_MoveArcFollowConfig)">
+            <summary>
+            坐标系弧度跟随圆弧插补
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接标识</param>
+            <param name="channel">通道号 支持[0,GATE_MOVEMENT_NUM)通道号</param>
+            <param name="config">坐标系弧度跟随圆弧指令配置</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_InitGroupArcFollow(System.Int32,System.UInt32,YKCat2.NES_ArcFollowGroupConfig)">
+            <summary>
+             坐标系弧度跟随坐标系初始化
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接标识</param>
+            <param name="channel">通道号 支持[0,GATE_MOVEMENT_NUM)通道号</param>
+            <param name="config">坐标系弧度跟随坐标系配置</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_DeinitGroupArcFollow(System.Int32,System.UInt32)">
+            <summary>
+             坐标系弧度跟随坐标系解绑
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接标识</param>
+            <param name="channel">通道号 支持[0,GATE_MOVEMENT_NUM)通道号</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_StartMoveArcFollow(System.Int32,System.UInt32)">
+            <summary>
+            启动坐标系弧度跟随运动
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接标识</param>
+            <param name="channel">通道号 支持[0,GATE_MOVEMENT_NUM)通道号</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_StopMoveArcFollow(System.Int32,System.UInt32)">
+            <summary>
+            停止坐标系弧度跟随运动
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接标识</param>
+            <param name="channel">通道号 支持[0,GATE_MOVEMENT_NUM)通道号</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_ReadMoveArcFollowStatus(System.Int32,System.UInt32,YKCat2.NES_ArcFollowGroupStatus@)">
+            <summary>
+            读取坐标系弧度跟随坐标系状态状态
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接标识</param>
+            <param name="channel">通道号 支持[0,GATE_MOVEMENT_NUM)通道号</param>
+            <param name="status">坐标系弧度跟随坐标系状态</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_StartDemo(System.Int32,YKCat2.NEE_TEST_DEMO)">
+            <summary>
+            启动demo
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接标识</param>
+            <param name="opt">类型</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoExt.NEM_StopDemo(System.Int32,YKCat2.NEE_TEST_DEMO)">
+            <summary>
+            停止demo
+            </summary>
+            <param name="handle">0:共享内存 其他:通讯链接标识</param>
+            <param name="opt">类型</param>
+            <returns></returns>
+        </member>
+    </members>
+</doc>

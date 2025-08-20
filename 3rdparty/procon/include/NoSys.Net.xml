@@ -1,0 +1,808 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>NoSys.Net</name>
+    </assembly>
+    <members>
+        <member name="T:YKCat2.NOS_RESULT_CODE">
+            <summary>
+            函数返回值定义
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_RESULT_CODE.NOS_RET_OK">
+            <summary>
+            正常
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_RESULT_CODE.NOS_RET_FUN">
+            <summary>
+            不支持的函数
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_RESULT_CODE.NOS_RET_FAIL">
+            <summary>
+            函数执行失败
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_RESULT_CODE.NOS_RET_NULL">
+            <summary>
+            参数为空
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_RESULT_CODE.NOS_RET_PARA">
+            <summary>
+            参数越界
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_RESULT_CODE.NOS_RET_SMEM">
+            <summary>
+            执行前先调用NOS_InitShareMemory初始化共享内存
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_RESULT_CODE.NOS_RET_ADMIN">
+            <summary>
+            当前操作需要管理员权限
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_RESULT_CODE.NOS_RET_TIMEOUT">
+            <summary>
+            接收数据超时
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_RESULT_CODE.NOS_RET_CMD">
+            <summary>
+            MODBUS指令命令不匹配
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_RESULT_CODE.NOS_RET_WAIT">
+            <summary>
+            等待命令完成
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_RESULT_CODE.NOS_RET_CONNECT">
+            <summary>
+            通讯未连接
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_RESULT_CODE.NOS_RET_INIT">
+            <summary>
+            通讯未初始化
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_RESULT_CODE.NOS_RET_BIND">
+            <summary>
+            通讯绑定失败
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_RESULT_CODE.NOS_RET_LISTEN">
+            <summary>
+            通讯监听失败
+            </summary>
+        </member>
+        <member name="T:YKCat2.NOS_BOOL">
+            <summary>
+            BOOL类型
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_BOOL.NOS_FALSE">
+            <summary>
+            假
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_BOOL.NOS_TRUE">
+            <summary>
+            真
+            </summary>
+        </member>
+        <member name="T:YKCat2.NOS_NODE">
+            <summary>
+            节点选择
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_NODE.NOS_ECAT_A">
+            <summary>
+            节点A
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_NODE.NOS_ECAT_B">
+            <summary>
+            节点B
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_NODE.NOS_ECAT_C">
+            <summary>
+            节点C
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_NODE.NOS_ECAT_D">
+            <summary>
+            节点D
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_NODE.NOS_NODE_E">
+            <summary>
+            节点E
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_NODE.NOS_NODE_F">
+            <summary>
+            节点F
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_NODE.NOS_NODE_G">
+            <summary>
+            节点G
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_NODE.NOS_NODE_H">
+            <summary>
+            节点H
+            </summary>
+        </member>
+        <member name="T:YKCat2.NOS_EVENT_CODE">
+            <summary>
+            事件类型
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_EVENT_CODE.NOS_WAIT_TIMEOUT">
+            <summary>
+            超时时间已到
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_EVENT_CODE.NOS_WAIT_FOREVER">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_EVENT_CODE.NOS_WAIT_FAILED">
+            <summary>
+            无效的句柄
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_EVENT_CODE.NOS_STATUS_ABANDONED_WAIT_0">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_EVENT_CODE.NOS_WAIT_ABANDONED_0">
+            <summary>
+            指定事件被删除
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_EVENT_CODE.NOS_STATUS_WAIT_0">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_EVENT_CODE.NOS_WAIT_OBJECT_0">
+            <summary>
+            指定事件被激活
+            </summary>
+        </member>
+        <member name="T:YKCat2.NOS_OptionType">
+            <summary>
+            socket选项
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_OptionType.NOS_SO_DEBUG">
+            <summary>
+            turn on debugging info recording
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_OptionType.NOS_SO_ACCEPTCONN">
+            <summary>
+            socket has had listen
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_OptionType.NOS_SO_REUSEADDR">
+            <summary>
+            allow local address reuse
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_OptionType.NOS_SO_KEEPALIVE">
+            <summary>
+            keep connections alive
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_OptionType.NOS_SO_DONTROUTE">
+            <summary>
+            just use interface addresses
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_OptionType.NOS_SO_BROADCAST">
+            <summary>
+            permit sending of broadcast msgs
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_OptionType.NOS_SO_USELOOPBACK">
+            <summary>
+            bypass hardware when possible
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_OptionType.NOS_SO_LINGER">
+            <summary>
+            linger on close if data present
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_OptionType.NOS_SO_OOBINLINE">
+            <summary>
+            leave received OOB data in line
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_OptionType.NOS_SO_REUSEPORT">
+            <summary>
+            allow local address port reuse
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_OptionType.NOS_SO_TIMESTAMP">
+            <summary>
+            timestamp received dgram traffic
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_OptionType.NOS_SO_SNDBUF">
+            <summary>
+            send buffer size
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_OptionType.NOS_SO_RCVBUF">
+            <summary>
+            receive buffer size
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_OptionType.NOS_SO_SNDLOWAT">
+            <summary>
+            send low-water mark
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_OptionType.NOS_SO_RCVLOWAT">
+            <summary>
+            receive low-water mark
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_OptionType.NOS_SO_SNDTIMEO">
+            <summary>
+            send timeout
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_OptionType.NOS_SO_RCVTIMEO">
+            <summary>
+            receive timeout
+            </summary>
+        </member>
+        <member name="T:YKCat2.NOS_ShutDownFlag">
+            <summary>
+            socket关闭策略
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_ShutDownFlag.NOS_SHUT_RD">
+            <summary>
+            shut down the reading side
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_ShutDownFlag.NOS_SHUT_WR">
+            <summary>
+            shut down the writing side
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_ShutDownFlag.NOS_SHUT_RDWR">
+            <summary>
+            shut down both sides
+            </summary>
+        </member>
+        <member name="T:YKCat2.NOS_MsgFlag">
+            <summary>
+            消息控制策略
+            </summary>
+        </member>
+        <member name="F:YKCat2.NOS_MsgFlag.NOS_MSG_DONTWAIT">
+            <summary>
+            非阻塞
+            </summary>
+        </member>
+        <member name="T:YKCat2.NoSys">
+            <summary>
+            NoSys
+            </summary>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_GetVersion(System.UInt32@)">
+            <summary>
+            获取内部版本号
+            </summary>
+            <param name="ver"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_GetUsTick(System.UInt64@)">
+            <summary>
+            获取系统时钟(微秒单位)
+            </summary>
+            <param name="tick"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_SleepUs(System.UInt32)">
+            <summary>
+            微秒延时，分辨率为实时系统的最小调度周期
+            </summary>
+            <param name="us">微秒单位</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_SetNode(YKCat2.NOS_NODE)">
+            <summary>
+            选中节点
+            </summary>
+            <param name="node">节点</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_SetRtaName(System.Byte[])">
+            <summary>
+            设置进程名称
+            </summary>
+            <param name="name">名称,最多12个英文字符</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_InitShareMemory(System.Byte[],System.UInt64)">
+            <summary>
+            共享内存初始化
+            </summary>
+            <param name="rta_name">进程名称，12个英文字符以内</param>
+            <param name="handle">保留，固定填0</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_CreateShareMemory(System.Byte[],System.UInt32,System.UInt64@)">
+            <summary>
+            创建共享内存
+            </summary>
+            <param name="name">共享内存名称，8个英文字符以内</param>
+            <param name="size">内存大小，字节单位</param>
+            <param name="addr">返回内存地址</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_OpenShareMemory(YKCat2.NOS_NODE,System.Byte[],System.Byte[],System.UInt64@,YKCat2.NOS_BOOL)">
+            <summary>
+            打开共享内存
+            </summary>
+            <param name="nodeIndex">创建共享内存进程所在的节点</param>
+            <param name="rta_name">进程名称</param>
+            <param name="mem_name">共享内存名称</param>
+            <param name="addr">首地址</param>
+            <param name="rtos">FALSE:windows创建的内存 TRUE:rtos创建的内存</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_ReadShareMemory(System.UInt64,System.UInt32,System.Byte[],System.UInt32)">
+            <summary>
+            读共享内存
+            </summary>
+            <param name="addr">共享内存首地址</param>
+            <param name="offset">偏移量，字节单位</param>
+            <param name="data">缓冲区，存放读入数据</param>
+            <param name="num">读取数量，字节单位</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_WriteShareMemory(System.UInt64,System.UInt32,System.Byte[],System.UInt32)">
+            <summary>
+            写共享内存
+            </summary>
+            <param name="addr">共享内存首地址</param>
+            <param name="offset">偏移量，字节单位</param>
+            <param name="data">缓冲区，存放写入数据</param>
+            <param name="num">写入数量，字节单位</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_CreateEvent(System.UInt32,System.UInt32,System.Byte[],System.UInt64@)">
+            <summary>
+            创建事件
+            </summary>
+            <param name="ManualReset">0:当一个等待线程被释放后，系统自动重置事件 1:使用ResetEvent手动将事件重置为无信号状态。</param>
+            <param name="bInitialState">指定初始状态 0:无信号 1:有信号</param>
+            <param name="name">事件名称，仅限于英文字符</param>
+            <param name="handle">返回的事件句柄</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_OpenEvent(System.Byte[],System.UInt64@,YKCat2.NOS_BOOL)">
+            <summary>
+            打开由NOS_CreateEvent创建的事件
+            </summary>
+            <param name="name">事件名称</param>
+            <param name="handle">返回的事件句柄</param>
+            <param name="rtos">0:windows创建的事件 1:rtos创建的事件</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_CloseEvent(System.UInt64,YKCat2.NOS_BOOL)">
+            <summary>
+            关闭事件句柄
+            </summary>
+            <param name="handle">事件句柄</param>
+            <param name="rtos">FALSE:windows创建的事件 TRUE:rtos创建的事件</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_PulseEvent(System.UInt64,YKCat2.NOS_BOOL)">
+            <summary>
+            将指定的事件对象设置为有信号，然后在释放适当数量的等待线程后将其重置为无信号。
+            </summary>
+            <param name="handle">事件句柄</param>
+            <param name="rtos">FALSE:windows创建的事件 TRUE:rtos创建的事件</param>
+            <returns>0:失败 非0:成功</returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_ResetEvent(System.UInt64,YKCat2.NOS_BOOL)">
+            <summary>
+            将事件置为无信号状态
+            </summary>
+            <param name="handle">事件句柄</param>
+            <param name="rtos">FALSE:windows创建的事件 TRUE:rtos创建的事件</param>
+            <returns>0:失败 非0:成功</returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_SetEvent(System.UInt64,YKCat2.NOS_BOOL)">
+            <summary>
+            将事件置为有信号状态
+            </summary>
+            <param name="handle">事件句柄</param>
+            <param name="rtos">FALSE:windows创建的事件 TRUE:rtos创建的事件</param>
+            <returns>0:失败 非0:成功</returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_WaitForSingleObject(System.UInt64,YKCat2.NOS_BOOL,System.UInt32,YKCat2.NOS_EVENT_CODE@)">
+            <summary>
+            等待单个事件
+            </summary>
+            <param name="hHandle">事件句柄</param>
+            <param name="rtos">FALSE:windows创建的事件 TRUE:rtos创建的事件</param>
+            <param name="dwMilliseconds">超时时间(毫秒单位), INFINITE(0xFFFFFFFF)为永不超时</param>
+            <param name="result">返回代码</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_WaitForMultipleObjects(System.UInt64[],YKCat2.NOS_BOOL,System.UInt32,System.UInt32,YKCat2.NOS_EVENT_CODE@)">
+            <summary>
+            等待多个事件
+            </summary>
+            <param name="nCount">事件数量</param>
+            <param name="lpHandles">事件句柄</param>
+            <param name="rtos">FALSE:windows创建的事件 TRUE:rtos创建的事件</param>
+            <param name="dwMillisecond">超时时间(毫秒单位), INFINITE(0xFFFFFFFF)为永不超时</param>
+            <param name="result">返回代码</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_CreateMutex(System.Byte[],YKCat2.NOS_BOOL,System.UInt64@)">
+            <summary>
+            创建互斥量
+            </summary>
+            <param name="name">名称</param>
+            <param name="bInitialState">FALSE:创建时不获取权限 TRUE:创建时获取权限</param>
+            <param name="handle">返回句柄</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_OpenMutex(System.Byte[],System.UInt64@,YKCat2.NOS_BOOL)">
+            <summary>
+            打开互斥量
+            </summary>
+            <param name="name">互斥量名称</param>
+            <param name="handle">返回句柄</param>
+            <param name="rtos">FALSE:windows创建的互斥量 TRUE:rtos创建的互斥量</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_WaitMutex(System.UInt64,YKCat2.NOS_BOOL,System.Double)">
+            <summary>
+            获取互斥量
+            </summary>
+            <param name="handle">互斥量句柄</param>
+            <param name="rtos">FALSE:windows创建的互斥量 TRUE:rtos创建的互斥量</param>
+            <param name="timeout">超时时间 小于0代表一直等待</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_ReleaseMutex(System.UInt64,YKCat2.NOS_BOOL)">
+            <summary>
+            释放互斥量
+            </summary>
+            <param name="handle">互斥量句柄</param>
+            <param name="rtos">FALSE:windows创建的互斥量 TRUE:rtos创建的互斥量</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_CloseMutex(System.UInt64,YKCat2.NOS_BOOL)">
+            <summary>
+            关闭互斥量句柄
+            </summary>
+            <param name="handle">互斥量句柄</param>
+            <param name="rtos">FALSE:windows创建的互斥量 TRUE:rtos创建的互斥量</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_CreateLogger(System.UInt32,System.UInt32)">
+            <summary>
+            创建日志服务
+            runtime端创建
+            </summary>
+            <param name="channel">通道序号[0,32)</param>
+            <param name="size">缓冲区尺寸,最大1Mbyte</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_OpenLogger(YKCat2.NOS_NODE,System.Byte[],System.UInt32,YKCat2.NOS_BOOL)">
+            <summary>
+            打开日志服务
+            </summary>
+            <param name="nodeIndex">创建共享内存进程所在的节点</param>
+            <param name="rta_name">进程名称</param>
+            <param name="channel">通道序号[0,32)</param>
+            <param name="rtos">FALSE:windows创建的日志 TRUE:rtos创建的日志</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_WriteLogger(System.UInt32,System.Byte[])">
+            <summary>
+            写日志,无多线程锁
+            runtime端写入
+            </summary>
+            <param name="channel">通道序号[0,32)</param>
+            <param name="msg">消息</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_ReadLogger(System.UInt32,System.Byte[],System.UInt32,System.UInt32@)">
+            <summary>
+            读日志,有多线程锁
+            windows端读取
+            </summary>
+            <param name="channel">通道序号[0,32)</param>
+            <param name="msg">消息缓冲区</param>
+            <param name="buff_size">缓冲区大小,字节单位</param>
+            <param name="revd_size">实际接收到的数据数量,字节单位</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_UdpCreate(System.UInt64@,System.UInt32)">
+            <summary>
+            创建UDP句柄
+            </summary>
+            <param name="handle">返回句柄</param>
+            <param name="flags">控制标记(NOS_MsgFlag)，按位定义</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_UdpBind(System.UInt64,System.UInt32)">
+            <summary>
+            UDP绑定端口
+            </summary>
+            <param name="handle">句柄</param>
+            <param name="port">端口</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_UdpSend(System.UInt64,System.Byte[],System.UInt32,System.Byte[],System.UInt32,System.Int32@)">
+            <summary>
+            UDP发送数据
+            </summary>
+            <param name="handle">socket句柄</param>
+            <param name="ipaddr">目标ip地址</param>
+            <param name="ipport">目标端口</param>
+            <param name="buffer">数据缓冲区</param>
+            <param name="size">发送数据大小，字节单位</param>
+            <param name="sendNum">实际发送数据大小，字节单位</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_UdpRecv(System.UInt64,System.Byte[],System.UInt32,System.Byte[],System.UInt32@,System.Int32@)">
+            <summary>
+            UDP接收数据
+            </summary>
+            <param name="handle">socket句柄</param>
+            <param name="buffer">数据缓冲区</param>
+            <param name="size">数据缓冲区大小，字节单位</param>
+            <param name="ipaddr">目标ip地址</param>
+            <param name="ipport">目标端口</param>
+            <param name="revNum">实际接收数据大小，字节单位</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_TcpClientConnect(System.Byte[],System.UInt32,System.UInt32,System.UInt64@)">
+            <summary>
+            连接TCP服务器
+            </summary>
+            <param name="ipaddr">IP地址</param>
+            <param name="ipport">IP端口</param>
+            <param name="flags">控制标记(NOS_MsgFlag)，按位定义</param>
+            <param name="handle">返回句柄</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_TcpServerInit(System.UInt32,System.UInt32,System.UInt32,System.UInt64@)">
+            <summary>
+            TCP服务器初始化
+            </summary>
+            <param name="port">端口</param>
+            <param name="nBackLog">socket</param>
+            <param name="flags">控制标记(NOS_MsgFlag)，按位定义</param>
+            <param name="handle">socket句柄</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_TcpServerAccept(System.UInt64,System.UInt64@,System.Byte[],System.UInt32@)">
+            <summary>
+            接收连接
+            </summary>
+            <param name="handle">socket句柄</param>
+            <param name="newHandle">新的句柄</param>
+            <param name="clientIpaddr">客户端IP</param>
+            <param name="clientPort">客户端端口</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_SetSocketOption(System.UInt64,YKCat2.NOS_OptionType,System.Int32@,System.Int32)">
+            <summary>
+            设置socket
+            </summary>
+            <param name="handle">socket句柄</param>
+            <param name="optionName"></param>
+            <param name="value"></param>
+            <param name="valueLen"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_TcpSend(System.UInt64,System.Byte[],System.UInt32,System.Int32@)">
+            <summary>
+            发送
+            </summary>
+            <param name="handle">socket句柄</param>
+            <param name="buffer">发送buffer</param>
+            <param name="bufferLen">待发送长度，字节单位</param>
+            <param name="sendNum">实际发送长度，字节单位</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_TcpRecv(System.UInt64,System.Byte[],System.UInt32,System.Int32@)">
+            <summary>
+            接收
+            </summary>
+            <param name="handle">socket句柄</param>
+            <param name="buffer">接收buffer</param>
+            <param name="bufferLen">待接收长度，字节单位</param>
+            <param name="revdNum">实际接收的数据长度，字节单位</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_CloseSocket(System.UInt64,YKCat2.NOS_ShutDownFlag)">
+            <summary>
+            关闭socket
+            </summary>
+            <param name="handle">socket句柄</param>
+            <param name="flag"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_MBusServerInit(System.UInt32)">
+            <summary>
+            Modbus服务器初始化
+            </summary>
+            <param name="port">端口</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_MBusServerSetWordOp(System.UInt64,System.UInt64)">
+            <summary>
+            传入Modbus客户端读写字寄存器操作函数
+            </summary>
+            <param name="ReadFun">读函数(MBusReadWord)</param>
+            <param name="WriteFun">写函数(MbusWriteWord)</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_MBusServerSetBitOp(System.UInt64,System.UInt64)">
+            <summary>
+            传入Modbus客户端读写位寄存器操作函数
+            </summary>
+            <param name="ReadFun">读函数(MBusReadBit)</param>
+            <param name="WriteFun">写函数(MBusWriteBit)</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_MbusClientConnect(System.Byte[],System.UInt32,System.UInt32,System.UInt32,System.UInt64@)">
+            <summary>
+            Modbus客户端初始化
+            </summary>
+            <param name="ipaddr">服务端ip地址</param>
+            <param name="ipport">务端端口</param>
+            <param name="flags">控制标记(NOS_MsgFlag)，按位定义</param>
+            <param name="timeout">接收超时时间(ms)</param>
+            <param name="handle">返回句柄</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_MbusClientClose(System.UInt64)">
+            <summary>
+            Modbus客户端关闭
+            </summary>
+            <param name="handle">句柄</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_MbusClientReadWord(System.UInt64,System.UInt32,System.UInt32,System.UInt16[],System.UInt32)">
+            <summary>
+            读字寄存器
+            </summary>
+            <param name="handle">句柄</param>
+            <param name="slave">站号</param>
+            <param name="index">寄存器索引</param>
+            <param name="data">读取数据</param>
+            <param name="num">寄存器数量</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_MbusClientWriteWord(System.UInt64,System.UInt32,System.UInt32,System.UInt16[],System.UInt32)">
+            <summary>
+            写字寄存器
+            </summary>
+            <param name="handle">句柄</param>
+            <param name="slave">站号</param>
+            <param name="index">寄存器索引</param>
+            <param name="data">写入数据</param>
+            <param name="num">寄存器数量</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_MbusClientReadBit(System.UInt64,System.UInt32,System.UInt32,System.UInt16[],System.UInt32)">
+            <summary>
+            读位寄存器
+            </summary>
+            <param name="handle">句柄</param>
+            <param name="slave">站号</param>
+            <param name="index">寄存器索引</param>
+            <param name="data">读取数据</param>
+            <param name="num">寄存器数量</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_MbusClientWriteBit(System.UInt64,System.UInt32,System.UInt32,System.UInt16[],System.UInt32)">
+            <summary>
+            写位寄存器
+            </summary>
+            <param name="handle">句柄</param>
+            <param name="slave">站号</param>
+            <param name="index">寄存器索引</param>
+            <param name="data">写入数据</param>
+            <param name="num">寄存器数量</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_OpenComm(System.Byte[],System.Int32@)">
+            <summary>
+            打开串口 未实现
+            </summary>
+            <param name="com_name">串口名称</param>
+            <param name="handle">返回句柄</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_CloseComm(System.Int32)">
+            <summary>
+            关闭串口
+            </summary>
+            <param name="handle">串口句柄</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_SetCommConfig(System.Int32,System.UInt32,System.UInt32,System.UInt32,System.UInt32)">
+            <summary>
+            串口设置
+            </summary>
+            <param name="handle">串口句柄</param>
+            <param name="baud"></param>
+            <param name="parity"></param>
+            <param name="dataBit"></param>
+            <param name="stopBit"></param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_ReadComm(System.Int32,System.Byte[],System.UInt32,System.UInt32@)">
+            <summary>
+            从串口读数据
+            </summary>
+            <param name="handle">串口句柄</param>
+            <param name="buffer">缓冲区</param>
+            <param name="size">缓冲区大小</param>
+            <param name="reved">实际接收的数量</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_WriteComm(System.Int32,System.Byte[],System.UInt32,System.UInt32@)">
+            <summary>
+            数据发送
+            </summary>
+            <param name="handle">串口句柄</param>
+            <param name="buffer">缓冲区</param>
+            <param name="size">缓冲区大小</param>
+            <param name="reved">实际接收的数量</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_SetupComm(System.Int32,System.UInt32,System.UInt32)">
+            <summary>
+            串口缓冲区设置
+            </summary>
+            <param name="handle">串口句柄</param>
+            <param name="inQueue">输入缓冲区大小</param>
+            <param name="outQueue">输出缓冲区大小</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_FlushCommBuffers(System.Int32)">
+            <summary>
+            发送缓存数据
+            </summary>
+            <param name="handle">串口句柄</param>
+            <returns></returns>
+        </member>
+        <member name="M:YKCat2.NoSys.NOS_PurgeComm(System.Int32,System.UInt32)">
+            <summary>
+            清除缓冲区
+            </summary>
+            <param name="handle">串口句柄</param>
+            <param name="flags">标记</param>
+            <returns></returns>
+        </member>
+    </members>
+</doc>

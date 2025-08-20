@@ -116,8 +116,8 @@ private:
                 throw std::runtime_error("Invalid motor data in config");
             }
         }
-        QJsonObject ioObj = json["IO"].toObject();
 
+        QJsonObject ioObj = json["IO"].toObject();
         // Parse digital_IO
         if (!ioObj.contains("digital_IO") || !ioObj["digital_IO"].isArray()) {
             throw std::runtime_error("Missing or invalid 'digital_IO' field in config");

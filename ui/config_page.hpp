@@ -55,18 +55,16 @@ inline void ConfigPage::_init_content() {
                 connect(write_conf_btn, &ElaPushButton::clicked, [this]() {
                     {
                         std::lock_guard<std::mutex> guard(lock_);
-                        auto &config_data = ShmManager::get_instance().get_data()->config;
+                        auto &config__ = ShmManager::get_instance().get_data()->config;
+                        config__ = ConfigManager::get_instance().get_config();
                         
-                        // 使用表格中修改后的数据
                         const auto& motor_data = motor_model_->getDataStorage();
                         if (!motor_data.empty()) {
-                            // 复制修改后的电机配置数据 (motor_config数组大小为20)
-                            for (size_t i = 0; i < motor_data.size() && i < 20; ++i) {
-                                config_data.motor_config[i] = motor_data[i];
+                            for (int i = 0; i < 20; ++i) {
+                                config__.motor_config[i] = motor_data[i];
                             }
                         }
-                        
-                        config_data.config_state = CONFIG_STATE::CONFIG_SUCCESS;
+                        config__.config_state = CONFIG_STATE::CONFIG_SUCCESS;
                     }
 
                     ElaMessageBar::success(ElaMessageBarType::Top, "提示", "配置写入成功！", 3000, this);

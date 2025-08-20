@@ -236,7 +236,7 @@ inline void DataMonitorPage::_init_content() {
                 auto *main__layout = new QGridLayout();
                 {
                     auto *init_btn = new ElaPushButton("初始化");
-                    auto *init_err_btn = new ElaPushButton("初始化");
+                    auto *init_err_btn = new ElaPushButton("初始化错误");
                     auto *config_btn = new ElaPushButton("配置");
                     auto *config_err_btn = new ElaPushButton("配置错误");
                     auto *err_reset_btn = new ElaPushButton("错误复位");

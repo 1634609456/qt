@@ -21,11 +21,12 @@ public:
     }
 
     void load_shared_memory() {
-        // int ret{0};
-        // UINT64 addr;
-        // ret = YKM_SysLoadLib(0);
+        int ret{0};
+        UINT64 addr;
+        ret = YKM_SysLoadLib(0);
         NOS_BOOL is_x64;
         QString rta_name, mem_name;
+        QString dev;
 
         QFile file("sys.conf");
         if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -33,6 +34,7 @@ public:
             QString system = in.readLine().trimmed();
             rta_name = in.readLine().trimmed();
             mem_name = in.readLine().trimmed();
+            dev = in.readLine().trimmed();
             is_x64 = (system == "x64") ? NOS_FALSE : NOS_TRUE;
             file.close();
         } else {
@@ -40,17 +42,54 @@ public:
             return;
         }
 
-        // ret = NOS_OpenShareMemory(NOS_ECAT_A, rta_name.toStdString().data(), mem_name.toStdString().data(), &addr, is_x64);
-        // if (ret == 0) {
-            // shm_data_ = reinterpret_cast<ShareMemData *>(addr);
-            shm_data_ = &shmdata;
-            if (shm_data_) {
-                emit loaded(true);
-                return;
+        if (dev == "dev") {
+            shm_data_ = new ShareMemData{};
+            emit loaded(true);
+        } else {
+            ret = NOS_OpenShareMemory(NOS_ECAT_A, rta_name.toStdString().data(), mem_name.toStdString().data(), &addr,
+                                      is_x64);
+            if (ret == 0) {
+                shm_data_ = reinterpret_cast<ShareMemData *>(addr);
+                if (shm_data_) {
+                    emit loaded(true);
+                    return;
+                }
             }
-        // }
-        // emit loaded(false);
+            emit loaded(false);
+        }
     }
+
+
+    // void load_shared_memory() {
+    //     int ret{0};
+    //     UINT64 addr;
+    //     ret = YKM_SysLoadLib(0);
+    //     NOS_BOOL is_x64;
+    //     QString rta_name, mem_name;
+
+    //     QFile file("sys.conf");
+    //     if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    //         QTextStream in(&file);
+    //         QString system = in.readLine().trimmed();
+    //         rta_name = in.readLine().trimmed();
+    //         mem_name = in.readLine().trimmed();
+    //         is_x64 = (system == "x64") ? NOS_FALSE : NOS_TRUE;
+    //         file.close();
+    //     } else {
+    //         emit loaded(false);
+    //         return;
+    //     }
+
+    //      ret = NOS_OpenShareMemory(NOS_ECAT_A, rta_name.toStdString().data(), mem_name.toStdString().data(), &addr, is_x64);
+    //      if (ret == 0) {
+    //         shm_data_ = reinterpret_cast<ShareMemData *>(addr);
+    //         if (shm_data_) {
+    //             emit loaded(true);
+    //             return;
+    //         }
+    //      }
+    //      emit loaded(false);
+    // }
 
     Q_SIGNAL void loaded(bool success);
 
