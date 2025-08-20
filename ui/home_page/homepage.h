@@ -4,6 +4,9 @@
 #include <QWidget>
 #include <qtmetamacros.h>
 
+#include "../../src/shm_data.hpp"
+#include "../../src/util/ring_buffer.hpp"
+
 namespace Ui {
 class HomePage;
 }
@@ -22,6 +25,8 @@ private slots:
 
 private:
     Ui::HomePage *ui;
+    RingBuffer<RINGBUFFER> buffer;
+
 };
 
 #endif // HOMEPAGE_H
