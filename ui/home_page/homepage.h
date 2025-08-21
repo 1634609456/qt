@@ -32,6 +32,7 @@ private slots:
     void on_pushButton_17_clicked();
     void on_pushButton_18_clicked();
     void on_lineEdit_editingFinished();
+    void on_lineEdit_2_editingFinished();
 
 private:
     Ui::HomePage *ui;

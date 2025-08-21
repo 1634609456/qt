@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <QTimer>
 #include <cstdlib>
+#include <qlogging.h>
 #include <qtimer.h>
 #include <winsock.h>
 
@@ -171,5 +172,21 @@ void HomePage::on_pushButton_18_clicked()
     });
 
     qDebug() << "手动按钮";
+}
+
+
+// 写入主轴的速度值
+void HomePage::on_lineEdit_2_editingFinished()
+{
+  ui->lineEdit_2->text();
+  buffer.push({
+      .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
+      .motor_manual_control = {
+          .manual_control_cmd = MOTOR_MANUAL_CONTROL::ABSOLUTE_POSITION_MOTION,
+          .motor_type = MAIN_SPINDLE,
+          .speed = ui->lineEdit_2->text().toDouble(),
+      }
+  });
+  qDebug() << "速度值" << ui->lineEdit_2->text();
 }
 
