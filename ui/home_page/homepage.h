@@ -37,7 +37,6 @@ private slots:
 private:
     Ui::HomePage *ui;
     RingBuffer<RINGBUFFER> buffer;
-
 };
 
 #endif // HOMEPAGE_H

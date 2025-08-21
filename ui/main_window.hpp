@@ -33,6 +33,7 @@ private:
     ParamPage *param_page_;
 
     QString config_key_;
+    QString manual_key_;
 
     ElaText *fsm_feb_text_;
 
@@ -88,6 +89,15 @@ inline void MainWindow::_init_content() {
 
     this->addPageNode("test主页", new Form(this), ElaIconType::None);
     this->addPageNode("电机主页", new HomePage(this), ElaIconType::House);
+    this->addExpanderNode("手动控制", manual_key_, ElaIconType::BookOpenCover);
+    {
+        this->addPageNode("主飞轮/虚捻/牵引手动", new QWidget(this), manual_key_, ElaIconType::None);
+        this->addPageNode("上料站手动", new QWidget(this), manual_key_, ElaIconType::None);
+        this->addPageNode("中穿熔丝手动", new QWidget(this), manual_key_, ElaIconType::None);
+        this->addPageNode("边穿手动", new QWidget(this), manual_key_, ElaIconType::None);
+        this->addPageNode("下料工字轮手动", new QWidget(this), manual_key_, ElaIconType::None);
+    }
+
     this->addPageNode("参数调试", data_monitor_page_, 0, ElaIconType::ScrewdriverWrench);
     this->addPageNode("数据监控", chart_page_, 0, ElaIconType::ChartMixed);
     this->addPageNode("参数设置", param_page_, 0, ElaIconType::Ruler);

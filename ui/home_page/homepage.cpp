@@ -11,10 +11,11 @@
 #include "../../src/util/shm_manager.hpp"
 
 HomePage::HomePage(QWidget *parent)
-    : QWidget(parent), ui(new Ui::HomePage), buffer(nullptr) // 初始化环形缓冲区
+    : QWidget(parent), 
+    ui(new Ui::HomePage), 
+    buffer(nullptr) // 初始化环形缓冲区
 {
   ui->setupUi(this);
-
 
           // 主轴速度读取
           auto timer = new QTimer(this);
@@ -183,7 +184,7 @@ void HomePage::on_lineEdit_2_editingFinished()
       qDebug() << "速度值不能为空";
       return;
   }
-  
+
    ShmManager::get_instance().get_data()->config.motor_config[MAIN_SPINDLE].running_speed =
       ui->lineEdit_2->text().toDouble();
 }

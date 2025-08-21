@@ -51,6 +51,8 @@ set(UI_FILES
     ui/form/form.cpp
     ui/home_page/homepage.ui
     ui/home_page/homepage.cpp
+    ui/main_flyer/mainflyer.ui
+    ui/main_flyer/mainflyer.cpp
     ui/main_window.hpp
     ui/data_monitor_page.hpp
     ui/chart_page.hpp
