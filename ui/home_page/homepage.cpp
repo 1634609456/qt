@@ -65,3 +65,111 @@ void HomePage::on_lineEdit_editingFinished()
     
 }
 
+
+// 停止
+void HomePage::on_pushButton_13_clicked()
+{
+    buffer.push({
+        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD,
+        .main_fsm_event_type =   MAIN_EVENT_CONTROL_OFF,        
+    });
+
+    qDebug() << "停止按钮";
+}
+
+
+// 急停
+void HomePage::on_pushButton_15_clicked()
+{
+    buffer.push({
+        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD,
+        .main_fsm_event_type =   MAIN_EVENT_EME_STOP,        
+    });
+
+    qDebug() << "急停按钮";
+}
+
+
+// 急停清除
+void HomePage::on_pushButton_16_clicked()
+{
+    buffer.push({
+        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD,
+        .main_fsm_event_type =   MAIN_EVENT_EME_STOP_CLEAR,        
+    });
+
+    qDebug() << "急停清除按钮";
+}
+
+
+
+// 错误
+void HomePage::on_pushButton_9_clicked()
+{
+    buffer.push({
+        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD,
+        .main_fsm_event_type =   MAIN_EVENT_ERROR,        
+    });
+
+    qDebug() << "错误按钮";
+}
+
+
+// 错误复位
+void HomePage::on_pushButton_10_clicked()
+{
+    buffer.push({
+        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD,
+        .main_fsm_event_type =   MAIN_EVENT_ERROR_RESET,        
+    });
+
+    qDebug() << "错误复位按钮";
+}
+
+
+// 上电
+void HomePage::on_pushButton_11_clicked()
+{
+    buffer.push({
+        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD,
+        .main_fsm_event_type =   MAIN_EVENT_MOTOR_ON,        
+    });
+
+    qDebug() << "上电按钮";
+}
+
+
+// 下电
+void HomePage::on_pushButton_12_clicked()
+{
+    buffer.push({
+        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD,
+        .main_fsm_event_type =   MAIN_EVENT_MOTOR_OFF,        
+    });
+
+    qDebug() << "下电按钮";
+  }
+
+
+// 自动
+void HomePage::on_pushButton_17_clicked()
+{
+    buffer.push({
+        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MODE_CMD,
+        .mode_fsm_event_type = MODE_EVENT_AUTO,        
+    });
+
+    qDebug() << "自动按钮";
+}
+
+// 手动
+void HomePage::on_pushButton_18_clicked()
+{
+    buffer.push({
+        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MODE_CMD,
+        .mode_fsm_event_type = MODE_EVENT_MANUAL,        
+    });
+
+    qDebug() << "手动按钮";
+}
+
