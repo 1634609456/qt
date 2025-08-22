@@ -11,6 +11,7 @@
 #include "chart_page.hpp"
 #include "config_page.hpp"
 #include "data_monitor_page.hpp"
+#include "main_flyer/mainflyer.h"
 #include "param_page.hpp"
 #include "form/form.h"
 #include "home_page/homepage.h"
@@ -91,7 +92,7 @@ inline void MainWindow::_init_content() {
     this->addPageNode("电机主页", new HomePage(this), ElaIconType::House);
     this->addExpanderNode("手动控制", manual_key_, ElaIconType::BookOpenCover);
     {
-        this->addPageNode("主飞轮/虚捻/牵引手动", new QWidget(this), manual_key_, ElaIconType::None);
+        this->addPageNode("主飞轮/虚捻/牵引手动", new MainFlyer(this), manual_key_, ElaIconType::None);
         this->addPageNode("上料站手动", new QWidget(this), manual_key_, ElaIconType::None);
         this->addPageNode("中穿熔丝手动", new QWidget(this), manual_key_, ElaIconType::None);
         this->addPageNode("边穿手动", new QWidget(this), manual_key_, ElaIconType::None);
