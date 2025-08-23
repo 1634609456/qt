@@ -49,16 +49,16 @@ MainFlyer::MainFlyer(QWidget *parent)
                             ->feedback.motor_fdb[MAIN_SPINDLE]
                             .position;
 
-            ui->label_2->setText(QString::number(speed));
-            ui->label_3->setText(QString::number(accelerate));
-            ui->label_6->setText(QString::number(position));
+            ui->lineEdit_2->setText(QString::number(speed));
+            ui->lineEdit_3->setText(QString::number(accelerate));
+            ui->lineEdit_6->setText(QString::number(position));
           });
 
   connect(
       &ShmManager::get_instance(), &ShmManager::loaded, [this, timer](bool success) {
 
         if (success) {
-          buffer.set_buffer(&ShmManager::get_instance().get_data()->buffer_M);
+          buffer.set_buffer(&ShmManager::get_instance().get_data()->buffer_P);
           timer->start(200);
         }
       });
@@ -74,13 +74,14 @@ void MainFlyer::on_pushButton_clicked()
 {
     qDebug() << "主轴正点动" << ui->lineEdit_9->text() << ui->lineEdit_8->text() << ui->lineEdit_7->text();
 
-    //检查空值并弹出提示框
-    if(ui->lineEdit_9->text().isEmpty() || 
-       ui->lineEdit_8->text().isEmpty() || 
-       ui->lineEdit_7->text().isEmpty()) {
-        QMessageBox::warning(this, "输入错误", "主轴电动的速度、加速度或位置不能为空！！！");
-        return;
-    }
+
+        // //检查空值并弹出提示框
+    // if(ui->lineEdit_9->text().isEmpty() ||
+    //     ui->lineEdit_8->text().isEmpty() ||
+    //     ui->lineEdit_7->text().isEmpty()) {
+    //     QMessageBox::warning(this, "输入错误", "主轴电动的速度、加速度或位置不能为空！！！");
+    //     return;
+    // }
 
     buffer.push({
         .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
@@ -100,13 +101,6 @@ void MainFlyer::on_pushButton_4_clicked()
 {
     qDebug() << "主轴反电动" << ui->lineEdit_9->text() << ui->lineEdit_8->text() << ui->lineEdit_7->text();
 
-    //检查空值并弹出提示框
-    if(ui->lineEdit_9->text().isEmpty() || 
-       ui->lineEdit_8->text().isEmpty() || 
-       ui->lineEdit_7->text().isEmpty()) {
-        QMessageBox::warning(this, "输入错误", "主轴电动的速度、加速度或位置不能为空！！！");
-        return;
-    }
 
     buffer.push({
         .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
@@ -126,13 +120,7 @@ void MainFlyer::on_pushButton_2_clicked()
 {
     qDebug() << "主轴回零" << ui->lineEdit_9->text() << ui->lineEdit_8->text() << ui->lineEdit_7->text();
 
-    //检查空值并弹出提示框
-    if(ui->lineEdit_9->text().isEmpty() ||
-        ui->lineEdit_8->text().isEmpty() ||
-        ui->lineEdit_7->text().isEmpty()) {
-        QMessageBox::warning(this, "输入错误", "主轴电动的速度、加速度或位置不能为空！！！");
-        return;
-    }
+
 
     buffer.push({
         .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
@@ -152,13 +140,7 @@ void MainFlyer::on_pushButton_7_clicked()
 {
     qDebug() << "主轴松闸" << ui->lineEdit_9->text() << ui->lineEdit_8->text() << ui->lineEdit_7->text();
 
-    //检查空值并弹出提示框
-    if(ui->lineEdit_9->text().isEmpty() ||
-        ui->lineEdit_8->text().isEmpty() ||
-        ui->lineEdit_7->text().isEmpty()) {
-        QMessageBox::warning(this, "输入错误", "主轴电动的速度、加速度或位置不能为空！！！");
-        return;
-    }
+
 
     buffer.push({
         .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
@@ -179,13 +161,7 @@ void MainFlyer::on_pushButton_8_clicked()
 {
     qDebug() << "主轴抱闸" << ui->lineEdit_9->text() << ui->lineEdit_8->text() << ui->lineEdit_7->text();
 
-    //检查空值并弹出提示框
-    if(ui->lineEdit_9->text().isEmpty() ||
-        ui->lineEdit_8->text().isEmpty() ||
-        ui->lineEdit_7->text().isEmpty()) {
-        QMessageBox::warning(this, "输入错误", "主轴电动的速度、加速度或位置不能为空！！！");
-        return;
-    }
+
 
     buffer.push({
         .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
@@ -204,13 +180,7 @@ void MainFlyer::on_pushButton_9_clicked()
 {
     qDebug() << "主轴停止" << ui->lineEdit_9->text() << ui->lineEdit_8->text() << ui->lineEdit_7->text();
 
-    //检查空值并弹出提示框
-    if(ui->lineEdit_9->text().isEmpty() ||
-        ui->lineEdit_8->text().isEmpty() ||
-        ui->lineEdit_7->text().isEmpty()) {
-        QMessageBox::warning(this, "输入错误", "主轴电动的速度、加速度或位置不能为空！！！");
-        return;
-    }
+
 
     buffer.push({
         .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
@@ -227,15 +197,9 @@ void MainFlyer::on_pushButton_9_clicked()
 // 主轴 --- 上使能
 void MainFlyer::on_pushButton_3_clicked()
 {
-    qDebug() << "主轴上使能" << ui->lineEdit_9->text() << ui->lineEdit_8->text() << ui->lineEdit_7->text();
 
-    //检查空值并弹出提示框
-    if(ui->lineEdit_9->text().isEmpty() ||
-        ui->lineEdit_8->text().isEmpty() ||
-        ui->lineEdit_7->text().isEmpty()) {
-        QMessageBox::warning(this, "输入错误", "主轴电动的速度、加速度或位置不能为空！！！");
-        return;
-    }
+        qDebug() << "主轴上使能" << ui->lineEdit_9->text() << ui->lineEdit_8->text() << ui->lineEdit_7->text();
+
 
      buffer.push({
         .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
@@ -247,6 +211,8 @@ void MainFlyer::on_pushButton_3_clicked()
             .manual_pos = ui -> lineEdit_7->text().toDouble()
         }
     });
+        qDebug() << "主轴上使能-输出" << ui->lineEdit_9->text().toDouble() << ui->lineEdit_8->text().toDouble() << ui->lineEdit_7->text().toDouble();
+
 }
 
 
@@ -255,13 +221,6 @@ void MainFlyer::on_pushButton_5_clicked()
 {
         qDebug() << "主轴去使能" << ui->lineEdit_9->text() << ui->lineEdit_8->text() << ui->lineEdit_7->text();
 
-         //检查空值并弹出提示框
-    if(ui->lineEdit_9->text().isEmpty() ||
-        ui->lineEdit_8->text().isEmpty() ||
-        ui->lineEdit_7->text().isEmpty()) {
-        QMessageBox::warning(this, "输入错误", "主轴电动的速度、加速度或位置不能为空！！！");
-        return;
-    }
 
     buffer.push({
         .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
@@ -279,13 +238,6 @@ void MainFlyer::on_pushButton_6_clicked()
 {
     qDebug() << "主轴绝对移动" << ui->lineEdit_9->text() << ui->lineEdit_8->text() << ui->lineEdit_7->text();
 
-    //检查空值并弹出提示框
-    if(ui->lineEdit_9->text().isEmpty() ||
-        ui->lineEdit_8->text().isEmpty() ||
-        ui->lineEdit_7->text().isEmpty()) {
-        QMessageBox::warning(this, "输入错误", "主轴电动的速度、加速度或位置不能为空！！！");
-        return;
-    }
 
     buffer.push({
         .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
