@@ -1,0 +1,12 @@
+[33mb2b3402[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{0}: reset: moving to HEAD~1
+[33mf0f1e57[m HEAD@{1}: commit: 【主轴手动电机】五个电机写完--没有测试
+[33mb2b3402[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{2}: commit: 【主飞轮-主轴】完成-通过测试
+[33maeb210e[m HEAD@{3}: commit: 【主飞轮-主轴】完成-没有测试
+[33me6debbe[m HEAD@{4}: commit: 【点击主页面】测试没问题
+[33m03b01b0[m HEAD@{5}: commit: 【电机主页面】修改电机输入速度
+[33m336c107[m HEAD@{6}: commit: 【电机主页面】添加电机输入速度
+[33m219be4d[m HEAD@{7}: commit: 五轴点击主页面
+[33mac4b5c2[m HEAD@{8}: commit: 使用定时器定时查询主轴实际速度
+[33m40c41cc[m HEAD@{9}: commit: 运行按钮可以正常运行
+[33m37bcd45[m HEAD@{10}: commit: 初始化
+[33m037765b[m HEAD@{11}: commit (initial): init commit

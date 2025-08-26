@@ -53,6 +53,14 @@ set(UI_FILES
     ui/home_page/homepage.cpp
     ui/main_flyer/mainflyer.ui
     ui/main_flyer/mainflyer.cpp
+    ui/feeding/feeding.ui
+    ui/feeding/feeding.cpp
+    ui/middle_circuit_breaker/middelcircuitbreaker.ui
+    ui/middle_circuit_breaker/middelcircuitbreaker.cpp
+    ui/beside_pass/besidepass.ui
+    ui/beside_pass/besidepass.cpp
+    ui/blanking/blanking.ui
+    ui/blanking/blanking.cpp
     ui/main_window.hpp
     ui/data_monitor_page.hpp
     ui/chart_page.hpp

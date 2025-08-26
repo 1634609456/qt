@@ -8,10 +8,13 @@
 
 #include "ElaStatusBar.h"
 #include "ElaWindow.h"
+#include "beside_pass/besidepass.h"
+#include "blanking/blanking.h"
 #include "chart_page.hpp"
 #include "config_page.hpp"
 #include "data_monitor_page.hpp"
 #include "main_flyer/mainflyer.h"
+#include "middle_circuit_breaker/middelcircuitbreaker.h"
 #include "param_page.hpp"
 #include "form/form.h"
 #include "home_page/homepage.h"
@@ -94,9 +97,9 @@ inline void MainWindow::_init_content() {
     {
         this->addPageNode("主飞轮/虚捻/牵引手动", new MainFlyer(this), manual_key_, ElaIconType::None);
         this->addPageNode("上料站手动", new QWidget(this), manual_key_, ElaIconType::None);
-        this->addPageNode("中穿熔丝手动", new QWidget(this), manual_key_, ElaIconType::None);
-        this->addPageNode("边穿手动", new QWidget(this), manual_key_, ElaIconType::None);
-        this->addPageNode("下料工字轮手动", new QWidget(this), manual_key_, ElaIconType::None);
+        this->addPageNode("中穿熔丝手动", new MiddelCircuitBreaker(this), manual_key_, ElaIconType::None);
+        this->addPageNode("边穿手动", new BesidePass(this), manual_key_, ElaIconType::None);
+        this->addPageNode("下料工字轮手动", new Blanking(this), manual_key_, ElaIconType::None);
     }
 
     this->addPageNode("参数调试", data_monitor_page_, 0, ElaIconType::ScrewdriverWrench);
