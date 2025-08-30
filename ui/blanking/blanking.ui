@@ -708,7 +708,7 @@
         </font>
        </property>
        <property name="text">
-        <string>上下料旋转</string>
+        <string>上料旋转</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignmentFlag::AlignCenter</set>
@@ -1370,7 +1370,7 @@
         </font>
        </property>
        <property name="text">
-        <string>空工字轮工位旋转</string>
+        <string>空轮定位</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignmentFlag::AlignCenter</set>

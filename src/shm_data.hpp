@@ -524,14 +524,19 @@ struct IO_MANUAL_CONTROL {
     YKE_BOOL value;
 };
 
+struct MECHINE_FSM_CMD {
+    MACHINE_FSM_CMD_TYPE machine_fsm_cmd_view;
+    MACHINE_FSM_CMD_TYPE machine_fsm_cmd_planner;
+};
+
 // 命令数据
 struct COMMOND_GROUPS {
-    enum class CMD_TYPE { MODE_CMD, MAIN_CMD, MOTOR_MANUAL_CONTROL_CMD, IO_MANUAL_CONTROL_CMD };  // 被控类型枚举
+    enum class CMD_TYPE { MODE_CMD, MAIN_CMD, MOTOR_MANUAL_CONTROL_CMD, IO_MANUAL_CONTROL_CMD, MECHINE_FSM_CMD};  // 被控类型枚举
     CMD_TYPE cmd_type;                                                                            // 被控类型
     MODE_FSM_EVENT_TYPE mode_fsm_event_type;                                                      // 模式状态机事件
     MAIN_FSM_EVENT_TYPE main_fsm_event_type;                                                      // 主状态机事件
     MOTOR_MANUAL_CONTROL motor_manual_control;                                                    // 手动控制电机事件
-    IO_MANUAL_CONTROL io_manual_control;                                                          // 手动控制IO事件
+    IO_MANUAL_CONTROL io_manual_control;
 };  // 命令数据
 
 struct RINGBUFFER {
@@ -616,6 +621,36 @@ enum class CONFIG_STATE {
     CONFIG_SUCCESS,
     CONFIG_ERROR,
 };
+//
+struct ATM_T_PLANNER
+{
+    UINT16 read_flag;
+    UINT16 ATM_start;
+    UINT16 machine_status;  // 0表示停机 1表示开机
+    double torsion_speed;
+};
+
+struct MACHINE_T_PLANNER {
+    UINT16 read_flag;
+    enum class MACHINE_TYPE {MACHINE_CONTROL_CMD_NONE,WIND_SPEED_MOTION, WIND_POS_MOTION, WIND_STOP, ROD_MOTOR_ADVANCE, CEMTER_SEND_WIRE, MAIN_WIND_4_AXIS_FOLLOW, WIND_STOP_4_AXIS_FOLLOW};  // 被控类型枚举
+    MACHINE_TYPE machine_type;
+    double wind_speed;
+    double wind_pos;
+};
+
+
+struct MAC_ATM_P
+{
+    MACHINE_T_PLANNER machint_to_planner;
+    ATM_T_PLANNER atm_to_planner;
+};
+
+struct ATM_CONFIG
+{
+    double dead_zone;
+};
+
+
 
 // 配置项
 struct CONFIG {
@@ -623,6 +658,24 @@ struct CONFIG {
     MOTOR_DATA motor_config[20];
     IO_DATA io_config;
     WHEEL_DATA wheel_config;  // 计米轮
+    ATM_CONFIG atm_config; // ATM config data on August 13th, 2025
+};
+
+// 需要在log功能中添加10ms MACHINE_LOG_DATA和50ms ATM_LOG_DATA的数据日志功能。
+struct MACHINE_LOG_DATA
+{
+    UINT16 plc_in_data[32];
+    UINT16 plc_out_data[32];
+};
+
+struct ATM_LOG_DATA
+{
+    double spindle_speed;
+    double torsion_speed;
+    double ATM_sensor;
+    double control_ratio;
+    double dead_zone;
+    double filter_data;
 };
 
 // 反馈数据
@@ -675,10 +728,6 @@ struct RECIPE_DATA
     double R_angle_compensation_radius;
 };
 
-struct MECHINE_FSM_CMD {
-    MACHINE_FSM_CMD_TYPE machine_fsm_cmd_view;
-    MACHINE_FSM_CMD_TYPE machine_fsm_cmd_planner;
-};
 
 typedef enum
 {
@@ -722,8 +771,9 @@ struct ShareMemData {
     FDB_DATA feedback;
     IO io;
     PID pid;
-
+    MAC_ATM_P mach_atm_to_planner; 
     RECIPE_DATA recipe_data;
+
     MECHINE_FSM_CMD machine_fsm_cmd;
     M_TO_P_STATE M_to_P_state;
 };

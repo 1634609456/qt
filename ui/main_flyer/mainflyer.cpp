@@ -3,6 +3,9 @@
 #include <QTimer>
 #include <QDebug>
 #include <QMessageBox>
+#include <qdeadlinetimer.h>
+#include <qdebug.h>
+#include <qlogging.h>
 #include <qobject.h>
 
 #include "../../src/util/shm_manager.hpp"
@@ -28,26 +31,7 @@ MainFlyer::MainFlyer(QWidget *parent)
        // 主轴速度读取
           auto timer = new QTimer(this);
           connect(timer, &QTimer::timeout, this, [this]() {
-            // // 模拟数据更新
-            // auto data = rand() % 100;
 
-            // auto speed = 
-            // ShmManager::get_instance()
-            //                 .get_data()
-            //                 ->feedback.motor_fdb[MAIN_SPINDLE]
-            //                 .running_speed;
-            
-            // auto accelerate = 
-            // ShmManager::get_instance()
-            //                 .get_data()
-            //                 ->feedback.motor_fdb[MAIN_SPINDLE]
-            //                 .acceleration;
-
-            // auto position = 
-            // ShmManager::get_instance()
-            //                 .get_data()
-            //                 ->feedback.motor_fdb[MAIN_SPINDLE]
-            //                 .position;
 
             // 电机-显示
             ui->lineEdit_2->setText(QString::number(getMotorNum(MAIN_SPINDLE, "speed"), 'f'));
@@ -60,19 +44,19 @@ MainFlyer::MainFlyer(QWidget *parent)
             ui->lineEdit_16->setText(QString::number(getMotorNum(MAIN_TORSION,"position"), 'f'));
 
             // 牵引-显示
-            ui->lineEdit_23->setText(QString::number(getMotorNum(MAIN_DRAWING, "speed"), 'f'));
-            ui->lineEdit_24->setText(QString::number(getMotorNum(MAIN_DRAWING, "acceleration"), 'f'));
-            ui->lineEdit_25->setText(QString::number(getMotorNum(MAIN_DRAWING, "position"), 'f'));
+            ui->lineEdit_20->setText(QString::number(getMotorNum(MAIN_DRAWING, "speed"), 'f'));
+            ui->lineEdit_21->setText(QString::number(getMotorNum(MAIN_DRAWING, "acceleration"), 'f'));
+            ui->lineEdit_22->setText(QString::number(getMotorNum(MAIN_DRAWING, "position"), 'f'));
 
             // 收线-显示
-            ui->lineEdit_35->setText(QString::number(getMotorNum(MAIN_WINDING, "speed"), 'f'));
-            ui->lineEdit_36->setText(QString::number(getMotorNum(MAIN_WINDING, "acceleration"), 'f'));
-            ui->lineEdit_37->setText(QString::number(getMotorNum(MAIN_WINDING, "position"), 'f'));
+            ui->lineEdit_26->setText(QString::number(getMotorNum(MAIN_WINDING, "speed"), 'f'));
+            ui->lineEdit_33->setText(QString::number(getMotorNum(MAIN_WINDING, "acceleration"), 'f'));
+            ui->lineEdit_34->setText(QString::number(getMotorNum(MAIN_WINDING, "position"), 'f'));
 
             // 排线-显示
-            ui->lineEdit_41->setText(QString::number(getMotorNum(MAIN_LAYING, "speed"), 'f'));
-            ui->lineEdit_42->setText(QString::number(getMotorNum(MAIN_LAYING, "acceleration"), 'f'));
-            ui->lineEdit_43->setText(QString::number(getMotorNum(MAIN_LAYING, "position"), 'f'));
+            ui->lineEdit_38->setText(QString::number(getMotorNum(MAIN_LAYING, "speed"), 'f'));
+            ui->lineEdit_39->setText(QString::number(getMotorNum(MAIN_LAYING, "acceleration"), 'f'));
+            ui->lineEdit_40->setText(QString::number(getMotorNum(MAIN_LAYING, "position"), 'f'));
           });
 
   connect(
@@ -209,6 +193,14 @@ void MainFlyer::on_pushButton_pressed()
 }
 
 
+// 主轴  --- 正点动释放
+void MainFlyer::on_pushButton_released()
+{
+    qDebug() << "主轴正点动释放";
+    executeOperation(MAIN_SPINDLE, SpindleOperation::STOP, 0.0, 0.0, 0.0);
+}
+
+
 // 主轴  --- 反点动
 void MainFlyer::on_pushButton_4_pressed()
 {
@@ -227,6 +219,12 @@ void MainFlyer::on_pushButton_4_pressed()
         }
     });
 }
+void MainFlyer::on_pushButton_4_released()
+{
+    qDebug() << "主轴反点动释放";
+    executeOperation(MAIN_SPINDLE, SpindleOperation::STOP, 0.0, 0.0, 0.0);
+}
+
 
 
 // 主轴  --- 回零
@@ -373,11 +371,14 @@ void MainFlyer::on_pushButton_19_pressed()
 
 }
 
+//虚捻 --- 正点动释放
+void MainFlyer::on_pushButton_19_released()
+{
+    qDebug() << "虚捻正点动释放";
+    executeOperation(MAIN_TORSION, SpindleOperation::STOP, 0.0, 0.0, 0.0);
+}
 
 // 虚捻  --- 反点动
-// void MainFlyer::on_pushButton_20_clicked()
-// {
-//     }
 
 void MainFlyer::on_pushButton_20_pressed()
 {
@@ -385,6 +386,13 @@ void MainFlyer::on_pushButton_20_pressed()
     executeOperation(MAIN_TORSION, SpindleOperation::REVERSE_JOGING, ui->lineEdit_17->text().toDouble(), ui->lineEdit_18->text().toDouble(), ui->lineEdit_19->text().toDouble());
 
 }
+// 虚捻  --- 反点动释放
+void MainFlyer::on_pushButton_20_released()
+{
+    qDebug() << "虚捻反点动释放";
+    executeOperation(MAIN_TORSION, SpindleOperation::STOP, 0.0, 0.0, 0.0);
+}
+
 
 // 虚捻  --- 回零
 void MainFlyer::on_pushButton_21_clicked()
@@ -449,12 +457,25 @@ void MainFlyer::on_pushButton_28_pressed()
     executeOperation(MAIN_DRAWING, SpindleOperation::FORWARD_JOGING, ui->lineEdit_23->text().toDouble(), ui->lineEdit_24->text().toDouble(), ui->lineEdit_25->text().toDouble());
 }
 
+//牵引 --- 正点动释放
+void MainFlyer::on_pushButton_28_released()
+{
+    qDebug() << "牵引正点动释放";
+    executeOperation(MAIN_DRAWING, SpindleOperation::STOP, 0.0, 0.0, 0.0);
+}
 
 //牵引  --- 反点动
 void MainFlyer::on_pushButton_29_pressed()
 {
      qDebug() << "牵引反点动" << ui->lineEdit_23->text() << ui->lineEdit_24->text() << ui->lineEdit_25->text();
     executeOperation(MAIN_DRAWING, SpindleOperation::REVERSE_JOGING, ui->lineEdit_23->text().toDouble(), ui->lineEdit_24->text().toDouble(), ui->lineEdit_25->text().toDouble());
+}
+
+//牵引 --- 反点动释放
+void MainFlyer::on_pushButton_29_released()
+{
+    qDebug() << "牵引反点动释放";
+    executeOperation(MAIN_DRAWING, SpindleOperation::STOP, 0.0, 0.0, 0.0);
 }
 
 //牵引  --- 回零
@@ -518,11 +539,27 @@ void MainFlyer::on_pushButton_46_pressed()
     executeOperation(MAIN_WINDING, SpindleOperation::FORWARD_JOGING, ui->lineEdit_35->text().toDouble(), ui->lineEdit_36->text().toDouble(), ui->lineEdit_37->text().toDouble());
 }
 
+
+//收线 --- 正点动释放
+void MainFlyer::on_pushButton_46_released()
+{
+    qDebug() << "收线正点动释放";
+    executeOperation(MAIN_WINDING, SpindleOperation::STOP, 0.0, 0.0, 0.0);
+}
+
+
 //收线  --- 反点动
 void MainFlyer::on_pushButton_47_pressed()
 {
     qDebug() << "收线反点动" << ui->lineEdit_35->text() << ui->lineEdit_36->text() << ui->lineEdit_37->text();
     executeOperation(MAIN_WINDING, SpindleOperation::REVERSE_JOGING, ui->lineEdit_35->text().toDouble(), ui->lineEdit_36->text().toDouble(), ui->lineEdit_37->text().toDouble());
+}
+
+//收线  --- 反点动释放
+void MainFlyer::on_pushButton_47_released()
+{
+    qDebug() << "收线反点动释放";
+    executeOperation(MAIN_WINDING, SpindleOperation::STOP, 0.0, 0.0, 0.0);
 }
 
 //收线  --- 回零
@@ -578,63 +615,74 @@ void MainFlyer::on_pushButton_54_clicked()
 //排线  --- 正点动
 void MainFlyer::on_pushButton_55_pressed()
 {
-    qDebug() << "排线正点动" << ui->lineEdit_38->text() << ui->lineEdit_39->text() << ui->lineEdit_40->text();
-    executeOperation(MAIN_LAYING, SpindleOperation::FORWARD_JOGING, ui->lineEdit_38->text().toDouble(), ui->lineEdit_39->text().toDouble(), ui->lineEdit_40->text().toDouble());
+    qDebug() << "排线正点动" << ui->lineEdit_41->text() << ui->lineEdit_42->text() << ui->lineEdit_43->text();
+    executeOperation(MAIN_LAYING, SpindleOperation::FORWARD_JOGING, ui->lineEdit_41->text().toDouble(), ui->lineEdit_39->text().toDouble(), ui->lineEdit_40->text().toDouble());
+}
+//排线  --- 正点动释放
+void MainFlyer::on_pushButton_55_released()
+{
+    qDebug() << "排线正点动释放";
+    executeOperation(MAIN_LAYING, SpindleOperation::STOP, 0.0, 0.0, 0.0);
 }
 
 //排线  --- 反点动
 void MainFlyer::on_pushButton_56_pressed()
 {
-    qDebug() << "排线反点动" << ui->lineEdit_38->text() << ui->lineEdit_39->text() << ui->lineEdit_40->text();
-    executeOperation(MAIN_LAYING, SpindleOperation::REVERSE_JOGING, ui->lineEdit_38->text().toDouble(), ui->lineEdit_39->text().toDouble(), ui->lineEdit_40->text().toDouble());
+    qDebug() << "排线反点动" << ui->lineEdit_41->text() << ui->lineEdit_42->text() << ui->lineEdit_43->text();
+    executeOperation(MAIN_LAYING, SpindleOperation::REVERSE_JOGING, ui->lineEdit_41->text().toDouble(), ui->lineEdit_42->text().toDouble(), ui->lineEdit_43->text().toDouble());
+}
+//排线  --- 反点动释放
+void MainFlyer::on_pushButton_56_released()
+{
+    qDebug() << "排线反点动释放";
+    executeOperation(MAIN_LAYING, SpindleOperation::STOP, 0.0, 0.0, 0.0);
 }
 
 //排线  --- 回零
 void MainFlyer::on_pushButton_57_clicked()
 {
-    qDebug() << "排线回零" << ui->lineEdit_38->text() << ui->lineEdit_39->text() << ui->lineEdit_40->text();
-    executeOperation(MAIN_LAYING, SpindleOperation::RETURN_TO_ZERO, ui->lineEdit_38->text().toDouble(), ui->lineEdit_39->text().toDouble(), ui->lineEdit_40->text().toDouble());
+    qDebug() << "排线回零" << ui->lineEdit_41->text() << ui->lineEdit_42->text() << ui->lineEdit_43->text();
+    executeOperation(MAIN_LAYING, SpindleOperation::RETURN_TO_ZERO, ui->lineEdit_41->text().toDouble(), ui->lineEdit_42->text().toDouble(), ui->lineEdit_43->text().toDouble());
 }
 
 //排线  --- 松闸
 void MainFlyer::on_pushButton_58_clicked()
 {
-    qDebug() << "排线松闸" << ui->lineEdit_38->text() << ui->lineEdit_39->text() << ui->lineEdit_40->text();
-    executeOperation(MAIN_LAYING, SpindleOperation::RELEASE_BRAKE, ui->lineEdit_38->text().toDouble(), ui->lineEdit_39->text().toDouble(), ui->lineEdit_40->text().toDouble());
+    qDebug() << "排线松闸" << ui->lineEdit_41->text() << ui->lineEdit_42->text() << ui->lineEdit_43->text();
+    executeOperation(MAIN_LAYING, SpindleOperation::RELEASE_BRAKE, ui->lineEdit_41->text().toDouble(), ui->lineEdit_42->text().toDouble(), ui->lineEdit_43->text().toDouble());
 }
 
 //排线  --- 抱闸
 void MainFlyer::on_pushButton_59_clicked()
 {
-    qDebug() << "排线抱闸" << ui->lineEdit_38->text() << ui->lineEdit_39->text() << ui->lineEdit_40->text();
-    executeOperation(MAIN_LAYING, SpindleOperation::ENGAGE_BRAKE, ui->lineEdit_38->text().toDouble(), ui->lineEdit_39->text().toDouble(), ui->lineEdit_40->text().toDouble());
-}
+    qDebug() << "排线抱闸" << ui->lineEdit_41->text() << ui->lineEdit_42->text() << ui->lineEdit_43->text();
+    executeOperation(MAIN_LAYING, SpindleOperation::ENGAGE_BRAKE, ui->lineEdit_41->text().toDouble(), ui->lineEdit_42->text().toDouble(), ui->lineEdit_43->text().toDouble());}
 
 //排线  --- 停止
 void MainFlyer::on_pushButton_60_clicked()
 {
-    qDebug() << "排线停止" << ui->lineEdit_38->text() << ui->lineEdit_39->text() << ui->lineEdit_40->text();
-    executeOperation(MAIN_LAYING, SpindleOperation::STOP, ui->lineEdit_38->text().toDouble(), ui->lineEdit_39->text().toDouble(), ui->lineEdit_40->text().toDouble());
+    qDebug() << "排线停止" << ui->lineEdit_41->text() << ui->lineEdit_42->text() << ui->lineEdit_43->text();
+    executeOperation(MAIN_LAYING, SpindleOperation::STOP, ui->lineEdit_41->text().toDouble(), ui->lineEdit_42->text().toDouble(), ui->lineEdit_43->text().toDouble());
 }
 
 //排线  --- 上使能
 void MainFlyer::on_pushButton_61_clicked()
 {
-    qDebug() << "排线上使能" << ui->lineEdit_38->text() << ui->lineEdit_39->text() << ui->lineEdit_40->text();
-    executeOperation(MAIN_LAYING, SpindleOperation::MANUAL_MOTOR_ON, ui->lineEdit_38->text().toDouble(), ui->lineEdit_39->text().toDouble(), ui->lineEdit_40->text().toDouble());
+    qDebug() << "排线上使能" << ui->lineEdit_41->text() << ui->lineEdit_42->text() << ui->lineEdit_43->text();
+    executeOperation(MAIN_LAYING, SpindleOperation::MANUAL_MOTOR_ON, ui->lineEdit_41->text().toDouble(), ui->lineEdit_42->text().toDouble(), ui->lineEdit_43->text().toDouble());
 }
 
 //排线  --- 去使能
 void MainFlyer::on_pushButton_62_clicked()
 {
-    qDebug() << "排线去使能" << ui->lineEdit_38->text() << ui->lineEdit_39->text() << ui->lineEdit_40->text();
-    executeOperation(MAIN_LAYING, SpindleOperation::MANUAL_MOTOR_OFF, ui->lineEdit_38->text().toDouble(), ui->lineEdit_39->text().toDouble(), ui->lineEdit_40->text().toDouble());
+    qDebug() << "排线去使能" << ui->lineEdit_41->text() << ui->lineEdit_42->text() << ui->lineEdit_43->text();
+    executeOperation(MAIN_LAYING, SpindleOperation::MANUAL_MOTOR_OFF, ui->lineEdit_41->text().toDouble(), ui->lineEdit_42->text().toDouble(), ui->lineEdit_43->text().toDouble());
 }
 
 //排线  --- 绝对移动
 void MainFlyer::on_pushButton_63_clicked()
 {
-    qDebug() << "排线绝对移动" << ui->lineEdit_38->text() << ui->lineEdit_39->text() << ui->lineEdit_40->text();
+    qDebug() << "排线绝对移动" << ui->lineEdit_41->text() << ui->lineEdit_42->text() << ui->lineEdit_43->text();
     executeOperation(MAIN_LAYING, SpindleOperation::ABSOLUTE_POSITION_MOTION, ui->lineEdit_38->text().toDouble(), ui->lineEdit_39->text().toDouble(), ui->lineEdit_40->text().toDouble());
 }
 
