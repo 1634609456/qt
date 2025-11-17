@@ -1,5 +1,8 @@
 #pragma once
 
+#include <qjsonarray.h>
+#include <qlogging.h>
+#include <qwidget.h>
 #ifdef max
 #undef max
 #endif
@@ -18,6 +21,7 @@
 #include <QVBoxLayout>
 #include <QWidget>
 #include <QWindow>
+#include <QDebug>
 
 #include "../src/util/db_writer.hpp"
 #include "../src/util/ring_buffer.hpp"
@@ -36,6 +40,10 @@ inline constexpr int sampling_time = 50;
 REGISTER_AUTO_KEY(MotorData, data_id)
 YLT_REFL(MotorData, data_id, motor_id, running_speed, acceleration, position, follow_ratio, encoder_resolution_counter,
          create_at)
+
+//注册自增主键
+REGISTER_AUTO_KEY(ATM_LOG_DATA, data_id)
+YLT_REFL(ATM_LOG_DATA, data_id, spindle_speed, torsion_speed, ATM_sensor, filter_data, required_speed, bias, winding_length, dead_zone, goat, tension, create_at)
 
 class ChartPage : public QWidget {
     Q_OBJECT
@@ -70,8 +78,19 @@ private:
     QWidget *chart_test_widget_{};
     QJsonArray test_datas_;
 
+    // atm
+    QWidget *container_atm_widget_{};
+    std::unique_ptr<webview::webview> atm_webview_;
+    QWidget *chart_atm_widget_{};
+    QJsonArray atm_datas_;
+
     std::optional<DBWriter<MotorData>> db_writer_;
+    std::optional<DBWriter<ATM_LOG_DATA>> db_atm_writer_;
+
     RingBuffer<Datas> datas_{nullptr};
+    //ATM_Datas
+    RingBuffer<ATM_Datas> atm_buff_datas_{nullptr};
+
 };
 
 inline ChartPage::ChartPage(QWidget *parent)
@@ -96,15 +115,19 @@ inline ChartPage::ChartPage(QWidget *parent)
           std::make_unique<webview::webview>(true, reinterpret_cast<HWND>(container_other_widget_->winId()))),
       chart_other_widget_{QWidget::createWindowContainer(
           QWindow::fromWinId(reinterpret_cast<WId>(reinterpret_cast<HWND>(other_webview_->widget().value()))),
-          container_other_widget_)}
-          
-
-                ,container_test_widget_(new QWidget()),
-      test_webview_(
-          std::make_unique<webview::webview>(true, reinterpret_cast<HWND>(container_test_widget_->winId()))),
-      chart_test_widget_{QWidget::createWindowContainer(
-          QWindow::fromWinId(reinterpret_cast<WId>(reinterpret_cast<HWND>(test_webview_->widget().value()))),
-          container_test_widget_)}
+          container_other_widget_)},
+          container_atm_widget_(new QWidget()),
+    atm_webview_(std::make_unique<webview::webview>(true, reinterpret_cast<HWND>(container_atm_widget_->winId()))),
+    chart_atm_widget_{QWidget::createWindowContainer(
+    QWindow::fromWinId(reinterpret_cast<WId>(reinterpret_cast<HWND>(atm_webview_->widget().value()))),
+    container_atm_widget_)}
+    // ,
+    //           container_test_widget_(new QWidget()),
+    //   test_webview_(
+    //       std::make_unique<webview::webview>(true, reinterpret_cast<HWND>(container_test_widget_->winId()))),
+    //   chart_test_widget_{QWidget::createWindowContainer(
+    //       QWindow::fromWinId(reinterpret_cast<WId>(reinterpret_cast<HWND>(test_webview_->widget().value()))),
+    //       container_test_widget_)}
           {
     this->_init_content();
 
@@ -112,6 +135,7 @@ inline ChartPage::ChartPage(QWidget *parent)
     connect(&ShmManager::get_instance(), &ShmManager::loaded, [this](bool success) {
         if (success) {
             datas_.set_buffer(&ShmManager::get_instance().get_data()->datas);
+            atm_buff_datas_.set_buffer(&ShmManager::get_instance().get_data()->atm_datas); 
         }
     });
 }
@@ -127,7 +151,7 @@ inline void ChartPage::_init_content() {
     pivot_->appendPivot("单电机多参数");
     pivot_->appendPivot("多电机单参数");
     pivot_->appendPivot("性能监控");
-    pivot_->appendPivot("Test图表");
+    pivot_->appendPivot("ATM检测");
     pivot_->setPivotSpacing(8);
     pivot_->setCurrentIndex(0);
     connect(pivot_, &ElaPivot::pivotClicked, stack_, &QStackedWidget::setCurrentIndex);
@@ -295,23 +319,37 @@ inline void ChartPage::_init_content() {
 
     {
 
-         test_webview_->set_virtual_hostname("charts", "./res");
-         test_webview_->navigate("http://charts/test-data.html");
+         atm_webview_->set_virtual_hostname("charts", "./res");
+        
+         atm_webview_->navigate("http://charts/atm-data.html");
 
          auto *update_chart_timer = new QTimer(this);
         connect(update_chart_timer, &QTimer::timeout, [this]() {
-            const static auto &data = ShmManager::get_instance().get_data()->feedback;
+            const static auto &atm_datas = ShmManager::get_instance().get_data()->atm_datas;
             QJsonObject data_json;
-            data_json["vibrationData"] = QJsonArray{data.tremors[0], data.tremors[1]};
-            data_json["temperatureData"] =
-                QJsonArray{data.temperature[0], data.temperature[1], data.temperature[2], data.temperature[3]};
 
-            test_datas_.append(data_json);
 
-            if (test_datas_.size() > 1000 / sampling_time) {
-                QString data_str{QJsonDocument(test_datas_).toJson(QJsonDocument::Compact)};
-                test_webview_->eval("updateChartData(" + data_str.toStdString() + ");");
-                test_datas_ = QJsonArray();
+            data_json["atmData"] = QJsonArray{atm_datas.data[atm_datas.read_index].ATM_sensor,
+                                            atm_datas.data[atm_datas.read_index].filter_data,
+                                            atm_datas.data[atm_datas.read_index].goat,
+                                            atm_datas.data[atm_datas.read_index].goat + atm_datas.data[atm_datas.read_index].dead_zone,
+                                            atm_datas.data[atm_datas.read_index].goat - atm_datas.data[atm_datas.read_index].dead_zone
+            };
+
+            data_json["speedControlData"] = QJsonArray{
+                atm_datas.data[atm_datas.read_index].torsion_speed,
+                atm_datas.data[atm_datas.read_index].required_speed,
+            };
+
+            // qDebug() << "[实际ATM, ATM滤波值， 目标值， 死区上限， 死区下限]" << data_json;
+
+
+            atm_datas_.append(data_json);
+
+            if (atm_datas_.size() > 1000 / sampling_time) {
+                QString data_str{QJsonDocument(atm_datas_).toJson(QJsonDocument::Compact)};
+                atm_webview_->eval("updateChartData(" + data_str.toStdString() + ");");
+                atm_datas_ = QJsonArray();
             }
         });
 
@@ -323,19 +361,19 @@ inline void ChartPage::_init_content() {
             }
         });
 
-        stack_->addWidget(chart_test_widget_);
+        stack_->addWidget(chart_atm_widget_);
     }
 
     
     auto *collect_btn = new ElaToggleButton("连接数据库", this);
     {
         collect_btn->setFixedWidth(128);
-        collect_btn->move(450, 12);
+        collect_btn->move(1040, 12);
 
         auto *collect_timer = new QTimer(this);
 
         connect(collect_btn, &ElaToggleButton::toggled, [this, collect_btn, collect_timer](bool checked) {
-            if (!db_writer_.has_value()) {
+            if (!db_writer_.has_value() && !db_atm_writer_.has_value()) {
                 // 第一次点击：连接数据库
 
                 // 创建文件夹
@@ -344,30 +382,60 @@ inline void ChartPage::_init_content() {
                     db_dir.mkpath(".");
                 }
 
-                // 数据库文件命名
-                db_writer_.emplace(QString("db/twister_%1 .db")
-                                       .arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"))
-                                       .toStdString());
+                auto db_file_name = QString("db/twister_%1 .db").arg(QDateTime::currentDateTime().toString("yyyyMMdd"));
+
+                // 电机数据库
+                db_writer_.emplace(db_file_name.toStdString());
+
+                // atm数据库
+                 db_atm_writer_.emplace(db_file_name.toStdString());
 
                 collect_btn->setText("采集数据");
                 collect_btn->setIsToggled(false);  // 重置按钮状态
 
+
                 // 设置定时器回调
                 connect(collect_timer, &QTimer::timeout, [this]() {
+
+                    // qDebug() << "采集数据 1";
                     auto datas = datas_.pop_all();
+                    // qDebug() << "datas 数据长度" << datas.size();
+                    auto atm_datas = atm_buff_datas_.pop_all();
+                    // qDebug() << "atm_datas 数据长度" << atm_datas.size();
                     for (const auto &item : datas) {
+                        // qDebug() << "进入datas循环";
                         db_writer_->push({
-                            .motor_id = item.motor_id,
-                            .running_speed = item.running_speed,
-                            .acceleration = item.acceleration,
-                            .position = item.position,
-                            .follow_ratio = item.follow_ratio,
-                            .encoder_resolution_counter = item.encoder_resolution_counter,
-                            .create_at = static_cast<size_t>(item.create_at)
+                            0,
+                            item.motor_id,
+                            item.running_speed,
+                            item.acceleration,
+                            item.position,
+                            item.follow_ratio,
+                            item.encoder_resolution_counter,
+                            static_cast<size_t>(item.create_at)
+                        });
+                    }
+
+                    for (const auto &item : atm_datas) {
+                        // qDebug() << "进入atm_datas循环";
+
+                        db_atm_writer_->push({
+                            0,
+                            item.spindle_speed,
+                            item.torsion_speed,
+                            item.ATM_sensor,
+                            item.filter_data,
+                            item.required_speed,
+                            item.bias,
+                            item.winding_length,
+                            item.dead_zone,
+                            item.goat,
+                            item.tension,
+                            static_cast<size_t>(item.create_at)
                         });
                     }
                 });
-            } else {
+            }  else {
                 // 后续点击：控制数据采集
                 if (checked) {
                     collect_btn->setText("数据采集中...");
@@ -380,7 +448,7 @@ inline void ChartPage::_init_content() {
             }
         });
     }
-
+ 
     auto *pid_widget = new QWidget(this);
     auto *pid_layout = new QHBoxLayout(pid_widget);
     {
@@ -412,7 +480,7 @@ inline void ChartPage::_init_content() {
             static std::mutex lock;
             {
                 std::lock_guard<std::mutex> guard(lock);
-                ShmManager::get_instance().get_data()->pid = {.Kp = Kp, .Ki = Ki, .Kd = Kd};
+                ShmManager::get_instance().get_data()->pid = {Kp, Ki, Kd};
             }
 
             ElaMessageBar::success(ElaMessageBarType::Top, "提示", "PID参数修改成功！", 3000, this);
