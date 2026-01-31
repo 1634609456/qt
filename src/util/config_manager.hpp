@@ -94,23 +94,23 @@ private:
                 double displacement_equivalent = motorDataObj.value("displacement_equivalent").toDouble();
 
                 config_.motor_config[logic_id] = MOTOR_DATA{
-                    .physical_id = static_cast<UINT32>(i),
-                    .ECAT_id = ecat_id,
-                    .acceleration = acceleration,
-                    .emg_deceleration = emg_deceleration,
-                    .smooth_deceleration = smooth_deceleration,
-                    .max_speed = max_speed,
-                    .min_speed = min_speed,
-                    .running_speed = running_speed,
-                    .negative_limit = negative_limit,
-                    .positive_limit = positive_limit,
-                    .zero_position = zero_position,
-                    .position = position,
-                    .ratio = ratio,
-                    .follow_ratio = follow_ratio,
-                    .torque_limit = torque_limit,
-                    .encoder_resolution_counter = encoder_resolution_counter,
-                    .displacement_equivalent = displacement_equivalent
+                    static_cast<UINT32>(i),
+                    ecat_id,
+                    acceleration,
+                    emg_deceleration,
+                    smooth_deceleration,
+                    max_speed,
+                    min_speed,
+                    running_speed,
+                    negative_limit,
+                    positive_limit,
+                    zero_position,
+                    position,
+                    ratio,
+                    follow_ratio,
+                    torque_limit,
+                    encoder_resolution_counter,
+                    displacement_equivalent
                 };
             } catch (...) {
                 throw std::runtime_error("Invalid motor data in config");

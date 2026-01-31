@@ -2,6 +2,9 @@
 #define MAINFLYER_H
 
 #include <QWidget>
+#include <QPushButton>  
+#include <qobject.h>
+
 
 #include "../../src/shm_data.hpp"
 #include "../../src/util/ring_buffer.hpp"
@@ -96,11 +99,15 @@ class MainFlyer : public QWidget
     private:
         Ui::MainFlyer *ui;
         RingBuffer<RINGBUFFER> buffer;
+        QPushButton* lastPressedButton;  // 跟踪上一个按下的按钮
 
-        
-    //电机操作执行函数
-    void executeOperation( int motorType, SpindleOperation operation, double speed, double acceleration, double position);
-
+        //电机操作执行函数
+        void executeOperation( int motorType, SpindleOperation operation, double speed, double acceleration, double position);
+        // 恢复按钮样式
+        void resetLastButtonStyle();
+        //从类中提取button名称
+        QString extractButtonName(const QString& functionName);
+        //从类中获取按钮
+        QPushButton* getButtonFromName(const QString& functionName);
 };
-
 #endif // MAINFLYER_H

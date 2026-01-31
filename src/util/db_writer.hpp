@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <thread>
 #include <vector>
 
@@ -28,7 +29,7 @@ public:
 
         } catch (const std::exception &e) {
             running_ = false;
-            throw std::runtime_error(std::format("Worker thread creation failed: ", e.what()));
+            throw std::runtime_error(e.what());
         }
     }
 
@@ -65,7 +66,7 @@ public:
             }
 
         } catch (const std::exception &e) {
-            throw std::runtime_error(std::format("Error joining worker thread: {}", e.what()));
+            throw std::runtime_error(e.what());
         }
     }
 
@@ -80,11 +81,12 @@ private:
             while (batch.size() < BATCH_SIZE) {
                 if (data_queue_.try_dequeue(item)) {
                     batch.emplace_back(std::move(item));
-                }
-
+                }                
                 if (!running_ && data_queue_.size_approx() == 0) {
                     break;
                 }
+                using namespace std::chrono_literals;
+                std::this_thread::sleep_for(1us);
             }
 
             if (!batch.empty()) {

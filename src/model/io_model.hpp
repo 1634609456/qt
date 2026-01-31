@@ -2,6 +2,7 @@
 #include <QAbstractTableModel>
 #include <QStringList>
 #include <QTimer>
+#include <iterator>
 #include <mutex>
 #include <vector>
 
@@ -95,7 +96,7 @@ public:
                     if (row < IN_MAX) {
                         isOn = (io_.digital_input[l2p[row] / 8] >> (l2p[row] % 8)) & 1;
                     } else if (row < OUT_MAX) {
-                        isOn = (io_.digital_output[(l2p[row] / 8) - 16] >> (l2p[row] % 8)) & 1;
+                        isOn = (io_.digital_output[(l2p[row] / 8) - std::size(io_.digital_input)] >> (l2p[row] % 8)) & 1;
                     } else {
                         row -= OUT_MAX;
                         isOn = (io_.valve_output[l2p[row] / 8] >> (l2p[row] % 8)) & 1;

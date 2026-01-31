@@ -22,10 +22,13 @@
 #include <QWidget>
 #include <QWindow>
 #include <QDebug>
+#include <limits> 
+#include <algorithm> 
 
 #include "../src/util/db_writer.hpp"
 #include "../src/util/ring_buffer.hpp"
 #include "../src/util/shm_manager.hpp"
+#include "../src/util/ring_buffer.hpp"
 #include "ElaComboBox.h"
 #include "ElaLineEdit.h"
 #include "ElaMessageBar.h"
@@ -91,12 +94,16 @@ private:
     //ATM_Datas
     RingBuffer<ATM_Datas> atm_buff_datas_{nullptr};
 
+    RingBuffer<RINGBUFFER> buffer_p_;  
+    RingBuffer<RINGBUFFER> buffer_m_;  
 };
 
 inline ChartPage::ChartPage(QWidget *parent)
     : QWidget(parent),
       stack_(new QStackedWidget(this)),
       pivot_(new ElaPivot(this)),
+       buffer_p_(nullptr), 
+      buffer_m_(nullptr),
 
       container_smmp_widget_(new QWidget()),
       smmp_webview_(std::make_unique<webview::webview>(true, reinterpret_cast<HWND>(container_smmp_widget_->winId()))),
@@ -136,6 +143,8 @@ inline ChartPage::ChartPage(QWidget *parent)
         if (success) {
             datas_.set_buffer(&ShmManager::get_instance().get_data()->datas);
             atm_buff_datas_.set_buffer(&ShmManager::get_instance().get_data()->atm_datas); 
+            buffer_p_.set_buffer(&ShmManager::get_instance().get_data()->buffer_P);
+            buffer_m_.set_buffer(&ShmManager::get_instance().get_data()->buffer_M);
         }
     });
 }
@@ -149,9 +158,10 @@ inline ChartPage::~ChartPage() {
 
 inline void ChartPage::_init_content() {
     pivot_->appendPivot("单电机多参数");
-    pivot_->appendPivot("多电机单参数");
-    pivot_->appendPivot("性能监控");
+    // pivot_->appendPivot("多电机单参数");
+    pivot_->appendPivot("捻距检测");
     pivot_->appendPivot("ATM检测");
+    pivot_->appendPivot("震动温度检测");
     pivot_->setPivotSpacing(8);
     pivot_->setCurrentIndex(0);
     connect(pivot_, &ElaPivot::pivotClicked, stack_, &QStackedWidget::setCurrentIndex);
@@ -213,96 +223,132 @@ inline void ChartPage::_init_content() {
         stack_->addWidget(center_widget);
     }
 
+    // {
+    //     auto *center_widget = new QWidget(this);
+    //     auto *center_layout = new QVBoxLayout(center_widget);
+    //     {
+    //         auto *motor_type_layout = new QHBoxLayout();
+    //         auto *param_type_combo = new ElaComboBox(this);
+    //         param_type_combo->addItems({"速度", "位置", "加速度", "跟随比率", "编码器分辨率计数器"});
+    //         connect(param_type_combo, &ElaComboBox::currentIndexChanged, [this](int) {
+    //             mmsp_webview_->eval("clearChartData()");
+    //             mmsp_datas_ = QJsonArray();
+    //         });
+    //         motor_type_layout->addStretch();
+    //         motor_type_layout->addWidget(new ElaText("多电机单参数监控：", 16));
+    //         motor_type_layout->addWidget(param_type_combo);
+    //         motor_type_layout->addStretch();
+    //         mmsp_webview_->set_virtual_hostname("charts", "./res");
+    //         mmsp_webview_->navigate("http://charts/multi-motor-single-param.html");
+    //         auto *update_chart_timer = new QTimer(this);
+    //         connect(update_chart_timer, &QTimer::timeout, [this, param_type_combo]() {
+    //             const static auto &data = ShmManager::get_instance().get_data()->feedback.motor_fdb;
+    //             QJsonObject data_json;
+    //             QJsonArray motor_data;
+    //             for (const auto &i : data) {
+    //                 auto roundToTwoDecimals = [](double value) { return QString::number(value, 'f', 2).toDouble(); };
+    //                 switch (param_type_combo->currentIndex()) {
+    //                     case 0:
+    //                         motor_data.append(roundToTwoDecimals(i.running_speed));
+    //                         break;
+    //                     case 1:
+    //                         motor_data.append(roundToTwoDecimals(i.position));
+    //                         break;
+    //                     case 2:
+    //                         motor_data.append(roundToTwoDecimals(i.acceleration));
+    //                         break;
+    //                     case 3:
+    //                         motor_data.append(roundToTwoDecimals(i.follow_ratio));
+    //                         break;
+    //                     case 4:
+    //                         motor_data.append(roundToTwoDecimals(i.encoder_resolution_counter));
+    //                         break;
+    //                     default:
+    //                         break;
+    //                 }
+    //             }
+    //             data_json["motorData"] = motor_data;
+    //             mmsp_datas_.append(data_json);
+    //             if (mmsp_datas_.size() > 1000 / sampling_time) {
+    //                 QString data_str{QJsonDocument(mmsp_datas_).toJson(QJsonDocument::Compact)};
+    //                 mmsp_webview_->eval("updateChartData(" + data_str.toStdString() + ");");
+    //                 mmsp_datas_ = QJsonArray();
+    //             }
+    //         });
+    //         connect(&ShmManager::get_instance(), &ShmManager::loaded, [update_chart_timer, this](bool success) {
+    //             if (success) {
+    //                 update_chart_timer->start(sampling_time);
+    //             } else {
+    //                 update_chart_timer->stop();
+    //             }
+    //         });
+    //         center_layout->addLayout(motor_type_layout);
+    //         center_layout->addWidget(chart_mmsp_widget_);
+    //     }
+    //     stack_->addWidget(center_widget);
+    // }
+
+// 修改后的捻距检测页面代码段
+{
+    auto *center_widget = new QWidget(this);
+    auto *center_layout = new QVBoxLayout(center_widget);
+    
     {
-        auto *center_widget = new QWidget(this);
-        auto *center_layout = new QVBoxLayout(center_widget);
-        {
-            auto *motor_type_layout = new QHBoxLayout();
+        auto *motor_type_layout = new QHBoxLayout();
 
-            auto *param_type_combo = new ElaComboBox(this);
-            param_type_combo->addItems({"速度", "位置", "加速度", "跟随比率", "编码器分辨率计数器"});
-            connect(param_type_combo, &ElaComboBox::currentIndexChanged, [this](int) {
-                mmsp_webview_->eval("clearChartData()");
-                mmsp_datas_ = QJsonArray();
-            });
+        auto *param_type_combo = new ElaComboBox(this);
+        param_type_combo->addItems({"速度", "位置", "加速度", "跟随比率", "编码器分辨率计数器"});
+       
+        connect(param_type_combo, &ElaComboBox::currentIndexChanged, [this](int) {
+            mmsp_webview_->eval("clearChartData()");
+            mmsp_datas_ = QJsonArray();
+        });
 
-            motor_type_layout->addStretch();
-            motor_type_layout->addWidget(new ElaText("多电机单参数监控：", 16));
-            motor_type_layout->addWidget(param_type_combo);
-            motor_type_layout->addStretch();
+        motor_type_layout->addStretch();
+        motor_type_layout->addWidget(new ElaText("捻距检测：", 16));
+        motor_type_layout->addWidget(param_type_combo);
+        motor_type_layout->addStretch();
 
-            mmsp_webview_->set_virtual_hostname("charts", "./res");
-            mmsp_webview_->navigate("http://charts/multi-motor-single-param.html");
-
-            auto *update_chart_timer = new QTimer(this);
-            connect(update_chart_timer, &QTimer::timeout, [this, param_type_combo]() {
-                const static auto &data = ShmManager::get_instance().get_data()->feedback.motor_fdb;
-                QJsonObject data_json;
-                QJsonArray motor_data;
-                for (const auto &i : data) {
-                    auto roundToTwoDecimals = [](double value) { return QString::number(value, 'f', 2).toDouble(); };
-                    switch (param_type_combo->currentIndex()) {
-                        case 0:
-                            motor_data.append(roundToTwoDecimals(i.running_speed));
-                            break;
-                        case 1:
-                            motor_data.append(roundToTwoDecimals(i.position));
-                            break;
-                        case 2:
-                            motor_data.append(roundToTwoDecimals(i.acceleration));
-                            break;
-                        case 3:
-                            motor_data.append(roundToTwoDecimals(i.follow_ratio));
-                            break;
-                        case 4:
-                            motor_data.append(roundToTwoDecimals(i.encoder_resolution_counter));
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                data_json["motorData"] = motor_data;
-                mmsp_datas_.append(data_json);
-
-                if (mmsp_datas_.size() > 1000 / sampling_time) {
-                    QString data_str{QJsonDocument(mmsp_datas_).toJson(QJsonDocument::Compact)};
-                    mmsp_webview_->eval("updateChartData(" + data_str.toStdString() + ");");
-                    mmsp_datas_ = QJsonArray();
-                }
-            });
-            connect(&ShmManager::get_instance(), &ShmManager::loaded, [update_chart_timer, this](bool success) {
-                if (success) {
-                    update_chart_timer->start(sampling_time);
-                } else {
-                    update_chart_timer->stop();
-                }
-            });
-
-            center_layout->addLayout(motor_type_layout);
-            center_layout->addWidget(chart_mmsp_widget_);
-        }
-
-        stack_->addWidget(center_widget);
-    }
-
-    {
-        other_webview_->set_virtual_hostname("charts", "./res");
-        other_webview_->navigate("http://charts/other-data.html");
+        mmsp_webview_->set_virtual_hostname("charts", "./res");
+        mmsp_webview_->navigate("http://charts/multi-motor-single-param.html");
 
         auto *update_chart_timer = new QTimer(this);
-        connect(update_chart_timer, &QTimer::timeout, [this]() {
-            const static auto &data = ShmManager::get_instance().get_data()->feedback;
+        connect(update_chart_timer, &QTimer::timeout, [this, param_type_combo]() {
+            const static auto &data = ShmManager::get_instance().get_data()->feedback.motor_fdb;
             QJsonObject data_json;
-            data_json["vibrationData"] = QJsonArray{data.tremors[0], data.tremors[1]};
-            data_json["temperatureData"] =
-                QJsonArray{data.temperature[0], data.temperature[1], data.temperature[2], data.temperature[3]};
+            QJsonArray motor_data;
 
-            other_datas_.append(data_json);
+            // 只选择主轴和牵引电机的数据（索引0和1）
+            for (int i = 0; i < 2; ++i) { // 只循环前两个电机
+                auto roundToTwoDecimals = [](double value) { return QString::number(value, 'f', 2).toDouble(); };
+                switch (param_type_combo->currentIndex()) {
+                    case 0:
+                        motor_data.append(roundToTwoDecimals(data[i].running_speed));
+                        break;
+                    case 1:
+                        motor_data.append(roundToTwoDecimals(data[i].position));
+                        break;
+                    case 2:
+                        motor_data.append(roundToTwoDecimals(data[i].acceleration));
+                        break;
+                    case 3:
+                        motor_data.append(roundToTwoDecimals(data[i].follow_ratio));
+                        break;
+                    case 4:
+                        motor_data.append(roundToTwoDecimals(data[i].encoder_resolution_counter));
+                        break;
+                    default:
+                        break;
+                }
+            }
+            
+            data_json["motorData"] = motor_data;
+            mmsp_datas_.append(data_json);
 
-            if (other_datas_.size() > 1000 / sampling_time) {
-                QString data_str{QJsonDocument(other_datas_).toJson(QJsonDocument::Compact)};
-                other_webview_->eval("updateChartData(" + data_str.toStdString() + ");");
-                other_datas_ = QJsonArray();
+            if (mmsp_datas_.size() > 1000 / sampling_time) {
+                QString data_str{QJsonDocument(mmsp_datas_).toJson(QJsonDocument::Compact)};
+                mmsp_webview_->eval("updateChartData(" + data_str.toStdString() + ");");
+                mmsp_datas_ = QJsonArray();
             }
         });
 
@@ -314,8 +360,56 @@ inline void ChartPage::_init_content() {
             }
         });
 
-        stack_->addWidget(chart_other_widget_);
+        // ========== 关键修改1：调整图表和统计栏的占比，突出图表 ==========
+        auto *chart_stats_layout = new QHBoxLayout();
+        
+        // 图表组件（左侧，占85%宽度，原70%）
+        chart_mmsp_widget_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        chart_stats_layout->addWidget(chart_mmsp_widget_, 85); // 提高图表占比到85%
+        
+        // 添加统计信息显示区域（右侧，占15%宽度，原30%）
+        {
+            auto *stats_widget = new QWidget();
+            auto *stats_layout = new QVBoxLayout(stats_widget);
+            // 关键修改2：减小统计栏内边距，从10px改为5px，让整体更紧凑
+            stats_layout->setContentsMargins(5, 5, 5, 5); 
+            stats_layout->setSpacing(5); // 减小控件之间的间距
+            
+            // 主轴统计信息
+            auto *main_axis_stats = new QWidget();
+            auto *main_axis_layout = new QVBoxLayout(main_axis_stats);
+            main_axis_layout->setSpacing(2); // 进一步缩小内部间距
+            // 关键修改3：缩小字体大小，从12px改为10px
+            main_axis_layout->addWidget(new ElaText("主轴最大值:", 10));
+            main_axis_layout->addWidget(new ElaText("主轴最小值:", 10));
+            stats_layout->addWidget(main_axis_stats);
+            
+            // 牵引统计信息
+            auto *traction_stats = new QWidget();
+            auto *traction_layout = new QVBoxLayout(traction_stats);
+            traction_layout->setSpacing(2); // 进一步缩小内部间距
+            // 关键修改4：缩小字体大小，从12px改为10px
+            traction_layout->addWidget(new ElaText("牵引最大值:", 10));
+            traction_layout->addWidget(new ElaText("牵引最小值:", 10));
+            stats_layout->addWidget(traction_stats);
+            
+            // 设置样式：减小内边距，保持基础样式
+            stats_widget->setStyleSheet("background-color: #f5f5f5; border: 1px solid #ddd; padding: 5px;");
+            // 关键修改5：设置统计栏最小宽度，避免过窄导致文字挤压
+            stats_widget->setMinimumWidth(100); 
+            
+            // 统计组件放到水平布局右侧（占15%）
+            chart_stats_layout->addWidget(stats_widget, 15); // 降低统计栏占比到15%
+        }
+
+        // 垂直布局：先加参数选择栏，再加「图表+统计」水平布局
+        center_layout->addLayout(motor_type_layout);
+        center_layout->addLayout(chart_stats_layout); // 替换原来的addWidget(chart_mmsp_widget_)
     }
+
+    stack_->addWidget(center_widget);
+}
+
 
     {
 
@@ -363,6 +457,123 @@ inline void ChartPage::_init_content() {
 
         stack_->addWidget(chart_atm_widget_);
     }
+
+
+    {
+        auto *center_widget = new QWidget(this);
+        auto *center_layout = new QVBoxLayout(center_widget);
+        
+        // 其他数据监控部分 (占70%)
+        {
+            other_webview_->set_virtual_hostname("charts", "./res");
+            other_webview_->navigate("http://charts/other-data.html");
+
+            auto *update_chart_timer_other = new QTimer(this);
+            connect(update_chart_timer_other, &QTimer::timeout, [this]() {
+                const static auto &data = ShmManager::get_instance().get_data()->feedback;
+                QJsonObject data_json;
+                data_json["vibrationData"] = QJsonArray{data.tremors[0], data.tremors[1]};
+                data_json["temperatureData"] =
+                    QJsonArray{data.temperature[0], data.temperature[1], data.temperature[2], data.temperature[3]};
+
+                other_datas_.append(data_json);
+
+                if (other_datas_.size() > 1000 / sampling_time) {
+                    QString data_str{QJsonDocument(other_datas_).toJson(QJsonDocument::Compact)};
+                    other_webview_->eval("updateChartData(" + data_str.toStdString() + ");");
+                    other_datas_ = QJsonArray();
+                }
+            });
+
+            connect(&ShmManager::get_instance(), &ShmManager::loaded, [update_chart_timer_other, this](bool success) {
+                if (success) {
+                    update_chart_timer_other->start(sampling_time);
+                } else {
+                    update_chart_timer_other->stop();
+                }
+            });
+
+            chart_other_widget_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+            center_layout->addWidget(chart_other_widget_, 70); // 70%占比
+        }
+
+        stack_->addWidget(center_widget);
+    }
+
+    // 多电机单参数监控部分 (独立函数)
+    auto createMultiMotorSingleParamSection = [this]() {
+        auto *param_layout = new QHBoxLayout();
+
+        auto *param_type_combo = new ElaComboBox(this);
+        param_type_combo->addItems({"速度", "位置", "加速度", "跟随比率", "编码器分辨率计数器"});
+       
+        connect(param_type_combo, &ElaComboBox::currentIndexChanged, [this]() {
+            mmsp_webview_->eval("clearChartData()");
+            mmsp_datas_ = QJsonArray();
+        });
+
+
+        param_layout->addStretch();
+        param_layout->addWidget(new ElaText("多电机单参数监控：", 16));
+        param_layout->addWidget(param_type_combo);
+        param_layout->addStretch();
+
+        mmsp_webview_->set_virtual_hostname("charts", "./res");
+        mmsp_webview_->navigate("http://charts/multi-motor-single-param.html");
+
+        auto *update_chart_timer = new QTimer(this);
+        connect(update_chart_timer, &QTimer::timeout, [this, param_type_combo]() {
+            const static auto &data = ShmManager::get_instance().get_data()->feedback.motor_fdb;
+            QJsonObject data_json;
+            QJsonArray motor_data;
+            for (const auto &i : data) {
+                auto roundToTwoDecimals = [](double value) { return QString::number(value, 'f', 2).toDouble(); };
+                switch (param_type_combo->currentIndex()) {
+                    case 0:
+                        motor_data.append(roundToTwoDecimals(i.running_speed));
+                        break;
+                    case 1:
+                        motor_data.append(roundToTwoDecimals(i.position));
+                        break;
+                    case 2:
+                        motor_data.append(roundToTwoDecimals(i.acceleration));
+                        break;
+                    case 3:
+                        motor_data.append(roundToTwoDecimals(i.follow_ratio));
+                        break;
+                    case 4:
+                        motor_data.append(roundToTwoDecimals(i.encoder_resolution_counter));
+                        break;
+                    default:
+                        break;
+                }
+            }
+            data_json["motorData"] = motor_data;
+            mmsp_datas_.append(data_json);
+
+            if (mmsp_datas_.size() > 1000 / sampling_time) {
+                QString data_str{QJsonDocument(mmsp_datas_).toJson(QJsonDocument::Compact)};
+                mmsp_webview_->eval("updateChartData(" + data_str.toStdString() + ");");
+                mmsp_datas_ = QJsonArray();
+            }
+        });
+        connect(&ShmManager::get_instance(), &ShmManager::loaded, [update_chart_timer, this](bool success) {
+            if (success) {
+                update_chart_timer->start(sampling_time);
+            } else {
+                update_chart_timer->stop();
+            }
+        });
+
+        chart_mmsp_widget_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        
+        auto *container_widget = new QWidget();
+        auto *container_layout = new QVBoxLayout(container_widget);
+        container_layout->addLayout(param_layout);
+        container_layout->addWidget(chart_mmsp_widget_, 30); // 30%占比
+        
+        return container_widget;
+    };
 
     
     auto *collect_btn = new ElaToggleButton("连接数据库", this);
@@ -446,6 +657,32 @@ inline void ChartPage::_init_content() {
                     collect_timer->stop();
                 }
             }
+        });
+    }
+
+
+     // 添加停止电机按钮
+    auto *stop_motor_btn = new ElaPushButton("停止电机", this);
+    {
+        stop_motor_btn->setFixedWidth(128);
+        stop_motor_btn->move(1200, 12);
+        
+        connect(stop_motor_btn, &ElaPushButton::clicked, [this]() {
+            COMMOND_GROUPS cmd;
+            cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD;
+            cmd.motor_manual_control = {
+                MOTOR_MANUAL_CONTROL::STOP,
+                static_cast<MOTOR_TYPE>(0),
+                0.0,
+                0.0,
+                0.0
+            };
+            
+            // 发送命令到两个缓冲区
+        buffer_p_.push(cmd);
+        buffer_m_.push(cmd);
+            
+            ElaMessageBar::success(ElaMessageBarType::Top, "提示", "停止命令已发送！", 3000, this);
         });
     }
  

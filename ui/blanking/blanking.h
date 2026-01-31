@@ -2,6 +2,8 @@
 #define BLANKING_H
 
 #include <QWidget>
+#include <QPushButton>
+
 
 #include "../../src/shm_data.hpp"
 #include "../../src/util/ring_buffer.hpp"
@@ -50,6 +52,11 @@ class Blanking : public QWidget
         void on_pushButton_25_clicked();
         void on_pushButton_26_clicked();
         void on_pushButton_27_clicked();
+        void on_pushButton_28_clicked();
+        void on_pushButton_29_clicked();
+        void on_pushButton_30_clicked();
+        void on_pushButton_31_clicked();
+        void on_pushButton_32_clicked();
         void on_pushButton_100_pressed();
         void on_pushButton_100_released();
         void on_pushButton_101_pressed();
@@ -81,12 +88,15 @@ class Blanking : public QWidget
     private:
         Ui::Blanking *ui;
         RingBuffer<RINGBUFFER> buffer;
+        RingBuffer<RINGBUFFER> buffer_M;
 
 
 
     //电机操作执行函数
     void executeOperation( int motorType, SpindleOperation operation, double speed, double acceleration, double position);
 
+    //颜色操作函数
+    void setEnableButtonState(QPushButton* enableButton, QPushButton* disableButton, bool isEnabled);
     };
 
 #endif // BLANKING_H

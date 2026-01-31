@@ -6,7 +6,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
@@ -44,17 +44,19 @@ set(SRC_FILES
     src/model/motor_feb_model.hpp
     src/model/io_model.hpp
     src/delegate/light_delegate.hpp
+    src/util/password_manager/password_manager.cpp  # 密码管理
+
 )
 
 set(UI_FILES
-    ui/form/form.ui
-    ui/form/form.cpp
+    # ui/form/form.ui
+    # ui/form/form.cpp
     ui/home_page/homepage.ui
     ui/home_page/homepage.cpp
     ui/main_flyer/mainflyer.ui
     ui/main_flyer/mainflyer.cpp
-    ui/feeding/feeding.ui
-    ui/feeding/feeding.cpp
+    # ui/feeding/feeding.ui
+    # ui/feeding/feeding.cpp
     ui/middle_circuit_breaker/middelcircuitbreaker.ui
     ui/middle_circuit_breaker/middelcircuitbreaker.cpp
     ui/beside_pass/besidepass.ui

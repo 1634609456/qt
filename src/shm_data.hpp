@@ -2,6 +2,7 @@
 #define SHARED_MEMORY_DEF_HPP
 
 #include <Windows.h>
+#include <cstddef>
 
 #include "YKCat2.h"
 
@@ -9,7 +10,38 @@
 
 typedef enum { MANUAL, AUTO, ERROR_MODE_STATE, MAX_MODE_STATES } MODE_STATE_TYPE;  // 模式状态机：状态
 
+
+enum class AUTO_EVENT_TYPE
+{
+    // EDGE_PIERCE_LOCATION,//边穿定位
+    // EDGE_PIERCE,//边穿
+    // CENTER_PIERCE_LOCATION,//中穿定位
+    // CENTER_PIERCE,//中穿
+    // ONE_KEY_LOAD,//一键上料
+    // ONE_KEY_UNLOAD,//一键下料
+    // LOAD_EMPTY_WHEEL,//上空轮
+    // UNLOAD_FULL_WHEEL//卸满轮
+
+    SEEK_EDGE_HOLE,//边寻孔
+    RETURN_EDGE_HOLE,//边回孔
+    SEEK_CENTER_HOLE,//中寻孔
+    EDGE_PIERCE,//边穿
+    CENTER_PIERCE,//中穿
+    ONE_KEY_LOAD,//一键上料
+    ONE_KEY_UNLOAD,//一键下料
+    LOAD_EMPTY_WHEEL,//上空轮
+    UNLOAD_FULL_WHEEL,//卸满轮
+    FUSED,//熔断
+
+    //测试按键，后续可删
+    TEST_CENTER_MOTOR_ADVANCE,//测试中穿电机进
+    TEST_ROD_ADVANCE,//测试撑杆进
+    TEST_ROD_RETREAC,//测试撑杆退
+    TEST_WIND_WHEEL_ALIGN//测试收线电机找棱
+};
+
 enum class MACHINE_FSM_CMD_TYPE { CMD_NONE, EDGE_PIERCE_LOCATION, EDGE_PIERCE, LOAD_UNLOAD_WHEEL, CENTER_PIERCE_LOCATION, CENTER_PIERCE, ONE_CLICK_FEEDING, ONE_CLICK_UNLOADING };  // 被控类型枚举
+
 
 // 模式状态机事件
 typedef enum {
@@ -531,13 +563,15 @@ struct MECHINE_FSM_CMD {
 
 // 命令数据
 struct COMMOND_GROUPS {
-    enum class CMD_TYPE { MODE_CMD, MAIN_CMD, MOTOR_MANUAL_CONTROL_CMD, IO_MANUAL_CONTROL_CMD, MECHINE_FSM_CMD};  // 被控类型枚举
-    CMD_TYPE cmd_type;                                                                            // 被控类型
-    MODE_FSM_EVENT_TYPE mode_fsm_event_type;                                                      // 模式状态机事件
-    MAIN_FSM_EVENT_TYPE main_fsm_event_type;                                                      // 主状态机事件
-    MOTOR_MANUAL_CONTROL motor_manual_control;                                                    // 手动控制电机事件
-    IO_MANUAL_CONTROL io_manual_control;
+    enum class CMD_TYPE { MODE_CMD, MAIN_CMD, MOTOR_MANUAL_CONTROL_CMD, IO_MANUAL_CONTROL_CMD ,AUTO_COMMAND};  // 被控类型枚举
+    CMD_TYPE cmd_type;                          // 被控类型
+    MODE_FSM_EVENT_TYPE mode_fsm_event_type;    // 模式状态机事件
+    MAIN_FSM_EVENT_TYPE main_fsm_event_type;    // 主状态机事件
+    MOTOR_MANUAL_CONTROL motor_manual_control;  // 手动控制电机事件
+    IO_MANUAL_CONTROL io_manual_control;        // 手动控制IO事件
+    AUTO_EVENT_TYPE auto_event_type;    //自动化部分的事件
 };  // 命令数据
+
 
 struct RINGBUFFER {
     using Type = COMMOND_GROUPS;
@@ -578,6 +612,7 @@ struct MOTOR_FDB_DATA {
     double position;
     double follow_ratio;
     double encoder_resolution_counter;
+    double spindle_speed_theory;
 };
 
 struct MotorData {
@@ -588,7 +623,7 @@ struct MotorData {
     double position;
     double follow_ratio;
     double encoder_resolution_counter;
-    size_t create_at;
+    size_t create_at; //时间戳
 };
 
 // 状态机反馈数据
@@ -608,10 +643,10 @@ struct IO_DATA {
 // 计米轮数据
 struct WHEEL_DATA {
     double total_meters_fdb;
-    double master_meters_fdb;
+    double master_meters_fdb;   //清零
     double slave_meters_fdb;
-    double start_length_ref;
-    double feeding_length_ref;
+    double start_length_ref;  
+    double feeding_length_ref;  // 单丝剩余长度
     double finish_length_ref;
 };
 
@@ -621,21 +656,61 @@ enum class CONFIG_STATE {
     CONFIG_SUCCESS,
     CONFIG_ERROR,
 };
-//
+
+
 struct ATM_T_PLANNER
 {
-    UINT16 read_flag;
+     UINT16 read_flag;
     UINT16 ATM_start;
-    UINT16 machine_status;  // 0表示停机 1表示开机
+    UINT16 ATN_ON;  // 0表示停机 1表示开机
+    UINT16 spindle_ATM_trigger;//1 ATM主轴达到匀速   0 主轴减速
+    UINT16 ATM_planner_on;//1 ATM开机且spindle_ATM_trigger为1   0 停机或者spindle_ATM_trigger为0
     double torsion_speed;
 };
 
+//M进程需要P进程配合的动作类型
+enum class MACHINE_TYPE { 
+   MACHINE_CONTROL_CMD_NONE,
+    SEEK_CENTER_HOLE, SEEK_EDGE_HOLE, RETURN_EDGE_HOLE,WIND_WHEEL_ALIGN,
+    ROD_ADVANCE, ROD_RETREAT,
+    CENTER_MOTOR_ADVANCE, CENTER_FEED_WIRE, SLOW_RUN, FUSED
+ };  
+//M进程需要P进程配合的动作
 struct MACHINE_T_PLANNER {
-    UINT16 read_flag;
-    enum class MACHINE_TYPE {MACHINE_CONTROL_CMD_NONE,WIND_SPEED_MOTION, WIND_POS_MOTION, WIND_STOP, ROD_MOTOR_ADVANCE, CEMTER_SEND_WIRE, MAIN_WIND_4_AXIS_FOLLOW, WIND_STOP_4_AXIS_FOLLOW};  // 被控类型枚举
+    UINT16 read_flag; //0=无效，1=有效；M写1，P读完后写0
+    UINT16 running_ready_flag;
     MACHINE_TYPE machine_type;
-    double wind_speed;
-    double wind_pos;
+    double speed;
+    double pos;
+    double acceleration;
+    double displacement;
+};
+
+   typedef enum {
+        STATUS_IDLE,        // 空闲，可接收新指令
+        STATUS_COMPLETED,   // 执行成功完成
+        STATUS_ABORTED,     // 被中断
+        STATUS_ERROR        // 执行出错
+    } MotionStatusType;
+
+//表示p进程配合m进程完成的情况
+struct PLANNER_T_MACHINE_STATUS {
+    UINT16 read_flag; //0无效，1有效；P写1，M读完后写0
+    MACHINE_TYPE last_cmd; //最近执行的状态指令
+    MotionStatusType status;    // 当前状态
+};
+
+struct ATM_PLANNER_T_MACHINE_STATUS {
+ 
+    UINT16 read_flag; //0无效，1有效；P写1，M读完后写0
+    MACHINE_TYPE last_cmd; //最近执行的状态指令
+    MotionStatusType status;    // 当前状态
+};
+
+struct  A_P_TO_MAC
+{
+    ATM_PLANNER_T_MACHINE_STATUS planner_t_machine_status;
+    ATM_PLANNER_T_MACHINE_STATUS atm_t_machine_status;
 };
 
 
@@ -658,7 +733,7 @@ struct CONFIG {
     MOTOR_DATA motor_config[20];
     IO_DATA io_config;
     WHEEL_DATA wheel_config;  // 计米轮
-    ATM_CONFIG atm_config; // ATM config data on August 13th, 2025
+    ATM_CONFIG atm_config;
 };
 
 // 需要在log功能中添加10ms MACHINE_LOG_DATA和50ms ATM_LOG_DATA的数据日志功能。
@@ -670,13 +745,20 @@ struct MACHINE_LOG_DATA
 
 struct ATM_LOG_DATA
 {
+    int data_id;
     double spindle_speed;
-    double torsion_speed;
-    double ATM_sensor;
-    double control_ratio;
-    double dead_zone;
-    double filter_data;
+    double torsion_speed; // 实际速度
+    double ATM_sensor;  //实际ATM值
+    double filter_data;  //ATM滤波值
+    double required_speed;  //需求速度
+    double bias;
+    double winding_length; //计米长度
+    double dead_zone;  //死区
+    double goat;    //ATM目标值，  目标值 +- 死区 = 上下限
+    UINT16 tension; //张力
+    size_t create_at;
 };
+
 
 // 反馈数据
 struct FDB_DATA {
@@ -699,6 +781,21 @@ struct PID {
     double Kp;
     double Ki;
     double Kd;
+
+    //撑杆退PID参数
+    double Kp_Rod_retreat;
+    double Ki_Rod_retreat;
+    double Kd_Rod_retreat;
+
+    //撑杆进PID参数
+    double Kp_Rod_advance;
+    double Ki_Rod_advance;
+    double Kd_Rod_advance;
+    
+    //中穿进PID参数
+    double Kp_center_advance;
+    double Ki_center_advance;
+    double Kd_center_advance;
 };
 
 struct Datas {
@@ -706,6 +803,15 @@ struct Datas {
     int read_index;        // 读指针
     int write_index;       // 写指针
     MotorData data[1024];  // 环形队列
+};
+
+
+
+struct ATM_Datas {
+    using Type = ATM_LOG_DATA;
+    int read_index;
+    int write_index;
+    ATM_LOG_DATA data[1024];  // 或其他合适的大小
 };
 
 struct RECIPE_DATA
@@ -767,6 +873,8 @@ struct ShareMemData {
     CONFIG config;        // 配置
     RINGBUFFER buffer_P;  // P进程缓冲区
     RINGBUFFER buffer_M;  // M进程缓冲区
+    
+    ATM_Datas atm_datas;  // ATM数据缓冲区
     Datas datas;          // 数据缓冲区
     FDB_DATA feedback;
     IO io;
@@ -776,6 +884,7 @@ struct ShareMemData {
 
     MECHINE_FSM_CMD machine_fsm_cmd;
     M_TO_P_STATE M_to_P_state;
+    A_P_TO_MAC atm_planner_to_mac; //表示ATM和P进程写给M进程的
 };
 
 

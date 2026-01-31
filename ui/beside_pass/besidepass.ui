@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1378</width>
+    <width>1354</width>
     <height>809</height>
    </rect>
   </property>
@@ -1005,6 +1005,986 @@
      </item>
     </layout>
    </widget>
+  </widget>
+  <widget class="QWidget" name="layoutWidget_4">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>430</y>
+     <width>201</width>
+     <height>87</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout_4">
+    <item row="0" column="0">
+     <widget class="QLabel" name="label_22">
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>边穿导向</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_16">
+      <item>
+       <widget class="QPushButton" name="pushButton_28">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #cccccc;  /* 标准灰色，也可改用具体色值如#888888（深灰）、#cccccc（浅灰） */
+    color: white;            /* 按钮文字颜色（可选，搭配灰色更清晰） */
+    border: none;            /* 取消默认边框（可选） */
+}
+/* 可选：悬停时保持灰色（仅微调深浅） */
+QPushButton:hover {
+    background-color: #777777;
+}
+/* 可选：点击时保持灰色 */
+QPushButton:pressed {
+    background-color: #666666;
+}</string>
+        </property>
+        <property name="text">
+         <string>伸出</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_29">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #cccccc;  /* 标准灰色，也可改用具体色值如#888888（深灰）、#cccccc（浅灰） */
+    color: white;            /* 按钮文字颜色（可选，搭配灰色更清晰） */
+    border: none;            /* 取消默认边框（可选） */
+}
+/* 可选：悬停时保持灰色（仅微调深浅） */
+QPushButton:hover {
+    background-color: #777777;
+}
+/* 可选：点击时保持灰色 */
+QPushButton:pressed {
+    background-color: #666666;
+}</string>
+        </property>
+        <property name="text">
+         <string>缩回</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="layoutWidget_5">
+   <property name="geometry">
+    <rect>
+     <x>250</x>
+     <y>430</y>
+     <width>201</width>
+     <height>87</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout_5">
+    <item row="0" column="0">
+     <widget class="QLabel" name="label_23">
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>边穿导向</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_17">
+      <item>
+       <widget class="QPushButton" name="pushButton_30">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #cccccc;  /* 标准灰色，也可改用具体色值如#888888（深灰）、#cccccc（浅灰） */
+    color: white;            /* 按钮文字颜色（可选，搭配灰色更清晰） */
+    border: none;            /* 取消默认边框（可选） */
+}
+/* 可选：悬停时保持灰色（仅微调深浅） */
+QPushButton:hover {
+    background-color: #777777;
+}
+/* 可选：点击时保持灰色 */
+QPushButton:pressed {
+    background-color: #666666;
+}</string>
+        </property>
+        <property name="text">
+         <string>伸出</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_31">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #cccccc;  /* 标准灰色，也可改用具体色值如#888888（深灰）、#cccccc（浅灰） */
+    color: white;            /* 按钮文字颜色（可选，搭配灰色更清晰） */
+    border: none;            /* 取消默认边框（可选） */
+}
+/* 可选：悬停时保持灰色（仅微调深浅） */
+QPushButton:hover {
+    background-color: #777777;
+}
+/* 可选：点击时保持灰色 */
+QPushButton:pressed {
+    background-color: #666666;
+}</string>
+        </property>
+        <property name="text">
+         <string>缩回</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="layoutWidget_6">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>530</y>
+     <width>201</width>
+     <height>87</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout_6">
+    <item row="0" column="0">
+     <widget class="QLabel" name="label_24">
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>边穿导向</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_18">
+      <item>
+       <widget class="QPushButton" name="pushButton_32">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #cccccc;  /* 标准灰色，也可改用具体色值如#888888（深灰）、#cccccc（浅灰） */
+    color: white;            /* 按钮文字颜色（可选，搭配灰色更清晰） */
+    border: none;            /* 取消默认边框（可选） */
+}
+/* 可选：悬停时保持灰色（仅微调深浅） */
+QPushButton:hover {
+    background-color: #777777;
+}
+/* 可选：点击时保持灰色 */
+QPushButton:pressed {
+    background-color: #666666;
+}</string>
+        </property>
+        <property name="text">
+         <string>伸出</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_33">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #cccccc;  /* 标准灰色，也可改用具体色值如#888888（深灰）、#cccccc（浅灰） */
+    color: white;            /* 按钮文字颜色（可选，搭配灰色更清晰） */
+    border: none;            /* 取消默认边框（可选） */
+}
+/* 可选：悬停时保持灰色（仅微调深浅） */
+QPushButton:hover {
+    background-color: #777777;
+}
+/* 可选：点击时保持灰色 */
+QPushButton:pressed {
+    background-color: #666666;
+}</string>
+        </property>
+        <property name="text">
+         <string>缩回</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="layoutWidget_7">
+   <property name="geometry">
+    <rect>
+     <x>250</x>
+     <y>530</y>
+     <width>201</width>
+     <height>87</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout_7">
+    <item row="0" column="0">
+     <widget class="QLabel" name="label_25">
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>边穿导向</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_19">
+      <item>
+       <widget class="QPushButton" name="pushButton_34">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #cccccc;  /* 标准灰色，也可改用具体色值如#888888（深灰）、#cccccc（浅灰） */
+    color: white;            /* 按钮文字颜色（可选，搭配灰色更清晰） */
+    border: none;            /* 取消默认边框（可选） */
+}
+/* 可选：悬停时保持灰色（仅微调深浅） */
+QPushButton:hover {
+    background-color: #777777;
+}
+/* 可选：点击时保持灰色 */
+QPushButton:pressed {
+    background-color: #666666;
+}</string>
+        </property>
+        <property name="text">
+         <string>伸出</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_35">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #cccccc;  /* 标准灰色，也可改用具体色值如#888888（深灰）、#cccccc（浅灰） */
+    color: white;            /* 按钮文字颜色（可选，搭配灰色更清晰） */
+    border: none;            /* 取消默认边框（可选） */
+}
+/* 可选：悬停时保持灰色（仅微调深浅） */
+QPushButton:hover {
+    background-color: #777777;
+}
+/* 可选：点击时保持灰色 */
+QPushButton:pressed {
+    background-color: #666666;
+}</string>
+        </property>
+        <property name="text">
+         <string>缩回</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="layoutWidget_8">
+   <property name="geometry">
+    <rect>
+     <x>480</x>
+     <y>430</y>
+     <width>201</width>
+     <height>87</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout_8">
+    <item row="0" column="0">
+     <widget class="QLabel" name="label_26">
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>边穿导向</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_20">
+      <item>
+       <widget class="QPushButton" name="pushButton_36">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #cccccc;  /* 标准灰色，也可改用具体色值如#888888（深灰）、#cccccc（浅灰） */
+    color: white;            /* 按钮文字颜色（可选，搭配灰色更清晰） */
+    border: none;            /* 取消默认边框（可选） */
+}
+/* 可选：悬停时保持灰色（仅微调深浅） */
+QPushButton:hover {
+    background-color: #777777;
+}
+/* 可选：点击时保持灰色 */
+QPushButton:pressed {
+    background-color: #666666;
+}</string>
+        </property>
+        <property name="text">
+         <string>伸出</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_37">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #cccccc;  /* 标准灰色，也可改用具体色值如#888888（深灰）、#cccccc（浅灰） */
+    color: white;            /* 按钮文字颜色（可选，搭配灰色更清晰） */
+    border: none;            /* 取消默认边框（可选） */
+}
+/* 可选：悬停时保持灰色（仅微调深浅） */
+QPushButton:hover {
+    background-color: #777777;
+}
+/* 可选：点击时保持灰色 */
+QPushButton:pressed {
+    background-color: #666666;
+}</string>
+        </property>
+        <property name="text">
+         <string>缩回</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="layoutWidget_9">
+   <property name="geometry">
+    <rect>
+     <x>710</x>
+     <y>430</y>
+     <width>201</width>
+     <height>87</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout_9">
+    <item row="0" column="0">
+     <widget class="QLabel" name="label_27">
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>边穿导向</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_21">
+      <item>
+       <widget class="QPushButton" name="pushButton_38">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #cccccc;  /* 标准灰色，也可改用具体色值如#888888（深灰）、#cccccc（浅灰） */
+    color: white;            /* 按钮文字颜色（可选，搭配灰色更清晰） */
+    border: none;            /* 取消默认边框（可选） */
+}
+/* 可选：悬停时保持灰色（仅微调深浅） */
+QPushButton:hover {
+    background-color: #777777;
+}
+/* 可选：点击时保持灰色 */
+QPushButton:pressed {
+    background-color: #666666;
+}</string>
+        </property>
+        <property name="text">
+         <string>伸出</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_39">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #cccccc;  /* 标准灰色，也可改用具体色值如#888888（深灰）、#cccccc（浅灰） */
+    color: white;            /* 按钮文字颜色（可选，搭配灰色更清晰） */
+    border: none;            /* 取消默认边框（可选） */
+}
+/* 可选：悬停时保持灰色（仅微调深浅） */
+QPushButton:hover {
+    background-color: #777777;
+}
+/* 可选：点击时保持灰色 */
+QPushButton:pressed {
+    background-color: #666666;
+}</string>
+        </property>
+        <property name="text">
+         <string>缩回</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="layoutWidget_10">
+   <property name="geometry">
+    <rect>
+     <x>940</x>
+     <y>430</y>
+     <width>201</width>
+     <height>87</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout_10">
+    <item row="1" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_22">
+      <item>
+       <widget class="QPushButton" name="pushButton_40">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #cccccc;  /* 标准灰色，也可改用具体色值如#888888（深灰）、#cccccc（浅灰） */
+    color: white;            /* 按钮文字颜色（可选，搭配灰色更清晰） */
+    border: none;            /* 取消默认边框（可选） */
+}
+/* 可选：悬停时保持灰色（仅微调深浅） */
+QPushButton:hover {
+    background-color: #777777;
+}
+/* 可选：点击时保持灰色 */
+QPushButton:pressed {
+    background-color: #666666;
+}</string>
+        </property>
+        <property name="text">
+         <string>伸出</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_41">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #cccccc;  /* 标准灰色，也可改用具体色值如#888888（深灰）、#cccccc（浅灰） */
+    color: white;            /* 按钮文字颜色（可选，搭配灰色更清晰） */
+    border: none;            /* 取消默认边框（可选） */
+}
+/* 可选：悬停时保持灰色（仅微调深浅） */
+QPushButton:hover {
+    background-color: #777777;
+}
+/* 可选：点击时保持灰色 */
+QPushButton:pressed {
+    background-color: #666666;
+}</string>
+        </property>
+        <property name="text">
+         <string>缩回</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="0">
+     <widget class="QLabel" name="label_28">
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>边穿导向</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="layoutWidget_11">
+   <property name="geometry">
+    <rect>
+     <x>480</x>
+     <y>530</y>
+     <width>201</width>
+     <height>87</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout_11">
+    <item row="0" column="0">
+     <widget class="QLabel" name="label_29">
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>边穿导向</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_23">
+      <item>
+       <widget class="QPushButton" name="pushButton_42">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #cccccc;  /* 标准灰色，也可改用具体色值如#888888（深灰）、#cccccc（浅灰） */
+    color: white;            /* 按钮文字颜色（可选，搭配灰色更清晰） */
+    border: none;            /* 取消默认边框（可选） */
+}
+/* 可选：悬停时保持灰色（仅微调深浅） */
+QPushButton:hover {
+    background-color: #777777;
+}
+/* 可选：点击时保持灰色 */
+QPushButton:pressed {
+    background-color: #666666;
+}</string>
+        </property>
+        <property name="text">
+         <string>伸出</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_43">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #cccccc;  /* 标准灰色，也可改用具体色值如#888888（深灰）、#cccccc（浅灰） */
+    color: white;            /* 按钮文字颜色（可选，搭配灰色更清晰） */
+    border: none;            /* 取消默认边框（可选） */
+}
+/* 可选：悬停时保持灰色（仅微调深浅） */
+QPushButton:hover {
+    background-color: #777777;
+}
+/* 可选：点击时保持灰色 */
+QPushButton:pressed {
+    background-color: #666666;
+}</string>
+        </property>
+        <property name="text">
+         <string>缩回</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="layoutWidget_12">
+   <property name="geometry">
+    <rect>
+     <x>710</x>
+     <y>530</y>
+     <width>201</width>
+     <height>87</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout_13">
+    <item row="0" column="0">
+     <widget class="QLabel" name="label_31">
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>边穿导向</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_25">
+      <item>
+       <widget class="QPushButton" name="pushButton_46">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #cccccc;  /* 标准灰色，也可改用具体色值如#888888（深灰）、#cccccc（浅灰） */
+    color: white;            /* 按钮文字颜色（可选，搭配灰色更清晰） */
+    border: none;            /* 取消默认边框（可选） */
+}
+/* 可选：悬停时保持灰色（仅微调深浅） */
+QPushButton:hover {
+    background-color: #777777;
+}
+/* 可选：点击时保持灰色 */
+QPushButton:pressed {
+    background-color: #666666;
+}</string>
+        </property>
+        <property name="text">
+         <string>伸出</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_47">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #cccccc;  /* 标准灰色，也可改用具体色值如#888888（深灰）、#cccccc（浅灰） */
+    color: white;            /* 按钮文字颜色（可选，搭配灰色更清晰） */
+    border: none;            /* 取消默认边框（可选） */
+}
+/* 可选：悬停时保持灰色（仅微调深浅） */
+QPushButton:hover {
+    background-color: #777777;
+}
+/* 可选：点击时保持灰色 */
+QPushButton:pressed {
+    background-color: #666666;
+}</string>
+        </property>
+        <property name="text">
+         <string>缩回</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="layoutWidget_13">
+   <property name="geometry">
+    <rect>
+     <x>940</x>
+     <y>530</y>
+     <width>201</width>
+     <height>87</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout_14">
+    <item row="0" column="0">
+     <widget class="QLabel" name="label_32">
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>边穿导向</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_26">
+      <item>
+       <widget class="QPushButton" name="pushButton_48">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #cccccc;  /* 标准灰色，也可改用具体色值如#888888（深灰）、#cccccc（浅灰） */
+    color: white;            /* 按钮文字颜色（可选，搭配灰色更清晰） */
+    border: none;            /* 取消默认边框（可选） */
+}
+/* 可选：悬停时保持灰色（仅微调深浅） */
+QPushButton:hover {
+    background-color: #777777;
+}
+/* 可选：点击时保持灰色 */
+QPushButton:pressed {
+    background-color: #666666;
+}</string>
+        </property>
+        <property name="text">
+         <string>伸出</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_49">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #cccccc;  /* 标准灰色，也可改用具体色值如#888888（深灰）、#cccccc（浅灰） */
+    color: white;            /* 按钮文字颜色（可选，搭配灰色更清晰） */
+    border: none;            /* 取消默认边框（可选） */
+}
+/* 可选：悬停时保持灰色（仅微调深浅） */
+QPushButton:hover {
+    background-color: #777777;
+}
+/* 可选：点击时保持灰色 */
+QPushButton:pressed {
+    background-color: #666666;
+}</string>
+        </property>
+        <property name="text">
+         <string>缩回</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
   </widget>
  </widget>
  <resources/>

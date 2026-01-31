@@ -16,7 +16,7 @@
 #include "main_flyer/mainflyer.h"
 #include "middle_circuit_breaker/middelcircuitbreaker.h"
 #include "param_page.hpp"
-#include "form/form.h"
+// #include "form/form.h"
 #include "home_page/homepage.h"
 
 class MainWindow : public ElaWindow {
@@ -54,6 +54,7 @@ inline MainWindow::MainWindow(QWidget *parent)
       fsm_feb_text_(new ElaText("", 14)) {
     this->_setup_ui();
     this->_init_content();
+    this->showFullScreen();
 }
 
 inline void MainWindow::_setup_ui() {
@@ -91,12 +92,12 @@ inline void MainWindow::_init_content() {
         });
     }
 
-    this->addPageNode("test主页", new Form(this), ElaIconType::None);
+    // this->addPageNode("test主页", new Form(this), ElaIconType::None);
     this->addPageNode("电机主页", new HomePage(this), ElaIconType::House);
     this->addExpanderNode("手动控制", manual_key_, ElaIconType::BookOpenCover);
     {
         this->addPageNode("主飞轮/虚捻/牵引手动", new MainFlyer(this), manual_key_, ElaIconType::None);
-        this->addPageNode("上料站手动", new QWidget(this), manual_key_, ElaIconType::None);
+        // this->addPageNode("上料站手动", new QWidget(this), manual_key_, ElaIconType::None);
         this->addPageNode("中穿熔丝手动", new MiddelCircuitBreaker(this), manual_key_, ElaIconType::None);
         this->addPageNode("边穿手动", new BesidePass(this), manual_key_, ElaIconType::None);
         this->addPageNode("下料工字轮手动", new Blanking(this), manual_key_, ElaIconType::None);
@@ -104,7 +105,7 @@ inline void MainWindow::_init_content() {
 
     this->addPageNode("参数调试", data_monitor_page_, 0, ElaIconType::ScrewdriverWrench);
     this->addPageNode("数据监控", chart_page_, 0, ElaIconType::ChartMixed);
-    this->addPageNode("参数设置", param_page_, 0, ElaIconType::Ruler);
+    this->addPageNode("计米参数设置", param_page_, 0, ElaIconType::Ruler);
 
     this->addFooterNode("配置管理", config_page_, config_key_, 0, ElaIconType::Gear);
 

@@ -4,6 +4,9 @@
 #include <QObject>
 #include <QFile>
 #include <QTextStream>
+#include <cstddef>
+#include <random>  
+
 
 #include "NoSys.h"
 #include "../shm_data.hpp"
@@ -44,16 +47,48 @@ public:
 
         if (dev == "dev") {
             shm_data_ = new ShareMemData{};
+            // shm_data_->io.digital_output[0] = 0b10101010;
+            // shm_data_->io.valve_output[1] = 0b00100000;
+            ShmManager::get_instance().get_data()->feedback.wheel_fdb.master_meters_fdb = 1000.0;
+            ShmManager::get_instance().get_data()->feedback.wheel_fdb.feeding_length_ref = 99999.0;
+
+            // 设置 主轴电机随时间变化的速度 在+-100的随机数
+            std::random_device rd;  // 用于获取种子
+            std::mt19937 gen(rd()); // 使用梅森旋转算法生成伪随机数
+            std::uniform_real_distribution<> dis(-100.0, 100.0); // 生成-100到100之间的随机浮点数
+
+            // 使用当前时间作为基准来设置不同电机的速度
+            auto currentTime = std::chrono::high_resolution_clock::now();
+            auto timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+                currentTime.time_since_epoch()).count();
+
+            for (int i = 0; i < 20; ++i) {
+                // 基于时间和索引生成不同的速度值
+                double baseSpeed = 100.0 * sin(timestamp * 0.001 + i * 0.5);  // 使用正弦波
+                shm_data_->feedback.motor_fdb[i].running_speed = baseSpeed;
+            }
+            
+            shm_data_->io.valve_output[0] = 0b00000100;
+
             emit loaded(true);
         } else {
             ret = NOS_OpenShareMemory(NOS_ECAT_A, rta_name.toStdString().data(), mem_name.toStdString().data(), &addr,
                                       is_x64);
             if (ret == 0) {
                 shm_data_ = reinterpret_cast<ShareMemData *>(addr);
-                if (shm_data_) {
+                // shm_data_->planner_t_machine_status.status = PLANNER_T_MACHINE_STATUS::MotionStatusType::STATUS_ERROR;
+                // qDebug() << "测试3"<< static_cast<int>(shm_data_->planner_t_machine_status.status);
+
+                // qDebug() << "addr" << addr;
+
+                // qDebug() << "shm_data_" << &shm_data_;
+                if (shm_data_ != nullptr) {
                     emit loaded(true);
+                    // qDebug() << "测试1"<< static_cast<int>(shm_data_->planner_t_machine_status.status);
                     return;
                 }
+                
+                // qDebug() << "测试2"<< static_cast<int>(shm_data_->planner_t_machine_status.status);
             }
             emit loaded(false);
         }

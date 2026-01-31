@@ -1,5 +1,6 @@
 #include "mainflyer.h"
 #include "ui_mainflyer.h"
+
 #include <QTimer>
 #include <QDebug>
 #include <QMessageBox>
@@ -7,6 +8,7 @@
 #include <qdebug.h>
 #include <qlogging.h>
 #include <qobject.h>
+#include <qtcoreexports.h>
 
 #include "../../src/util/shm_manager.hpp"
 
@@ -16,6 +18,7 @@ MainFlyer::MainFlyer(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::MainFlyer)
     ,buffer(nullptr) 
+    ,lastPressedButton(nullptr)
 {
     ui->setupUi(this);
 
@@ -70,6 +73,12 @@ MainFlyer::MainFlyer(QWidget *parent)
 }
 
 
+void MainFlyer::resetLastButtonStyle() {
+    if (lastPressedButton) {
+        lastPressedButton->setStyleSheet("");  // 恢复默认样式
+    }
+}
+
 
 
 // 获取电机的速度，加速度，位置
@@ -84,7 +93,7 @@ double MainFlyer::getMotorNum(int motorType, QString model) const
     }
 
     
-    qDebug() << "getMotorSpeed called with motorType:" << motorType;
+    // qDebug() << "getMotorSpeed called with motorType:" << motorType;
  
     if (model == "speed") {    
         num =  ShmManager::get_instance()
@@ -103,7 +112,7 @@ double MainFlyer::getMotorNum(int motorType, QString model) const
                     .acceleration;
     }
 
-    qDebug() << "MotorType:" << motorType << "num:" << num;
+    // qDebug() << "MotorType:" << motorType << "num:" << num;
 
     return  num;
 }
@@ -152,44 +161,100 @@ void MainFlyer::executeOperation(int motorType, SpindleOperation operation, doub
         throw std::invalid_argument("Unknown SpindleOperation");
 }
 
-    buffer.push({
-        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
-        .motor_manual_control = {
-            .manual_control_cmd = cmdType,
-            .motor_type = static_cast<MOTOR_TYPE>(motorType),  
-            .speed = speed,
-            .manual_acceleration = acceleration,
-            .manual_pos = position
-        }
-    });
+    // buffer.push({
+    //     .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
+    //     .motor_manual_control = {
+    //         .manual_control_cmd = cmdType,
+    //         .motor_type = static_cast<MOTOR_TYPE>(motorType),  
+    //         .speed = speed,
+    //         .manual_acceleration = acceleration,
+    //         .manual_pos = position
+    //     }
+    // });
+
+
+
+
+COMMOND_GROUPS cmd;
+cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD;
+cmd.motor_manual_control.manual_control_cmd = cmdType;
+cmd.motor_manual_control.motor_type = static_cast<MOTOR_TYPE>(motorType);
+cmd.motor_manual_control.speed = speed;
+cmd.motor_manual_control.manual_acceleration = acceleration;
+cmd.motor_manual_control.manual_pos = position;
+buffer.push(cmd);
 }
 
 
+QString MainFlyer::extractButtonName(const QString& functionName) {
+    
+
+    if (functionName.startsWith("on_") && functionName.endsWith("_pressed")) {
+
+        QString temp = functionName.mid(3); 
+        temp = temp.left(temp.length() - 8); 
+        
+        int underscoreCount = temp.count('_');
+
+        if (underscoreCount == 0) {
+            return "pushButton";
+        }
+    }
+
+    if (functionName.startsWith("on_") && functionName.endsWith("_clicked")) {
+        QString result = functionName.mid(3); 
+        result = result.left(result.length() - 8); 
+        return result;
+    }
+
+    return QString();
+}
+
+
+QPushButton* MainFlyer::getButtonFromName(const QString& functionName) {
+    QString buttonName = extractButtonName(functionName);
+    if (!buttonName.isEmpty()) {
+        return findChild<QPushButton*>(buttonName);
+    }
+    return nullptr;
+}
+
 // 主轴  ---  正点动
-// void MainFlyer::on_pushButton_clicked()
-// {
-//         // //检查空值并弹出提示框
-//     // if(ui->lineEdit_9->text().isEmpty() ||
-//     //     ui->lineEdit_8->text().isEmpty() ||
-//     //     ui->lineEdit_7->text().isEmpty()) {
-//     //     QMessageBox::warning(this, "输入错误", "主轴电动的速度、加速度或位置不能为空！！！");
-//     //     return;
-//     // }
-// }
 void MainFlyer::on_pushButton_pressed()
 {
-        qDebug() << "主轴正点动" << ui->lineEdit_9->text() << ui->lineEdit_8->text() << ui->lineEdit_7->text();
 
-    buffer.push({
-        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
-        .motor_manual_control = {
-            .manual_control_cmd = MOTOR_MANUAL_CONTROL::FORWARD_JOGING,  //电机控制类型
-            .motor_type = MAIN_SPINDLE,  // 飞轮对应的电机类型
-            .speed = ui->lineEdit_9->text().toDouble(),  // 从输入框获取速度
-            .manual_acceleration = ui -> lineEdit_8->text().toDouble(),  
-            .manual_pos = ui -> lineEdit_7->text().toDouble()      
-        }
-    });
+    auto h = getButtonFromName(extractButtonName(__func__));
+
+        qDebug() << "Extracted button name:" << h;  
+        qDebug() << "主轴正点动" << ui->lineEdit_9->text() << ui->lineEdit_8->text()  <<  ui->lineEdit_7->text();
+
+        // resetLastButtonStyle();
+        // ui->pushButton->setStyleSheet("background-color: red; color: white;");  
+        // lastPressedButton = ui->pushButton;
+
+
+    // buffer.push({
+    //     .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
+    //     .motor_manual_control = {
+    //         .manual_control_cmd = MOTOR_MANUAL_CONTROL::FORWARD_JOGING,  //电机控制类型
+    //         .motor_type = MAIN_SPINDLE,  // 飞轮对应的电机类型
+    //         .speed = ui->lineEdit_9->text().toDouble(),  // 从输入框获取速度
+    //         .manual_acceleration = ui -> lineEdit_8->text().toDouble(),  
+    //         .manual_pos = ui -> lineEdit_7->text().toDouble()      
+    //     }
+    // });
+
+
+
+    COMMOND_GROUPS cmd;
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD;
+    cmd.motor_manual_control.manual_control_cmd = MOTOR_MANUAL_CONTROL::FORWARD_JOGING;
+    cmd.motor_manual_control.motor_type = MAIN_SPINDLE;
+    cmd.motor_manual_control.speed = ui->lineEdit_9->text().toDouble();
+    cmd.motor_manual_control.manual_acceleration = ui->lineEdit_8->text().toDouble();
+    cmd.motor_manual_control.manual_pos = ui->lineEdit_7->text().toDouble();
+    buffer.push(cmd);
+
 }
 
 
@@ -197,7 +262,8 @@ void MainFlyer::on_pushButton_pressed()
 void MainFlyer::on_pushButton_released()
 {
     qDebug() << "主轴正点动释放";
-    executeOperation(MAIN_SPINDLE, SpindleOperation::STOP, 0.0, 0.0, 0.0);
+    // ui->pushButton->setStyleSheet(""); // 清空样式表，恢复默认样式
+    // executeOperation(MAIN_SPINDLE, SpindleOperation::STOP, 0.0, 0.0, 0.0);
 }
 
 
@@ -208,16 +274,25 @@ void MainFlyer::on_pushButton_4_pressed()
      qDebug() << "主轴反电动" << ui->lineEdit_9->text() << ui->lineEdit_8->text() << ui->lineEdit_7->text();
 
 
-    buffer.push({
-        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
-        .motor_manual_control = {
-            .manual_control_cmd = MOTOR_MANUAL_CONTROL::REVERSE_JOGING,  //电机控制类型
-            .motor_type = MAIN_SPINDLE,  // 飞轮对应的电机类型
-            .speed = ui->lineEdit_9->text().toDouble(),  
-            .manual_acceleration = ui -> lineEdit_8->text().toDouble(),  
-            .manual_pos = ui -> lineEdit_7->text().toDouble()            
-        }
-    });
+    // buffer.push({
+    //     .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
+    //     .motor_manual_control = {
+    //         .manual_control_cmd = MOTOR_MANUAL_CONTROL::REVERSE_JOGING,  //电机控制类型
+    //         .motor_type = MAIN_SPINDLE,  // 飞轮对应的电机类型
+    //         .speed = ui->lineEdit_9->text().toDouble(),  
+    //         .manual_acceleration = ui -> lineEdit_8->text().toDouble(),  
+    //         .manual_pos = ui -> lineEdit_7->text().toDouble()            
+    //     }
+    // });
+
+    COMMOND_GROUPS cmd;
+cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD;
+cmd.motor_manual_control.manual_control_cmd = MOTOR_MANUAL_CONTROL::FORWARD_JOGING;
+cmd.motor_manual_control.motor_type = MAIN_SPINDLE;
+cmd.motor_manual_control.speed = ui->lineEdit_9->text().toDouble();
+cmd.motor_manual_control.manual_acceleration = ui->lineEdit_8->text().toDouble();
+cmd.motor_manual_control.manual_pos = ui->lineEdit_7->text().toDouble();
+buffer.push(cmd);
 }
 void MainFlyer::on_pushButton_4_released()
 {
@@ -230,20 +305,30 @@ void MainFlyer::on_pushButton_4_released()
 // 主轴  --- 回零
 void MainFlyer::on_pushButton_2_clicked()
 {
-    qDebug() << "主轴回零" << ui->lineEdit_9->text() << ui->lineEdit_8->text() << ui->lineEdit_7->text();
+    qDebug() << "主轴回零" << ui->lineEdit_9->text() << ui->lineEdit_8->text() << ui->lineEdit_7->text() << extractButtonName(__func__);
+    // resetLastButtonStyle();
+    // ui->pushButton_2->setStyleSheet("background-color: blue; color: white;");  
+    // lastPressedButton = ui->pushButton_2;
 
 
-
-    buffer.push({
-        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
-        .motor_manual_control = {
-            .manual_control_cmd = MOTOR_MANUAL_CONTROL::RETURN_TO_ZERO,  //电机控制类型
-            .motor_type = MAIN_SPINDLE, 
-            .speed = ui->lineEdit_9->text().toDouble(),
-            .manual_acceleration = ui -> lineEdit_8->text().toDouble(),
-            .manual_pos = ui -> lineEdit_7->text().toDouble()
-        }
-    });
+    // buffer.push({
+    //     .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
+    //     .motor_manual_control = {
+    //         .manual_control_cmd = MOTOR_MANUAL_CONTROL::RETURN_TO_ZERO,  //电机控制类型
+    //         .motor_type = MAIN_SPINDLE, 
+    //         .speed = ui->lineEdit_9->text().toDouble(),
+    //         .manual_acceleration = ui -> lineEdit_8->text().toDouble(),
+    //         .manual_pos = ui -> lineEdit_7->text().toDouble()
+    //     }
+    // });
+    COMMOND_GROUPS cmd;
+cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD;
+cmd.motor_manual_control.manual_control_cmd = MOTOR_MANUAL_CONTROL::RETURN_TO_ZERO;
+cmd.motor_manual_control.motor_type = MAIN_SPINDLE;
+cmd.motor_manual_control.speed = ui->lineEdit_9->text().toDouble();
+cmd.motor_manual_control.manual_acceleration = ui->lineEdit_8->text().toDouble();
+cmd.motor_manual_control.manual_pos = ui->lineEdit_7->text().toDouble();
+buffer.push(cmd);
 }
 
 
@@ -253,17 +338,28 @@ void MainFlyer::on_pushButton_7_clicked()
     qDebug() << "主轴松闸" << ui->lineEdit_9->text() << ui->lineEdit_8->text() << ui->lineEdit_7->text();
 
 
+    // resetLastButtonStyle();
+    // ui->pushButton_7->setStyleSheet("background-color: blue; color: white;");  
+    // lastPressedButton = ui->pushButton_7;
 
-    buffer.push({
-        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
-        .motor_manual_control = {
-            .manual_control_cmd = MOTOR_MANUAL_CONTROL::RELEASE_BRAKE,  //电机控制类型
-            .motor_type = MAIN_SPINDLE, 
-            .speed = ui->lineEdit_9->text().toDouble(),
-            .manual_acceleration = ui -> lineEdit_8->text().toDouble(),
-            .manual_pos = ui -> lineEdit_7->text().toDouble()
-        }
-    });
+    // buffer.push({
+    //     .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
+    //     .motor_manual_control = {
+    //         .manual_control_cmd = MOTOR_MANUAL_CONTROL::RELEASE_BRAKE,  //电机控制类型
+    //         .motor_type = MAIN_SPINDLE, 
+    //         .speed = ui->lineEdit_9->text().toDouble(),
+    //         .manual_acceleration = ui -> lineEdit_8->text().toDouble(),
+    //         .manual_pos = ui -> lineEdit_7->text().toDouble()
+    //     }
+    // });
+COMMOND_GROUPS cmd;
+cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD;
+cmd.motor_manual_control.manual_control_cmd = MOTOR_MANUAL_CONTROL::RELEASE_BRAKE;
+cmd.motor_manual_control.motor_type = MAIN_SPINDLE;
+cmd.motor_manual_control.speed = ui->lineEdit_9->text().toDouble();
+cmd.motor_manual_control.manual_acceleration = ui->lineEdit_8->text().toDouble();
+cmd.motor_manual_control.manual_pos = ui->lineEdit_7->text().toDouble();
+buffer.push(cmd);
 }
 
 
@@ -273,16 +369,29 @@ void MainFlyer::on_pushButton_8_clicked()
 {
     qDebug() << "主轴抱闸" << ui->lineEdit_9->text() << ui->lineEdit_8->text() << ui->lineEdit_7->text();
 
-    buffer.push({
-        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
-        .motor_manual_control = {
-            .manual_control_cmd = MOTOR_MANUAL_CONTROL::ENGAGE_BRAKE,  //电机控制类型
-            .motor_type = MAIN_SPINDLE, 
-            .speed = ui->lineEdit_9->text().toDouble(),
-            .manual_acceleration = ui -> lineEdit_8->text().toDouble(),
-            .manual_pos = ui -> lineEdit_7->text().toDouble()
-        }
-    });
+    // resetLastButtonStyle();
+    // ui->pushButton_8->setStyleSheet("background-color: blue; color: white;");  
+    // lastPressedButton = ui->pushButton_8;
+
+    // buffer.push({
+    //     .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
+    //     .motor_manual_control = {
+    //         .manual_control_cmd = MOTOR_MANUAL_CONTROL::ENGAGE_BRAKE,  //电机控制类型
+    //         .motor_type = MAIN_SPINDLE, 
+    //         .speed = ui->lineEdit_9->text().toDouble(),
+    //         .manual_acceleration = ui -> lineEdit_8->text().toDouble(),
+    //         .manual_pos = ui -> lineEdit_7->text().toDouble()
+    //     }
+    // });
+
+COMMOND_GROUPS cmd;
+cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD;
+cmd.motor_manual_control.manual_control_cmd = MOTOR_MANUAL_CONTROL::ENGAGE_BRAKE;
+cmd.motor_manual_control.motor_type = MAIN_SPINDLE;
+cmd.motor_manual_control.speed = ui->lineEdit_9->text().toDouble();
+cmd.motor_manual_control.manual_acceleration = ui->lineEdit_8->text().toDouble();
+cmd.motor_manual_control.manual_pos = ui->lineEdit_7->text().toDouble();
+buffer.push(cmd);
 }
 
 // 主轴 --- 停止
@@ -290,18 +399,29 @@ void MainFlyer::on_pushButton_9_clicked()
 {
     qDebug() << "主轴停止" << ui->lineEdit_9->text() << ui->lineEdit_8->text() << ui->lineEdit_7->text();
 
+    // resetLastButtonStyle();
+    // ui->pushButton_9->setStyleSheet("background-color: red; color: white;");  
+    // lastPressedButton = ui->pushButton_9;
 
+    // buffer.push({
+    //     .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
+    //     .motor_manual_control = {
+    //         .manual_control_cmd = MOTOR_MANUAL_CONTROL::STOP,  //电机控制类型
+    //         .motor_type = MAIN_SPINDLE, 
+    //         .speed = ui->lineEdit_9->text().toDouble(),
+    //         .manual_acceleration = ui -> lineEdit_8->text().toDouble(),
+    //         .manual_pos = ui -> lineEdit_7->text().toDouble()
+    //     }
+    // });
 
-    buffer.push({
-        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
-        .motor_manual_control = {
-            .manual_control_cmd = MOTOR_MANUAL_CONTROL::STOP,  //电机控制类型
-            .motor_type = MAIN_SPINDLE, 
-            .speed = ui->lineEdit_9->text().toDouble(),
-            .manual_acceleration = ui -> lineEdit_8->text().toDouble(),
-            .manual_pos = ui -> lineEdit_7->text().toDouble()
-        }
-    });
+COMMOND_GROUPS cmd;
+cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD;
+cmd.motor_manual_control.manual_control_cmd = MOTOR_MANUAL_CONTROL::STOP;
+cmd.motor_manual_control.motor_type = MAIN_SPINDLE;
+cmd.motor_manual_control.speed = ui->lineEdit_9->text().toDouble();
+cmd.motor_manual_control.manual_acceleration = ui->lineEdit_8->text().toDouble();
+cmd.motor_manual_control.manual_pos = ui->lineEdit_7->text().toDouble();
+buffer.push(cmd);
 }
 
 // 主轴 --- 上使能
@@ -310,16 +430,30 @@ void MainFlyer::on_pushButton_3_clicked()
 
     qDebug() << "主轴上使能" << ui->lineEdit_9->text() << ui->lineEdit_8->text() << ui->lineEdit_7->text();
 
-     buffer.push({
-        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
-        .motor_manual_control = {
-            .manual_control_cmd = MOTOR_MANUAL_CONTROL::MANUAL_MOTOR_ON,  //电机控制类型
-            .motor_type = MAIN_SPINDLE, 
-            .speed = ui->lineEdit_9->text().toDouble(),
-            .manual_acceleration = ui -> lineEdit_8->text().toDouble(),
-            .manual_pos = ui -> lineEdit_7->text().toDouble()
-        }
-    });
+    // resetLastButtonStyle();
+    // ui->pushButton_3->setStyleSheet("background-color: blue; color: white;");  
+    // lastPressedButton = ui->pushButton_3;
+
+    //  buffer.push({
+    //     .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
+    //     .motor_manual_control = {
+    //         .manual_control_cmd = MOTOR_MANUAL_CONTROL::MANUAL_MOTOR_ON,  //电机控制类型
+    //         .motor_type = MAIN_SPINDLE, 
+    //         .speed = ui->lineEdit_9->text().toDouble(),
+    //         .manual_acceleration = ui -> lineEdit_8->text().toDouble(),
+    //         .manual_pos = ui -> lineEdit_7->text().toDouble()
+    //     }
+    // });
+
+COMMOND_GROUPS cmd;
+cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD;
+cmd.motor_manual_control.manual_control_cmd = MOTOR_MANUAL_CONTROL::MANUAL_MOTOR_ON;
+cmd.motor_manual_control.motor_type = MAIN_SPINDLE;
+cmd.motor_manual_control.speed = ui->lineEdit_9->text().toDouble();
+cmd.motor_manual_control.manual_acceleration = ui->lineEdit_8->text().toDouble();
+cmd.motor_manual_control.manual_pos = ui->lineEdit_7->text().toDouble();
+buffer.push(cmd);
+
         qDebug() << "主轴上使能-输出" << ui->lineEdit_9->text().toDouble() << ui->lineEdit_8->text().toDouble() << ui->lineEdit_7->text().toDouble();
 
 }
@@ -331,16 +465,31 @@ void MainFlyer::on_pushButton_5_clicked()
         qDebug() << "主轴去使能" << ui->lineEdit_9->text() << ui->lineEdit_8->text() << ui->lineEdit_7->text();
 
 
-    buffer.push({
-        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
-        .motor_manual_control = {
-            .manual_control_cmd = MOTOR_MANUAL_CONTROL::MANUAL_MOTOR_OFF,  //电机控制类型
-            .motor_type = MAIN_SPINDLE, 
-            .speed = ui->lineEdit_9->text().toDouble(),
-            .manual_acceleration = ui -> lineEdit_8->text().toDouble(),
-            .manual_pos = ui -> lineEdit_7->text().toDouble()
-        }
-    });
+    // resetLastButtonStyle();
+    // ui->pushButton_5->setStyleSheet("background-color: blue; color: white;");  
+    // lastPressedButton = ui->pushButton_5;
+
+
+    // buffer.push({
+    //     .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
+    //     .motor_manual_control = {
+    //         .manual_control_cmd = MOTOR_MANUAL_CONTROL::MANUAL_MOTOR_OFF,  //电机控制类型
+    //         .motor_type = MAIN_SPINDLE, 
+    //         .speed = ui->lineEdit_9->text().toDouble(),
+    //         .manual_acceleration = ui -> lineEdit_8->text().toDouble(),
+    //         .manual_pos = ui -> lineEdit_7->text().toDouble()
+    //     }
+    // });
+
+    COMMOND_GROUPS cmd;
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD;
+    cmd.motor_manual_control.manual_control_cmd = MOTOR_MANUAL_CONTROL::MANUAL_MOTOR_OFF;
+    cmd.motor_manual_control.motor_type = MAIN_SPINDLE;
+    cmd.motor_manual_control.speed = ui->lineEdit_9->text().toDouble();
+    cmd.motor_manual_control.manual_acceleration = ui->lineEdit_8->text().toDouble();
+    cmd.motor_manual_control.manual_pos = ui->lineEdit_7->text().toDouble();
+    buffer.push(cmd);
+    qDebug() << "主轴去使能-输出" << ui->lineEdit_9->text().toDouble() << ui->lineEdit_8->text().toDouble() << ui->lineEdit_7->text().toDouble();
 }
 // 主轴 --- 绝对移动
 void MainFlyer::on_pushButton_6_clicked()
@@ -348,16 +497,30 @@ void MainFlyer::on_pushButton_6_clicked()
     qDebug() << "主轴绝对移动" << ui->lineEdit_9->text() << ui->lineEdit_8->text() << ui->lineEdit_7->text();
 
 
-    buffer.push({
-        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
-        .motor_manual_control = {
-            .manual_control_cmd = MOTOR_MANUAL_CONTROL::ABSOLUTE_POSITION_MOTION,  //电机控制类型
-            .motor_type = MAIN_SPINDLE, 
-            .speed = ui->lineEdit_9->text().toDouble(),
-            .manual_acceleration = ui -> lineEdit_8->text().toDouble(),
-            .manual_pos = ui -> lineEdit_7->text().toDouble()
-        }
-    });
+    // resetLastButtonStyle();
+    // ui->pushButton_3->setStyleSheet("background-color: blue; color: white;");  
+    // lastPressedButton = ui->pushButton_3;
+
+    // buffer.push({
+    //     .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
+    //     .motor_manual_control = {
+    //         .manual_control_cmd = MOTOR_MANUAL_CONTROL::ABSOLUTE_POSITION_MOTION,  //电机控制类型
+    //         .motor_type = MAIN_SPINDLE, 
+    //         .speed = ui->lineEdit_9->text().toDouble(),
+    //         .manual_acceleration = ui -> lineEdit_8->text().toDouble(),
+    //         .manual_pos = ui -> lineEdit_7->text().toDouble()
+    //     }
+    // });
+    
+
+    COMMOND_GROUPS cmd;
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD;
+    cmd.motor_manual_control.manual_control_cmd = MOTOR_MANUAL_CONTROL::ABSOLUTE_POSITION_MOTION;
+    cmd.motor_manual_control.motor_type = MAIN_SPINDLE;
+    cmd.motor_manual_control.speed = ui->lineEdit_9->text().toDouble();
+    cmd.motor_manual_control.manual_acceleration = ui->lineEdit_8->text().toDouble();
+    cmd.motor_manual_control.manual_pos = ui->lineEdit_7->text().toDouble();
+    buffer.push(cmd);
 }
 
 

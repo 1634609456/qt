@@ -84,16 +84,70 @@ void BesidePass::executeOperation(int motorType, SpindleOperation operation, dou
         throw std::invalid_argument("Unknown SpindleOperation");
 }
 
-    buffer.push({
-        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
-        .motor_manual_control = {
-            .manual_control_cmd = cmdType,
-            .motor_type = static_cast<MOTOR_TYPE>(motorType),  
-            .speed = speed,
-            .manual_acceleration = acceleration,
-            .manual_pos = position
-        }
-    });
+    // buffer.push({
+    //     .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
+    //     .motor_manual_control = {
+    //         .manual_control_cmd = cmdType,
+    //         .motor_type = static_cast<MOTOR_TYPE>(motorType),  
+    //         .speed = speed,
+    //         .manual_acceleration = acceleration,
+    //         .manual_pos = position
+    //     }
+    // });
+
+        COMMOND_GROUPS cmd;
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD;
+    cmd.motor_manual_control.manual_control_cmd = cmdType;
+    cmd.motor_manual_control.motor_type = static_cast<MOTOR_TYPE>(motorType);
+    cmd.motor_manual_control.speed = speed;
+    cmd.motor_manual_control.manual_acceleration = acceleration;
+    cmd.motor_manual_control.manual_pos = position;
+    buffer.push(cmd);
+
+
+
+// // 确保变量声明正确
+//     MOTOR_MANUAL_CONTROL::MANUAL_CONTROL_CMD cmdType;    
+//     switch (operation) {
+//     case SpindleOperation::FORWARD_JOGING:
+//         cmdType = MOTOR_MANUAL_CONTROL::FORWARD_JOGING;
+//         break;
+//     case SpindleOperation::REVERSE_JOGING:
+//         cmdType = MOTOR_MANUAL_CONTROL::REVERSE_JOGING;
+//         break;
+//     case SpindleOperation::RETURN_TO_ZERO:
+//         cmdType = MOTOR_MANUAL_CONTROL::RETURN_TO_ZERO;
+//         break;
+//     case SpindleOperation::RELEASE_BRAKE:
+//         cmdType = MOTOR_MANUAL_CONTROL::RELEASE_BRAKE;
+//         break;
+//     case SpindleOperation::ENGAGE_BRAKE:
+//         cmdType = MOTOR_MANUAL_CONTROL::ENGAGE_BRAKE;
+//         break;
+//     case SpindleOperation::STOP:
+//         cmdType = MOTOR_MANUAL_CONTROL::STOP;
+//         break;
+//     case SpindleOperation::MANUAL_MOTOR_ON:
+//         cmdType = MOTOR_MANUAL_CONTROL::MANUAL_MOTOR_ON;
+//         break;
+//     case SpindleOperation::MANUAL_MOTOR_OFF:
+//         cmdType = MOTOR_MANUAL_CONTROL::MANUAL_MOTOR_OFF;
+//         break;
+//     case SpindleOperation::ABSOLUTE_POSITION_MOTION:
+//         cmdType = MOTOR_MANUAL_CONTROL::ABSOLUTE_POSITION_MOTION;
+//         break;
+//     default:
+//         throw std::invalid_argument("Unknown SpindleOperation");
+// }
+
+//     COMMOND_GROUPS cmd;
+//     cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD;
+//     cmd.motor_manual_control.manual_control_cmd = cmdType;
+//     cmd.motor_manual_control.motor_type = static_cast<MOTOR_TYPE>(motorType);
+//     cmd.motor_manual_control.speed = speed;
+//     cmd.motor_manual_control.manual_acceleration = acceleration;
+//     cmd.motor_manual_control.manual_pos = position;
+//     buffer.push(cmd);
 }
 
 // 获取电机的速度，加速度，位置
@@ -108,7 +162,6 @@ double BesidePass::getMotorNum(int motorType, QString model) const
     }
 
     
-    qDebug() << "getMotorSpeed called with motorType:" << motorType;
  
     if (model == "speed") {    
         num =  ShmManager::get_instance()
@@ -126,8 +179,6 @@ double BesidePass::getMotorNum(int motorType, QString model) const
                     ->feedback.motor_fdb[motorType]
                     .acceleration;
     }
-
-    qDebug() << "MotorType:" << motorType << "num:" << num;
 
     return  num;
 }

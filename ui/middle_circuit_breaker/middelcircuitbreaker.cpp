@@ -12,7 +12,6 @@ MiddelCircuitBreaker::MiddelCircuitBreaker(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::MiddelCircuitBreaker)
     ,buffer(nullptr) 
-
 {
     ui->setupUi(this);
 
@@ -35,7 +34,40 @@ MiddelCircuitBreaker::MiddelCircuitBreaker(QWidget *parent)
         ui->lineEdit_33->setText(QString::number(getMotorNum(EXTENDABLE_ROD_MOTOR, "position"), 'f'));
         ui->lineEdit_34->setText(QString::number(getMotorNum(EXTENDABLE_ROD_MOTOR, "position"), 'f'));
 
-        });
+
+            if (ShmManager::get_instance().get_data()) {
+            
+            // 中穿导向
+                if ((ShmManager::get_instance().get_data()->io.valve_output[1] >> 5) & 1) {
+                ui->pushButton_10->setStyleSheet("background-color: rgb(0, 255, 0);");
+            } else {
+                ui->pushButton_11->setStyleSheet("background-color: rgb(0, 255, 0);");
+            }
+
+            // 中穿定抓
+            if ((ShmManager::get_instance().get_data()->io.valve_output[1] >> 2) & 1) {
+                ui->pushButton_12->setStyleSheet("background-color: rgb(0, 255, 0);");
+            } else {
+                ui->pushButton_13->setStyleSheet("background-color: rgb(0, 255, 0);");
+            }
+
+            // 中穿动爪
+            if ((ShmManager::get_instance().get_data()->io.valve_output[1] >> 3) & 1) {
+                ui->pushButton_14->setStyleSheet("background-color: rgb(0, 255, 0);");
+            } else {
+                ui->pushButton_15->setStyleSheet("background-color: rgb(0, 255, 0);");
+            }
+
+            // 压线轮
+            if ((ShmManager::get_instance().get_data()->io.valve_output[4] >> 7) & 1) {
+                ui->pushButton_16->setStyleSheet("background-color: rgb(0, 255, 0);");
+            } else {
+                ui->pushButton_17->setStyleSheet("background-color: rgb(0, 255, 0);");
+            }
+        }
+
+    });
+
 
   connect(
       &ShmManager::get_instance(), &ShmManager::loaded, [this, timer](bool success) {
@@ -59,7 +91,7 @@ double MiddelCircuitBreaker::getMotorNum(int motorType, QString model) const
         return 0.0;
     }
     
-    qDebug() << "getMotorSpeed called with motorType:" << motorType;
+    // qDebug() << "getMotorSpeed called with motorType:" << motorType;
  
     if (model == "speed") {    
         num =  ShmManager::get_instance()
@@ -78,7 +110,7 @@ double MiddelCircuitBreaker::getMotorNum(int motorType, QString model) const
                     .acceleration;
     }
 
-    qDebug() << "MotorType:" << motorType << "num:" << num;
+    // qDebug() << "MotorType:" << motorType << "num:" << num;
 
     return  num;
 }
@@ -120,16 +152,16 @@ void MiddelCircuitBreaker::executeOperation(int motorType, SpindleOperation oper
         throw std::invalid_argument("Unknown SpindleOperation");
 }
 
-    buffer.push({
-        .cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,
-        .motor_manual_control = {
-            .manual_control_cmd = cmdType,
-            .motor_type = static_cast<MOTOR_TYPE>(motorType),  
-            .speed = speed,
-            .manual_acceleration = acceleration,
-            .manual_pos = position
-        }
-    });
+    COMMOND_GROUPS cmd;
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD;
+    cmd.motor_manual_control = {
+        cmdType,
+        static_cast<MOTOR_TYPE>(motorType),
+        speed,
+        acceleration,
+        position
+    };
+    buffer.push(cmd);
 }
 
 MiddelCircuitBreaker::~MiddelCircuitBreaker()
@@ -377,4 +409,114 @@ void MiddelCircuitBreaker::on_pushButton_54_clicked()
     executeOperation(EXTENDABLE_ROD_MOTOR, SpindleOperation::ABSOLUTE_POSITION_MOTION, ui->lineEdit_35->text().toDouble(), ui->lineEdit_36->text().toDouble(), ui->lineEdit_37->text().toDouble());
 }
 
+
+
+//中穿导向  -- 加紧
+void MiddelCircuitBreaker::on_pushButton_10_clicked()
+{
+    // CENTER_GUIDE
+
+        qDebug() << "中穿导向-加紧";
+
+        COMMOND_GROUPS cmd;
+        cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+        cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::CENTER_GUIDE;
+        cmd.io_manual_control.value = YKE_BOOL::YKE_FALSE;
+        buffer.push(cmd);
+
+}
+
+
+
+//中穿导向  --  松开
+void MiddelCircuitBreaker::on_pushButton_11_clicked()
+{
+    
+        qDebug() << "中穿导向-松开";
+
+        COMMOND_GROUPS cmd;
+        cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+        cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::CENTER_GUIDE;
+        cmd.io_manual_control.value = YKE_BOOL::YKE_TRUE;
+        buffer.push(cmd);
+}
+
+
+
+//中穿定抓  -- 夹紧
+void MiddelCircuitBreaker::on_pushButton_12_clicked()
+{
+    qDebug() << "中穿定抓-夹紧";
+
+    COMMOND_GROUPS cmd;
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+    cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::CENTER_FIXED_CLAW;
+    cmd.io_manual_control.value = YKE_BOOL::YKE_FALSE;
+    buffer.push(cmd);
+}
+
+
+//中穿定抓  -- 松开
+void MiddelCircuitBreaker::on_pushButton_13_clicked()
+{
+    qDebug() << "中穿定抓-松开";
+
+    COMMOND_GROUPS cmd;
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+    cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::CENTER_FIXED_CLAW;
+    cmd.io_manual_control.value = YKE_BOOL::YKE_TRUE;
+    buffer.push(cmd);
+}
+
+
+//中穿动爪  -- 夹紧
+void MiddelCircuitBreaker::on_pushButton_14_clicked()
+{
+    qDebug() << "中穿动爪-夹紧";
+
+    COMMOND_GROUPS cmd;
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+    cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::CENTER_ACTIVE_CLAW;
+    cmd.io_manual_control.value = YKE_BOOL::YKE_FALSE;
+    buffer.push(cmd);
+}
+
+
+//中穿动爪 -- 松开
+void MiddelCircuitBreaker::on_pushButton_15_clicked()
+{
+    qDebug() << "中穿动爪-松开";
+
+    COMMOND_GROUPS cmd;
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+    cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::CENTER_ACTIVE_CLAW;
+    cmd.io_manual_control.value = YKE_BOOL::YKE_TRUE;
+    buffer.push(cmd);
+}
+
+
+// 压线轮 -- 夹紧
+void MiddelCircuitBreaker::on_pushButton_16_clicked()
+{
+    qDebug() << "压线轮-夹紧";
+
+    COMMOND_GROUPS cmd;
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+    cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::WIRE_PRESS_WHEEL_EXTEND_RETRACT;
+    cmd.io_manual_control.value = YKE_BOOL::YKE_FALSE;
+    buffer.push(cmd);
+}
+
+
+// 压线轮 -- 松开
+void MiddelCircuitBreaker::on_pushButton_17_clicked()
+{
+    qDebug() << "压线轮-松开";
+    
+    COMMOND_GROUPS cmd;
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+    cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::WIRE_PRESS_WHEEL_EXTEND_RETRACT;
+    cmd.io_manual_control.value = YKE_BOOL::YKE_TRUE;
+    buffer.push(cmd);
+}
 

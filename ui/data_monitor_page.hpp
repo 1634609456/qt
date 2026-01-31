@@ -13,6 +13,7 @@
 #include "../src/util/config_manager.hpp"
 #include "../src/util/ring_buffer.hpp"
 #include "../src/util/shm_manager.hpp"
+#include "../src/shm_data.hpp"
 #include "ElaCheckBox.h"
 #include "ElaComboBox.h"
 #include "ElaLineEdit.h"
@@ -85,13 +86,14 @@ inline MotorCard::MotorCard(QWidget *parent) : QWidget(parent) {
 #define CONNECT_MOTOR_CMD(button, command)                                                                             \
     connect(button, &ElaPushButton::clicked,                                                                           \
             [this, speed_input, manual_acceleration_input, manual_pos_input, motor_type_combo]() {                     \
-                Q_EMIT send_cmd(                                                                                       \
-                    {.cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD,                                   \
-                     .motor_manual_control = {.manual_control_cmd = MOTOR_MANUAL_CONTROL::command,                     \
-                                              .motor_type = static_cast<MOTOR_TYPE>(motor_type_combo->currentIndex()), \
-                                              .speed = speed_input->text().toDouble(),                                 \
-                                              .manual_acceleration = manual_acceleration_input->text().toDouble(),     \
-                                              .manual_pos = manual_pos_input->text().toDouble()}});                    \
+                COMMOND_GROUPS cmd;\
+                cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MOTOR_MANUAL_CONTROL_CMD; \
+                cmd.motor_manual_control = {MOTOR_MANUAL_CONTROL::command,                     \
+                                            static_cast<MOTOR_TYPE>(motor_type_combo->currentIndex()), \
+                                            speed_input->text().toDouble(),                                 \
+                                            manual_acceleration_input->text().toDouble(),     \
+                                            manual_pos_input->text().toDouble()};                    \
+                Q_EMIT send_cmd(cmd);                    \
             })
 
         CONNECT_MOTOR_CMD(jog_forward, FORWARD_JOGING);
@@ -211,16 +213,18 @@ inline void DataMonitorPage::_init_content() {
                         manual_btn->setLightPressColor({72, 144, 198});
                     }
                     connect(auto_btn, &ElaPushButton::clicked, [this]() {
-                        COMMOND_GROUPS cmd{.cmd_type = COMMOND_GROUPS::CMD_TYPE::MODE_CMD,
-                                           .mode_fsm_event_type = MODE_EVENT_AUTO};
+                        COMMOND_GROUPS cmd;
+                        cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MODE_CMD;
+                        cmd.mode_fsm_event_type = MODE_EVENT_AUTO;
                         buffer_p_.push(cmd);
                         buffer_m_.push(cmd);
                         ElaMessageBar::success(ElaMessageBarType::Top, "提示", "自动模式命令下发成功！", 3000, this);
                     });
 
                     connect(manual_btn, &ElaPushButton::clicked, [this]() {
-                        COMMOND_GROUPS cmd{.cmd_type = COMMOND_GROUPS::CMD_TYPE::MODE_CMD,
-                                           .mode_fsm_event_type = MODE_EVENT_MANUAL};
+                        COMMOND_GROUPS cmd;
+                        cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MODE_CMD;
+                        cmd.mode_fsm_event_type = MODE_EVENT_MANUAL;
                         buffer_p_.push(cmd);
                         buffer_m_.push(cmd);
                         ElaMessageBar::success(ElaMessageBarType::Top, "提示", "手动模式命令下发成功！", 3000, this);
@@ -317,8 +321,9 @@ inline void DataMonitorPage::_init_content() {
                             else if (eventName == "急停清除")
                                 eventType = MAIN_EVENT_EME_STOP_CLEAR;
 
-                            COMMOND_GROUPS cmd{.cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD,
-                                               .main_fsm_event_type = eventType};
+                            COMMOND_GROUPS cmd;
+                            cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD;
+                            cmd.main_fsm_event_type = eventType;
                             buffer_p_.push(cmd);
                             buffer_m_.push(cmd);
 
@@ -358,10 +363,9 @@ inline void DataMonitorPage::_init_content() {
                             output_io = find_key_by_name(valve2name, io_combo->currentText());
                         }
 
-                        COMMOND_GROUPS cmd{
-                            .cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD,
-                            .io_manual_control = {.output_signal_name = output_io,
-                                                  .value = bit_check_->isChecked() ? YKE_TRUE : YKE_FALSE}};
+                        COMMOND_GROUPS cmd;
+                        cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+                        cmd.io_manual_control = {output_io, bit_check_->isChecked() ? YKE_TRUE : YKE_FALSE};
                         buffer_p_.push(cmd);
                         buffer_m_.push(cmd);
                         ElaMessageBar::success(ElaMessageBarType::Top, "提示", "IO使能命令下发成功！", 3000, this);
@@ -393,31 +397,61 @@ inline void DataMonitorPage::_init_content() {
 
             auto *automation_layout = new QGridLayout();
             {
-                #define CREATE_AUTOMATION_BUTTON(var, text, cmd_type)                              \
+                    #define CREATE_AUTOMATION_BUTTON(var, text, cmd_type_)                              \
                     auto *(var) = new ElaPushButton(text);                                        \
-                    connect(var, &ElaPushButton::clicked, [this]() {                              \
-                        ShmManager::get_instance().get_data()->machine_fsm_cmd.machine_fsm_cmd_view = cmd_type; \
+                     connect(var, &ElaPushButton::clicked, [this]() {              \
+                        COMMOND_GROUPS cmd;                                                    \
+                        cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::AUTO_COMMAND;                 \
+                        cmd.auto_event_type = cmd_type_;                                         \
+                        buffer_m_.push(cmd);                                                    \
                         ElaMessageBar::success(ElaMessageBarType::Top, "提示", QString("%1命令下发成功！").arg(text), 3000, this); \
-                    })
+                    })  
 
-                CREATE_AUTOMATION_BUTTON(edge_location_btn, "穿边线定位", MACHINE_FSM_CMD_TYPE::EDGE_PIERCE_LOCATION);
-                CREATE_AUTOMATION_BUTTON(edge_btn, "穿边线", MACHINE_FSM_CMD_TYPE::EDGE_PIERCE);
-                CREATE_AUTOMATION_BUTTON(center_location_btn, "穿中线定位", MACHINE_FSM_CMD_TYPE::CENTER_PIERCE_LOCATION);
-                CREATE_AUTOMATION_BUTTON(center_btn, "穿中线", MACHINE_FSM_CMD_TYPE::CENTER_PIERCE);
-                CREATE_AUTOMATION_BUTTON(oneclick_load, "一键上料", MACHINE_FSM_CMD_TYPE::ONE_CLICK_FEEDING);
-                CREATE_AUTOMATION_BUTTON(oneclick_unload, "一键下料", MACHINE_FSM_CMD_TYPE::ONE_CLICK_UNLOADING);
-                CREATE_AUTOMATION_BUTTON(unload_btn, "卸满轮上空轮", MACHINE_FSM_CMD_TYPE::LOAD_UNLOAD_WHEEL);
+                
+                // CREATE_AUTOMATION_BUTTON(edge_location_btn, "穿边线定位", AUTO_EVENT_TYPE::EDGE_PIERCE_LOCATION);
+                CREATE_AUTOMATION_BUTTON(edge_btn, "穿边", AUTO_EVENT_TYPE::EDGE_PIERCE);
+                // CREATE_AUTOMATION_BUTTON(center_location_btn, "穿中线定位", AUTO_EVENT_TYPE::CENTER_PIERCE_LOCATION);
+                CREATE_AUTOMATION_BUTTON(center_btn, "穿中", AUTO_EVENT_TYPE::CENTER_PIERCE);
+                CREATE_AUTOMATION_BUTTON(oneclick_load, "一键上料", AUTO_EVENT_TYPE::ONE_KEY_LOAD);
+                CREATE_AUTOMATION_BUTTON(oneclick_unload, "一键下料", AUTO_EVENT_TYPE::ONE_KEY_UNLOAD);
+                CREATE_AUTOMATION_BUTTON(unload_btn, "卸满轮", AUTO_EVENT_TYPE::UNLOAD_FULL_WHEEL);
+
+                
+                CREATE_AUTOMATION_BUTTON(seek_edge_hole, "边穿找孔", AUTO_EVENT_TYPE::SEEK_EDGE_HOLE);
+                CREATE_AUTOMATION_BUTTON(return_edge_hole, "边穿回孔", AUTO_EVENT_TYPE::RETURN_EDGE_HOLE);
+                CREATE_AUTOMATION_BUTTON(seek_center_hole, "中穿找孔", AUTO_EVENT_TYPE::SEEK_CENTER_HOLE);
+                CREATE_AUTOMATION_BUTTON(one_key_load, "一键上料", AUTO_EVENT_TYPE::ONE_KEY_LOAD);
+                CREATE_AUTOMATION_BUTTON(load_empty_wheel, "上空轮", AUTO_EVENT_TYPE::LOAD_EMPTY_WHEEL);
+                CREATE_AUTOMATION_BUTTON(unload_empty_wheel, "卸满轮", AUTO_EVENT_TYPE::UNLOAD_FULL_WHEEL);
+                CREATE_AUTOMATION_BUTTON(fused, "熔丝", AUTO_EVENT_TYPE::FUSED);
+                CREATE_AUTOMATION_BUTTON(test_center_motor_advance,    "测·中穿电机进", AUTO_EVENT_TYPE::TEST_CENTER_MOTOR_ADVANCE);
+                CREATE_AUTOMATION_BUTTON(test_rod_advance,             "测·撑杆进", AUTO_EVENT_TYPE::TEST_ROD_ADVANCE);
+                CREATE_AUTOMATION_BUTTON(test_rod_retreat,             "测·撑杆退", AUTO_EVENT_TYPE::TEST_ROD_RETREAC);
+                CREATE_AUTOMATION_BUTTON(test_wind_wheel_align,        "测·收线电机找棱",AUTO_EVENT_TYPE::TEST_WIND_WHEEL_ALIGN);
+
 
                 #undef CREATE_AUTOMATION_BUTTON
 
                 automation_layout->addWidget(new ElaText("自动化控制：", 16), 0, 0, 1, 2);
-                automation_layout->addWidget(edge_location_btn, 1, 0);
-                automation_layout->addWidget(edge_btn, 1, 1);
-                automation_layout->addWidget(center_location_btn, 2, 0);
+                automation_layout->addWidget(seek_edge_hole, 1, 0);
+                automation_layout->addWidget(return_edge_hole, 1, 1);
+                automation_layout->addWidget(seek_center_hole, 1, 2);
+                // automation_layout->addWidget(edge_location_btn, 1, 0);
+                automation_layout->addWidget(edge_btn, 2, 0);
+                // automation_layout->addWidget(center_location_btn, 2, 0);
                 automation_layout->addWidget(center_btn, 2, 1);
                 automation_layout->addWidget(oneclick_load, 3, 0);
                 automation_layout->addWidget(oneclick_unload, 3, 1);
-                automation_layout->addWidget(unload_btn, 4, 0, 1, 2);
+                automation_layout->addWidget(one_key_load, 4, 0);
+                automation_layout->addWidget(unload_btn, 4, 1);
+                automation_layout->addWidget(load_empty_wheel, 5, 0);
+                automation_layout->addWidget(unload_empty_wheel, 5, 1);
+                automation_layout->addWidget(fused, 5, 2);
+                automation_layout->addWidget(test_center_motor_advance, 6, 0);
+                automation_layout->addWidget(test_rod_advance, 6, 1);
+                automation_layout->addWidget(test_rod_retreat, 7, 0);
+                automation_layout->addWidget(test_wind_wheel_align, 7, 1);
+
             }
 
             control_layout->addLayout(state_machine_layout);

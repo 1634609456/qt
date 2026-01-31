@@ -42,7 +42,7 @@ public:
     }
 
     // 推送数据到环形缓冲区
-    bool push(const T::Type& item) {
+    bool push(const typename T::Type& item) {
         std::lock_guard<std::mutex> guard(lock_);
         size_t next_write_index = (buffer_->write_index + 1) % MAX_COMMANDS;
         if (next_write_index != buffer_->read_index) {
@@ -54,7 +54,7 @@ public:
     }
 
     // 从环形缓冲区读取数据
-    bool pop(T::Type& item) {
+    bool pop(typename T::Type& item) {
         std::lock_guard<std::mutex> guard(lock_);
         if (buffer_->read_index != buffer_->write_index) {
             item = buffer_->data[buffer_->read_index];
