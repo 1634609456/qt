@@ -53,6 +53,8 @@ public:
             // 原有基础测试数据（保留，简化调用：直接用this->get_data()，无需get_instance()）
             this->get_data()->feedback.wheel_fdb.master_meters_fdb = 1000.0;
             this->get_data()->feedback.wheel_fdb.feeding_length_ref = 99999.0;
+            this->get_data()->feedback.wheel_fdb.start_length_ref = 8388608.0 * 5;
+            this->get_data()->feedback.wheel_fdb.finish_length_ref = 8388608.0 * -5;
             shm_data_->io.valve_output[0] = 0b00000100;
 
             // ========== 极简版随机主轴/牵引速度（定时器实现） ==========
@@ -81,9 +83,9 @@ public:
                         this->get_data()->feedback.motor_fdb[main_torsion_idx].running_speed = main_torsion_speed;
                     }
                     // 调试日志
-                    qDebug() << "Dev随机数据 → 主轴速度：" << main_spindle_speed 
-                             << " 牵引速度：" << main_drawing_speed 
-                             << " 虚捻速度：" << main_torsion_speed;
+                    // qDebug() << "Dev随机数据 → 主轴速度：" << main_spindle_speed 
+                    //          << " 牵引速度：" << main_drawing_speed 
+                    //          << " 虚捻速度：" << main_torsion_speed;
                 });
                 // 启动定时器：每隔10ms生成一次随机数据
                 dev_test_timer_->start(10);

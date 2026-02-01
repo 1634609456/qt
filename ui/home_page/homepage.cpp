@@ -30,11 +30,24 @@ HomePage::HomePage(QWidget *parent)
             // // 模拟数据更新
             // auto data = rand() % 100;
 
+            // 主轴速度
             auto data = ShmManager::get_instance()
                             .get_data()
                             ->feedback.motor_fdb[MAIN_SPINDLE]
                             .running_speed;
             ui->label_5->setText(QString::number(data));
+
+            // 排线电机上限位显示
+            auto upper_limit = ShmManager::get_instance()
+                                 .get_data()
+                                 ->feedback.wheel_fdb.start_length_ref;
+            ui->label_8->setText(QString::number(upper_limit/8388608));
+
+            // 排线电机下限位显示
+            auto lower_limit = ShmManager::get_instance()
+                                 .get_data()
+                                 ->feedback.wheel_fdb.finish_length_ref;
+            ui->label_17->setText(QString::number(lower_limit/8388608));
           });
 
   connect(
@@ -114,17 +127,18 @@ void HomePage::updateUIBasedOnUserRole()
     ui->lineEdit_13->setEnabled(isOperator);
     ui->lineEdit_14->setEnabled(isOperator);
     ui->pushButton_5->setEnabled(isOperator);
+
+    //上限位修改
+    ui->lineEdit_15->setEnabled(isOperator);
+    ui->pushButton_6->setEnabled(isOperator);
+    //下限位修改
+    ui->lineEdit_16->setEnabled(isOperator);
+    ui->pushButton_7->setEnabled(isOperator);
 }
 
 // 运行
 void HomePage::on_pushButton_14_clicked()
 {
-    // buffer.push({
-    //     .cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD,
-    //     .main_fsm_event_type =   MAIN_EVENT_CONTROL_ON,        
-    // });
-
-
     COMMOND_GROUPS cmd;
     cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD;
     cmd.main_fsm_event_type = MAIN_EVENT_CONTROL_ON;
@@ -234,125 +248,9 @@ void HomePage::on_pushButton_18_clicked()
 
 
 
-// // 停止
-// void HomePage::on_pushButton_13_clicked()
-// {
-//     buffer.push({
-//         .cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD,
-//         .main_fsm_event_type =   MAIN_EVENT_CONTROL_OFF,        
-//     });
-
-//     qDebug() << "停止按钮";
-// }
-
-
-// // 急停
-// void HomePage::on_pushButton_15_clicked()
-// {
-//     buffer.push({
-//         .cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD,
-//         .main_fsm_event_type =   MAIN_EVENT_EME_STOP,        
-//     });
-
-//     qDebug() << "急停按钮";
-// }
-
-
-// // 急停清除
-// void HomePage::on_pushButton_16_clicked()
-// {
-//     buffer.push({
-//         .cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD,
-//         .main_fsm_event_type =   MAIN_EVENT_EME_STOP_CLEAR,        
-//     });
-
-//     qDebug() << "急停清除按钮";
-// }
-
-
-
-// // 错误
-// void HomePage::on_pushButton_9_clicked()
-// {
-//     buffer.push({
-//         .cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD,
-//         .main_fsm_event_type =   MAIN_EVENT_ERROR,        
-//     });
-
-//     qDebug() << "错误按钮";
-// }
-
-
-// // 错误复位
-// void HomePage::on_pushButton_10_clicked()
-// {
-//     buffer.push({
-//         .cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD,
-//         .main_fsm_event_type =   MAIN_EVENT_ERROR_RESET,        
-//     });
-
-//     qDebug() << "错误复位按钮";
-// }
-
-
-// // 上电
-// void HomePage::on_pushButton_11_clicked()
-// {
-//     buffer.push({
-//         .cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD,
-//         .main_fsm_event_type =   MAIN_EVENT_MOTOR_ON,        
-//     });
-
-//     qDebug() << "上电按钮";
-// }
-
-
-// // 下电
-// void HomePage::on_pushButton_12_clicked()
-// {
-//     buffer.push({
-//         .cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD,
-//         .main_fsm_event_type =   MAIN_EVENT_MOTOR_OFF,        
-//     });
-
-//     qDebug() << "下电按钮";
-//   }
-
-
-// // 自动
-// void HomePage::on_pushButton_17_clicked()
-// {
-//     buffer.push({
-//         .cmd_type = COMMOND_GROUPS::CMD_TYPE::MODE_CMD,
-//         .mode_fsm_event_type = MODE_EVENT_AUTO,        
-//     });
-
-//     qDebug() << "自动按钮";
-// }
-
-// // 手动
-// void HomePage::on_pushButton_18_clicked()
-// {
-//     buffer.push({
-//         .cmd_type = COMMOND_GROUPS::CMD_TYPE::MODE_CMD,
-//         .mode_fsm_event_type = MODE_EVENT_MANUAL,        
-//     });
-
-//     qDebug() << "手动按钮";
-// }
-
-
-
-
 //设定主轴速度-确认
 void HomePage::on_pushButton_clicked()
 {
-
-    //  if (!PasswordManager::showPasswordDialog(this)) {
-    //     QMessageBox::warning(this, tr("访问拒绝"), tr("密码错误，请重试！"));
-    //     return;
-    // }
-
 
     // 检查用户权限
     if (!UserManager::getInstance().isOperator()) {
@@ -370,10 +268,6 @@ void HomePage::on_pushButton_clicked()
 //撑杆退pid
 void HomePage::on_pushButton_2_clicked()
 {
-    // qDebug() << "撑杆退pid" << ui->lineEdit_3->text() << ui->lineEdit_4->text() << ui->lineEdit_6->text();
-    // ShmManager::get_instance().get_data()->pid = {.Kp_Rod_retreat = ui->lineEdit_3->text().toDouble(),
-    //                                              .Ki_Rod_retreat = ui->lineEdit_4->text().toDouble(),
-    //                                              .Kd_Rod_retreat = ui->lineEdit_6->text().toDouble()};
 
     PID pid_data;
     pid_data.Kp_Rod_retreat = ui->lineEdit_3->text().toDouble();
@@ -402,11 +296,7 @@ void HomePage::on_pushButton_3_clicked()
 //中穿进pid
 void HomePage::on_pushButton_4_clicked()
 {
-    // qDebug() << "中穿进pid" << ui->lineEdit_9->text() << ui->lineEdit_10->text() << ui->lineEdit_11->text();
-    // ShmManager::get_instance().get_data()->pid = {.Kp_center_advance = ui->lineEdit_9->text().toDouble(),
-    //                                              .Ki_center_advance = ui->lineEdit_10->text().toDouble(),
-                                                //  .Kd_center_advance = ui->lineEdit_11->text().toDouble()};
-
+   
     PID pid_data;
     pid_data.Kp_center_advance = ui->lineEdit_9->text().toDouble();
     pid_data.Ki_center_advance = ui->lineEdit_10->text().toDouble();
@@ -462,5 +352,29 @@ void HomePage::on_pushButton_19_clicked()
     
     // 更新界面控件状态
     updateUIBasedOnUserRole();
+}
+
+
+
+//上限位修改
+void HomePage::on_pushButton_6_clicked()
+{
+    // 检查用户权限
+    if (!UserManager::getInstance().isOperator()) {
+        QMessageBox::warning(this, tr("权限不足"), tr("只有操作员可以修改参数！"));
+        return;
+    }
+    ShmManager::get_instance().get_data()->feedback.wheel_fdb.start_length_ref = ui->lineEdit_15->text().toDouble()*8388608+ ui->label_8->text().toDouble()*8388608;
+}
+
+//下限位修改
+void HomePage::on_pushButton_7_clicked()
+{
+    // 检查用户权限
+    if (!UserManager::getInstance().isOperator()) {
+        QMessageBox::warning(this, tr("权限不足"), tr("只有操作员可以修改参数！"));
+        return;
+    }
+    ShmManager::get_instance().get_data()->feedback.wheel_fdb.finish_length_ref = ui->lineEdit_16->text().toDouble()*8388608+ ui->label_17->text().toDouble()*8388608;
 }
 

@@ -645,9 +645,9 @@ struct WHEEL_DATA {
     double total_meters_fdb;
     double master_meters_fdb;   //清零
     double slave_meters_fdb;
-    double start_length_ref;  
+    double start_length_ref;  // 排线电机上限位
     double feeding_length_ref;  // 单丝剩余长度
-    double finish_length_ref;
+    double finish_length_ref; // 排线电机下限位
 };
 
 // 配置状态
