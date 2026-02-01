@@ -103,6 +103,10 @@ private:
     ElaText* main_axis_avg_value_{nullptr};   // 主轴平均值数字
     ElaText* traction_avg_label_{nullptr};    // 牵引平均值文字标签
     ElaText* traction_avg_value_{nullptr};    // 牵引平均值数字
+    ElaText* avg_total_label_{nullptr};       // 整体平均值文字标签
+    ElaText* avg_total_value_{nullptr};       // 整体平均值数字
+
+    
 
 
     int sampling_time_{10};
@@ -300,7 +304,6 @@ inline void ChartPage::_init_content() {
 
 
 // ========== 捻距检测页面（参照单电机多参数修改，横坐标连续） ==========
-// ========== 捻距检测页面（修复后：横坐标连续） ==========
 {
     auto *center_widget = new QWidget(this);
     auto *center_layout = new QVBoxLayout(center_widget);
@@ -316,6 +319,7 @@ inline void ChartPage::_init_content() {
         connect(param_type_combo, &ElaComboBox::currentIndexChanged, [this](int) {
             mmsp_webview_->eval("clearChartData()");
             mmsp_datas_ = QJsonArray(); // 清空数据缓存
+            if (avg_total_value_) avg_total_value_->setText("--"); // 新增：重置平均数显示
             if (main_axis_avg_value_) main_axis_avg_value_->setText("--");
             if (traction_avg_value_) traction_avg_value_->setText("--");
         });
@@ -406,13 +410,17 @@ inline void ChartPage::_init_content() {
             }
 
             // 计算平均值（保留2位小数）
-            double main_axis_avg = 0.0, traction_avg = 0.0;
+            double main_axis_avg = 0.0, traction_avg = 0.0, avg_total = 0.0; // 新增：平均数变量
             if (count > 0) {
                 main_axis_avg = QString::number(main_axis_sum / count, 'f', 2).toDouble();
                 traction_avg = QString::number(traction_sum / count, 'f', 2).toDouble();
+                avg_total = QString::number(main_axis_avg / traction_avg, 'f', 2).toDouble(); // 计算两者平均数
             }
 
-            // 更新双行显示（增加空指针判断，避免崩溃）
+            // 更新显示（增加空指针判断，避免崩溃）
+            if (avg_total_value_) { // 新增：更新平均数显示
+                avg_total_value_->setText(QString::number(avg_total, 'f', 2));
+            }
             if (main_axis_avg_value_) {
                 main_axis_avg_value_->setText(QString::number(main_axis_avg, 'f', 2));
             }
@@ -441,7 +449,8 @@ inline void ChartPage::_init_content() {
                 update_chart_timer->start(sampling_time); // 统一用全局sampling_time（50ms）
             } else {
                 update_chart_timer->stop();
-                // 重置显示为--（增加空指针判断）
+                // 重置显示为--（增加空指针判断，新增平均数的重置）
+                if (avg_total_value_) avg_total_value_->setText("--");
                 if (main_axis_avg_value_) main_axis_avg_value_->setText("--");
                 if (traction_avg_value_) traction_avg_value_->setText("--");
             }
@@ -456,19 +465,19 @@ inline void ChartPage::_init_content() {
         // });
         // watchdog_timer->start(1000); // 1秒检查一次
 
-        // ========== 图表+统计栏布局（双行显示样式不变） ==========
+        // ========== 图表+统计栏布局（修改为三行显示：平均数、主轴、牵引） ==========
         auto *chart_stats_layout = new QHBoxLayout();
         
         // 图表区域（左侧85%）
         chart_mmsp_widget_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         chart_stats_layout->addWidget(chart_mmsp_widget_, 85);
         
-        // 统计栏（右侧15%：双行显示平均值）
+        // 统计栏（右侧15%：三行显示：平均数、主轴平均值、牵引平均值）
         {
             auto *stats_widget = new QWidget();
             auto *stats_layout = new QVBoxLayout(stats_widget);
             stats_layout->setContentsMargins(10, 10, 10, 10);
-            stats_layout->setSpacing(15);
+            stats_layout->setSpacing(10); // 调整间距适配三行布局
             stats_widget->setStyleSheet(R"(
                 background-color: #f5f5f5; 
                 border: 1px solid #ddd; 
@@ -476,7 +485,24 @@ inline void ChartPage::_init_content() {
             )");
             stats_widget->setMinimumWidth(140);
 
-            // 主轴平均值区域（双行）
+            // 1. 平均数区域（新增：最上方）
+            auto *avg_total_widget = new QWidget();
+            auto *avg_total_layout = new QVBoxLayout(avg_total_widget);
+            avg_total_layout->setContentsMargins(0, 0, 0, 0);
+            avg_total_layout->setSpacing(2);
+
+            avg_total_label_ = new ElaText("整体平均值", 10); // 平均数标签
+            avg_total_label_->setAlignment(Qt::AlignCenter);
+            avg_total_layout->addWidget(avg_total_label_);
+
+            avg_total_value_ = new ElaText("--", 16); // 平均数数值显示
+            avg_total_value_->setAlignment(Qt::AlignCenter);
+            avg_total_value_->setStyleSheet("color: #FF9800; font-weight: bold;"); // 橙色区分
+            avg_total_layout->addWidget(avg_total_value_);
+
+            stats_layout->addWidget(avg_total_widget);
+
+            // 2. 主轴平均值区域（中间）
             auto *main_axis_widget = new QWidget();
             auto *main_axis_layout = new QVBoxLayout(main_axis_widget);
             main_axis_layout->setContentsMargins(0, 0, 0, 0);
@@ -493,7 +519,7 @@ inline void ChartPage::_init_content() {
 
             stats_layout->addWidget(main_axis_widget);
 
-            // 牵引平均值区域（双行）
+            // 3. 牵引平均值区域（最下方）
             auto *traction_widget = new QWidget();
             auto *traction_layout = new QVBoxLayout(traction_widget);
             traction_layout->setContentsMargins(0, 0, 0, 0);

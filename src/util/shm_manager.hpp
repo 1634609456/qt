@@ -63,10 +63,13 @@ public:
                 connect(dev_test_timer_, &QTimer::timeout, this, [this]() {
                     // 1. 初始化随机种子（基于当前时间）
                     srand(static_cast<unsigned int>(time(nullptr)));
-                    // 2. 生成 -100 ~ 100 的随机速度
-                    double main_spindle_speed = (rand() % 200) - 100.0;
-                    double main_drawing_speed = (rand() % 200) - 100.0;
-                    double main_torsion_speed = (rand() % 200) - 100.0;
+                    // 2. 生成随机速度
+                    // 主轴转速：2000 - 5000
+                    double main_spindle_speed = 2000.0 + (rand() % 3001);   // 3001 = 5000 - 2000 + 1，确保包含5000
+                    // 拉丝速度：500 - 2000
+                    double main_drawing_speed = 500.0 + (rand() % 1501);    // 1501 = 2000 - 500 + 1
+                    // 扭转速度：2000 - 5000
+                    double main_torsion_speed = 2000.0 + (rand() % 3001);
                     // 3. 赋值给对应电机（MAIN_SPINDLE=主轴，MAIN_DRAWING=牵引）
                     const int main_spindle_idx = MAIN_SPINDLE;
                     const int main_drawing_idx = MAIN_DRAWING;
