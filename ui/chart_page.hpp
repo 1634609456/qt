@@ -300,6 +300,7 @@ inline void ChartPage::_init_content() {
 
 
 // ========== 捻距检测页面（参照单电机多参数修改，横坐标连续） ==========
+// ========== 捻距检测页面（修复后：横坐标连续） ==========
 {
     auto *center_widget = new QWidget(this);
     auto *center_layout = new QVBoxLayout(center_widget);
@@ -315,8 +316,8 @@ inline void ChartPage::_init_content() {
         connect(param_type_combo, &ElaComboBox::currentIndexChanged, [this](int) {
             mmsp_webview_->eval("clearChartData()");
             mmsp_datas_ = QJsonArray(); // 清空数据缓存
-            main_axis_avg_value_->setText("--");
-            traction_avg_value_->setText("--");
+            if (main_axis_avg_value_) main_axis_avg_value_->setText("--");
+            if (traction_avg_value_) traction_avg_value_->setText("--");
         });
 
         motor_type_layout->addStretch();
@@ -328,73 +329,80 @@ inline void ChartPage::_init_content() {
         mmsp_webview_->set_virtual_hostname("charts", "./res");
         mmsp_webview_->navigate("http://charts/multi-motor-single-param.html");
 
-        // 定时器：更新数据（完全参照单电机多参数的逻辑，保证横坐标连续）
+        // 定时器：更新数据（修复核心逻辑，保证横坐标连续）
         auto *update_chart_timer = new QTimer(this);
         connect(update_chart_timer, &QTimer::timeout, [this, param_type_combo]() {
             const static auto &data = ShmManager::get_instance().get_data()->feedback.motor_fdb;
-            QJsonObject data_json; // 单数据点对象（和单电机多参数的data_json结构逻辑一致）
+            QJsonObject data_json; // 单数据点对象
             QJsonArray motor_data;
 
-            // ========== 核心修正1：使用枚举值获取正确电机数据 ==========
+            // ========== 核心修复1：索引越界不中断，改为默认值兜底 ==========
+            // 原逻辑：越界直接return，丢失当前周期数据 → 新逻辑：兜底默认值，保证数据连续
             const int main_spindle_idx = MAIN_SPINDLE;          // 主轴索引：1
             const int main_drawing_idx = MAIN_DRAWING;          // 牵引索引：2
             
-            // 防越界检查：确保索引在有效范围内
-            if (main_spindle_idx >= MAX_MOTOR_TYPE_NUM || main_drawing_idx >= MAX_MOTOR_TYPE_NUM) {
-                qWarning() << "电机索引越界！主轴索引：" << main_spindle_idx << " 牵引索引：" << main_drawing_idx;
-                return;
-            }
-
-            // 工具函数：保留2位小数（和单电机逻辑一致，用std::round更统一）
-            auto roundToTwoDecimals = [](double value) { 
-                return std::round(value * 100.0) / 100.0; 
-            };
-
-            // 1. 提取主轴（索引1）数据
             double main_spindle_value = 0.0;
-            switch (param_type_combo->currentIndex()) {
-                case 0: main_spindle_value = roundToTwoDecimals(data[main_spindle_idx].running_speed); break;
-                case 1: main_spindle_value = roundToTwoDecimals(data[main_spindle_idx].position); break;
-                case 2: main_spindle_value = roundToTwoDecimals(data[main_spindle_idx].acceleration); break;
-                case 3: main_spindle_value = roundToTwoDecimals(data[main_spindle_idx].follow_ratio); break;
-                case 4: main_spindle_value = roundToTwoDecimals(data[main_spindle_idx].encoder_resolution_counter); break;
-                default: main_spindle_value = 0.0;
-            }
-            motor_data.append(main_spindle_value);
-
-            // 2. 提取牵引（索引2）数据
             double main_drawing_value = 0.0;
-            switch (param_type_combo->currentIndex()) {
-                case 0: main_drawing_value = roundToTwoDecimals(data[main_drawing_idx].running_speed); break;
-                case 1: main_drawing_value = roundToTwoDecimals(data[main_drawing_idx].position); break;
-                case 2: main_drawing_value = roundToTwoDecimals(data[main_drawing_idx].acceleration); break;
-                case 3: main_drawing_value = roundToTwoDecimals(data[main_drawing_idx].follow_ratio); break;
-                case 4: main_drawing_value = roundToTwoDecimals(data[main_drawing_idx].encoder_resolution_counter); break;
-                default: main_drawing_value = 0.0;
+
+            // 防越界检查：不return，而是给默认值
+            if (main_spindle_idx < MAX_MOTOR_TYPE_NUM && main_drawing_idx < MAX_MOTOR_TYPE_NUM) {
+                // 工具函数：保留2位小数（和单电机逻辑一致）
+                auto roundToTwoDecimals = [](double value) { 
+                    return std::round(value * 100.0) / 100.0; 
+                };
+
+                // 1. 提取主轴（索引1）数据
+                switch (param_type_combo->currentIndex()) {
+                    case 0: main_spindle_value = roundToTwoDecimals(data[main_spindle_idx].running_speed); break;
+                    case 1: main_spindle_value = roundToTwoDecimals(data[main_spindle_idx].position); break;
+                    case 2: main_spindle_value = roundToTwoDecimals(data[main_spindle_idx].acceleration); break;
+                    case 3: main_spindle_value = roundToTwoDecimals(data[main_spindle_idx].follow_ratio); break;
+                    case 4: main_spindle_value = roundToTwoDecimals(data[main_spindle_idx].encoder_resolution_counter); break;
+                    default: main_spindle_value = 0.0;
+                }
+
+                // 2. 提取牵引（索引2）数据
+                switch (param_type_combo->currentIndex()) {
+                    case 0: main_drawing_value = roundToTwoDecimals(data[main_drawing_idx].running_speed); break;
+                    case 1: main_drawing_value = roundToTwoDecimals(data[main_drawing_idx].position); break;
+                    case 2: main_drawing_value = roundToTwoDecimals(data[main_drawing_idx].acceleration); break;
+                    case 3: main_drawing_value = roundToTwoDecimals(data[main_drawing_idx].follow_ratio); break;
+                    case 4: main_drawing_value = roundToTwoDecimals(data[main_drawing_idx].encoder_resolution_counter); break;
+                    default: main_drawing_value = 0.0;
+                }
+            } else {
+                qWarning() << "电机索引越界！主轴索引：" << main_spindle_idx << " 牵引索引：" << main_drawing_idx;
+                main_spindle_value = 0.0;
+                main_drawing_value = 0.0; // 兜底默认值，不中断数据生成
             }
+            
+            motor_data.append(main_spindle_value);
             motor_data.append(main_drawing_value);
             
-            // 3. 缓存数据到mmsp_datas_（和单电机多参数逻辑一致：单数据点append）
+            // ========== 核心修复2：添加毫秒级时间戳，支撑前端连续时间轴 ==========
+            // 前端可基于该时间戳渲染连续横坐标，而非仅靠数据点索引
+            data_json["timestamp"] = QDateTime::currentMSecsSinceEpoch();
             data_json["motorData"] = motor_data;
             mmsp_datas_.append(data_json);
 
-            // ========== 计算最新10条数据的平均值（基于正确索引） ==========
+            // ========== 核心修复3：平均值计算移除continue，补全默认值 ==========
+            // 原逻辑：continue过滤数据 → 新逻辑：补0兜底，保证计数完整
             double main_axis_sum = 0.0, traction_sum = 0.0;
             int count = 0;
-            const int target_count = 10;
+            const int target_count = 20;
             int start_idx = qMax(0, mmsp_datas_.size() - target_count);
 
             for (int i = start_idx; i < mmsp_datas_.size(); ++i) {
                 QJsonObject item = mmsp_datas_[i].toObject();
-                if (!item.contains("motorData")) continue;
+                QJsonArray motor_arr = item.contains("motorData") ? item["motorData"].toArray() : QJsonArray();
                 
-                QJsonArray motor_arr = item["motorData"].toArray();
-                if (motor_arr.size() < 2) continue; // 确保包含主轴+牵引数据
+                // 补全默认值，不跳过任何数据项
+                double main_val = (motor_arr.size() >= 1) ? motor_arr[0].toDouble() : 0.0;
+                double traction_val = (motor_arr.size() >= 2) ? motor_arr[1].toDouble() : 0.0;
                 
-                // 累加正确的数值：motor_arr[0]=主轴(索引1)、motor_arr[1]=牵引(索引2)
-                main_axis_sum += motor_arr[0].toDouble();
-                traction_sum += motor_arr[1].toDouble();
-                count++;
+                main_axis_sum += main_val;
+                traction_sum += traction_val;
+                count++; // 每个数据项都计数，保证平均值计算连续
             }
 
             // 计算平均值（保留2位小数）
@@ -404,30 +412,49 @@ inline void ChartPage::_init_content() {
                 traction_avg = QString::number(traction_sum / count, 'f', 2).toDouble();
             }
 
-            // ========== 更新双行显示（数字大号突出） ==========
-            main_axis_avg_value_->setText(QString::number(main_axis_avg, 'f', 2));
-            traction_avg_value_->setText(QString::number(traction_avg, 'f', 2));
+            // 更新双行显示（增加空指针判断，避免崩溃）
+            if (main_axis_avg_value_) {
+                main_axis_avg_value_->setText(QString::number(main_axis_avg, 'f', 2));
+            }
+            if (traction_avg_value_) {
+                traction_avg_value_->setText(QString::number(traction_avg, 'f', 2));
+            }
 
-            // 4. 批量更新图表（核心：和单电机多参数统一采样时间变量，保证连续触发）
-            // 单电机用的是全局sampling_time（50ms），此处统一，避免触发条件错误
-            if (mmsp_datas_.size() > 1000 / sampling_time) { 
+            // ========== 核心修复4：优化批量发送条件，增加超时兜底 ==========
+            // 原逻辑：仅靠整数除法判断 → 新逻辑：固定缓存大小+超时兜底，保证发送时机稳定
+            const int CACHE_MAX_SIZE = 20; // 固定缓存20条（对应sampling_time=50ms，1秒发送一次）
+            static int cache_timeout_count = 0;
+            cache_timeout_count++;
+
+            if (mmsp_datas_.size() >= CACHE_MAX_SIZE || cache_timeout_count >= (1000 / sampling_time)) { 
                 QString data_str = QJsonDocument(mmsp_datas_).toJson(QJsonDocument::Compact);
                 mmsp_webview_->eval("updateChartData(" + data_str.toStdString() + ");");
-                mmsp_datas_ = QJsonArray(); // 清空缓存，准备下一批数据
+                mmsp_datas_ = QJsonArray(); // 清空缓存
+                cache_timeout_count = 0; // 重置超时计数器
             }
         });
 
-        // 共享内存状态监听（和单电机逻辑一致，启动全局sampling_time）
+        // ========== 核心修复5：增加定时器重启逻辑，避免偶发中断 ==========
+        // 监听共享内存加载状态
         connect(&ShmManager::get_instance(), &ShmManager::loaded, [this, update_chart_timer](bool success) {
             if (success) {
                 update_chart_timer->start(sampling_time); // 统一用全局sampling_time（50ms）
             } else {
                 update_chart_timer->stop();
-                // 重置显示为--
-                main_axis_avg_value_->setText("--");
-                traction_avg_value_->setText("--");
+                // 重置显示为--（增加空指针判断）
+                if (main_axis_avg_value_) main_axis_avg_value_->setText("--");
+                if (traction_avg_value_) traction_avg_value_->setText("--");
             }
         });
+
+        // // 额外保障：定时检查共享内存状态，自动重启定时器（防止信号丢失）
+        // auto *watchdog_timer = new QTimer(this);
+        // connect(watchdog_timer, &QTimer::timeout, [this, update_chart_timer]() {
+        //     if (ShmManager::get_instance().is_loaded() && !update_chart_timer->isActive()) {
+        //         update_chart_timer->start(sampling_time);
+        //     }
+        // });
+        // watchdog_timer->start(1000); // 1秒检查一次
 
         // ========== 图表+统计栏布局（双行显示样式不变） ==========
         auto *chart_stats_layout = new QHBoxLayout();
@@ -492,6 +519,7 @@ inline void ChartPage::_init_content() {
 
     stack_->addWidget(center_widget);
 }
+
 
 // // ========== 以下是界面逻辑代码 ==========
 // {

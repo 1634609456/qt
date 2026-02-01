@@ -66,16 +66,21 @@ public:
                     // 2. 生成 -100 ~ 100 的随机速度
                     double main_spindle_speed = (rand() % 200) - 100.0;
                     double main_drawing_speed = (rand() % 200) - 100.0;
+                    double main_torsion_speed = (rand() % 200) - 100.0;
                     // 3. 赋值给对应电机（MAIN_SPINDLE=主轴，MAIN_DRAWING=牵引）
                     const int main_spindle_idx = MAIN_SPINDLE;
                     const int main_drawing_idx = MAIN_DRAWING;
+                    const int main_torsion_idx = MAIN_TORSION;
                     // 防越界检查
                     if (main_spindle_idx < MAX_MOTOR_TYPE_NUM && main_drawing_idx < MAX_MOTOR_TYPE_NUM) {
                         this->get_data()->feedback.motor_fdb[main_spindle_idx].running_speed = main_spindle_speed;
                         this->get_data()->feedback.motor_fdb[main_drawing_idx].running_speed = main_drawing_speed;
+                        this->get_data()->feedback.motor_fdb[main_torsion_idx].running_speed = main_torsion_speed;
                     }
                     // 调试日志
-                    qDebug() << "Dev随机数据 → 主轴速度：" << main_spindle_speed << " 牵引速度：" << main_drawing_speed;
+                    qDebug() << "Dev随机数据 → 主轴速度：" << main_spindle_speed 
+                             << " 牵引速度：" << main_drawing_speed 
+                             << " 虚捻速度：" << main_torsion_speed;
                 });
                 // 启动定时器：每隔10ms生成一次随机数据
                 dev_test_timer_->start(10);
