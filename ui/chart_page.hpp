@@ -96,6 +96,16 @@ private:
 
     RingBuffer<RINGBUFFER> buffer_p_;  
     RingBuffer<RINGBUFFER> buffer_m_;  
+
+
+    // 平均值显示控件（双行：文字+大号数字）
+    ElaText* main_axis_avg_label_{nullptr};   // 主轴平均值文字标签
+    ElaText* main_axis_avg_value_{nullptr};   // 主轴平均值数字
+    ElaText* traction_avg_label_{nullptr};    // 牵引平均值文字标签
+    ElaText* traction_avg_value_{nullptr};    // 牵引平均值数字
+
+
+    int sampling_time_{10};
 };
 
 inline ChartPage::ChartPage(QWidget *parent)
@@ -288,20 +298,25 @@ inline void ChartPage::_init_content() {
     //     stack_->addWidget(center_widget);
     // }
 
-// 修改后的捻距检测页面代码段
+
+// ========== 捻距检测页面（参照单电机多参数修改，横坐标连续） ==========
 {
     auto *center_widget = new QWidget(this);
     auto *center_layout = new QVBoxLayout(center_widget);
+    center_layout->setContentsMargins(10, 10, 10, 10);
+    center_layout->setSpacing(10);
     
     {
         auto *motor_type_layout = new QHBoxLayout();
-
         auto *param_type_combo = new ElaComboBox(this);
         param_type_combo->addItems({"速度", "位置", "加速度", "跟随比率", "编码器分辨率计数器"});
        
+        // 下拉框切换：清空图表+重置平均值（和单电机逻辑一致）
         connect(param_type_combo, &ElaComboBox::currentIndexChanged, [this](int) {
             mmsp_webview_->eval("clearChartData()");
-            mmsp_datas_ = QJsonArray();
+            mmsp_datas_ = QJsonArray(); // 清空数据缓存
+            main_axis_avg_value_->setText("--");
+            traction_avg_value_->setText("--");
         });
 
         motor_type_layout->addStretch();
@@ -309,106 +324,704 @@ inline void ChartPage::_init_content() {
         motor_type_layout->addWidget(param_type_combo);
         motor_type_layout->addStretch();
 
+        // 加载图表页面（和单电机逻辑一致）
         mmsp_webview_->set_virtual_hostname("charts", "./res");
         mmsp_webview_->navigate("http://charts/multi-motor-single-param.html");
 
+        // 定时器：更新数据（完全参照单电机多参数的逻辑，保证横坐标连续）
         auto *update_chart_timer = new QTimer(this);
         connect(update_chart_timer, &QTimer::timeout, [this, param_type_combo]() {
             const static auto &data = ShmManager::get_instance().get_data()->feedback.motor_fdb;
-            QJsonObject data_json;
+            QJsonObject data_json; // 单数据点对象（和单电机多参数的data_json结构逻辑一致）
             QJsonArray motor_data;
 
-            // 只选择主轴和牵引电机的数据（索引0和1）
-            for (int i = 0; i < 2; ++i) { // 只循环前两个电机
-                auto roundToTwoDecimals = [](double value) { return QString::number(value, 'f', 2).toDouble(); };
-                switch (param_type_combo->currentIndex()) {
-                    case 0:
-                        motor_data.append(roundToTwoDecimals(data[i].running_speed));
-                        break;
-                    case 1:
-                        motor_data.append(roundToTwoDecimals(data[i].position));
-                        break;
-                    case 2:
-                        motor_data.append(roundToTwoDecimals(data[i].acceleration));
-                        break;
-                    case 3:
-                        motor_data.append(roundToTwoDecimals(data[i].follow_ratio));
-                        break;
-                    case 4:
-                        motor_data.append(roundToTwoDecimals(data[i].encoder_resolution_counter));
-                        break;
-                    default:
-                        break;
-                }
-            }
+            // ========== 核心修正1：使用枚举值获取正确电机数据 ==========
+            const int main_spindle_idx = MAIN_SPINDLE;          // 主轴索引：1
+            const int main_drawing_idx = MAIN_DRAWING;          // 牵引索引：2
             
+            // 防越界检查：确保索引在有效范围内
+            if (main_spindle_idx >= MAX_MOTOR_TYPE_NUM || main_drawing_idx >= MAX_MOTOR_TYPE_NUM) {
+                qWarning() << "电机索引越界！主轴索引：" << main_spindle_idx << " 牵引索引：" << main_drawing_idx;
+                return;
+            }
+
+            // 工具函数：保留2位小数（和单电机逻辑一致，用std::round更统一）
+            auto roundToTwoDecimals = [](double value) { 
+                return std::round(value * 100.0) / 100.0; 
+            };
+
+            // 1. 提取主轴（索引1）数据
+            double main_spindle_value = 0.0;
+            switch (param_type_combo->currentIndex()) {
+                case 0: main_spindle_value = roundToTwoDecimals(data[main_spindle_idx].running_speed); break;
+                case 1: main_spindle_value = roundToTwoDecimals(data[main_spindle_idx].position); break;
+                case 2: main_spindle_value = roundToTwoDecimals(data[main_spindle_idx].acceleration); break;
+                case 3: main_spindle_value = roundToTwoDecimals(data[main_spindle_idx].follow_ratio); break;
+                case 4: main_spindle_value = roundToTwoDecimals(data[main_spindle_idx].encoder_resolution_counter); break;
+                default: main_spindle_value = 0.0;
+            }
+            motor_data.append(main_spindle_value);
+
+            // 2. 提取牵引（索引2）数据
+            double main_drawing_value = 0.0;
+            switch (param_type_combo->currentIndex()) {
+                case 0: main_drawing_value = roundToTwoDecimals(data[main_drawing_idx].running_speed); break;
+                case 1: main_drawing_value = roundToTwoDecimals(data[main_drawing_idx].position); break;
+                case 2: main_drawing_value = roundToTwoDecimals(data[main_drawing_idx].acceleration); break;
+                case 3: main_drawing_value = roundToTwoDecimals(data[main_drawing_idx].follow_ratio); break;
+                case 4: main_drawing_value = roundToTwoDecimals(data[main_drawing_idx].encoder_resolution_counter); break;
+                default: main_drawing_value = 0.0;
+            }
+            motor_data.append(main_drawing_value);
+            
+            // 3. 缓存数据到mmsp_datas_（和单电机多参数逻辑一致：单数据点append）
             data_json["motorData"] = motor_data;
             mmsp_datas_.append(data_json);
 
-            if (mmsp_datas_.size() > 1000 / sampling_time) {
-                QString data_str{QJsonDocument(mmsp_datas_).toJson(QJsonDocument::Compact)};
+            // ========== 计算最新10条数据的平均值（基于正确索引） ==========
+            double main_axis_sum = 0.0, traction_sum = 0.0;
+            int count = 0;
+            const int target_count = 10;
+            int start_idx = qMax(0, mmsp_datas_.size() - target_count);
+
+            for (int i = start_idx; i < mmsp_datas_.size(); ++i) {
+                QJsonObject item = mmsp_datas_[i].toObject();
+                if (!item.contains("motorData")) continue;
+                
+                QJsonArray motor_arr = item["motorData"].toArray();
+                if (motor_arr.size() < 2) continue; // 确保包含主轴+牵引数据
+                
+                // 累加正确的数值：motor_arr[0]=主轴(索引1)、motor_arr[1]=牵引(索引2)
+                main_axis_sum += motor_arr[0].toDouble();
+                traction_sum += motor_arr[1].toDouble();
+                count++;
+            }
+
+            // 计算平均值（保留2位小数）
+            double main_axis_avg = 0.0, traction_avg = 0.0;
+            if (count > 0) {
+                main_axis_avg = QString::number(main_axis_sum / count, 'f', 2).toDouble();
+                traction_avg = QString::number(traction_sum / count, 'f', 2).toDouble();
+            }
+
+            // ========== 更新双行显示（数字大号突出） ==========
+            main_axis_avg_value_->setText(QString::number(main_axis_avg, 'f', 2));
+            traction_avg_value_->setText(QString::number(traction_avg, 'f', 2));
+
+            // 4. 批量更新图表（核心：和单电机多参数统一采样时间变量，保证连续触发）
+            // 单电机用的是全局sampling_time（50ms），此处统一，避免触发条件错误
+            if (mmsp_datas_.size() > 1000 / sampling_time) { 
+                QString data_str = QJsonDocument(mmsp_datas_).toJson(QJsonDocument::Compact);
                 mmsp_webview_->eval("updateChartData(" + data_str.toStdString() + ");");
-                mmsp_datas_ = QJsonArray();
+                mmsp_datas_ = QJsonArray(); // 清空缓存，准备下一批数据
             }
         });
 
-        connect(&ShmManager::get_instance(), &ShmManager::loaded, [update_chart_timer, this](bool success) {
+        // 共享内存状态监听（和单电机逻辑一致，启动全局sampling_time）
+        connect(&ShmManager::get_instance(), &ShmManager::loaded, [this, update_chart_timer](bool success) {
             if (success) {
-                update_chart_timer->start(sampling_time);
+                update_chart_timer->start(sampling_time); // 统一用全局sampling_time（50ms）
             } else {
                 update_chart_timer->stop();
+                // 重置显示为--
+                main_axis_avg_value_->setText("--");
+                traction_avg_value_->setText("--");
             }
         });
 
-        // ========== 关键修改1：调整图表和统计栏的占比，突出图表 ==========
+        // ========== 图表+统计栏布局（双行显示样式不变） ==========
         auto *chart_stats_layout = new QHBoxLayout();
         
-        // 图表组件（左侧，占85%宽度，原70%）
+        // 图表区域（左侧85%）
         chart_mmsp_widget_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        chart_stats_layout->addWidget(chart_mmsp_widget_, 85); // 提高图表占比到85%
+        chart_stats_layout->addWidget(chart_mmsp_widget_, 85);
         
-        // 添加统计信息显示区域（右侧，占15%宽度，原30%）
+        // 统计栏（右侧15%：双行显示平均值）
         {
             auto *stats_widget = new QWidget();
             auto *stats_layout = new QVBoxLayout(stats_widget);
-            // 关键修改2：减小统计栏内边距，从10px改为5px，让整体更紧凑
-            stats_layout->setContentsMargins(5, 5, 5, 5); 
-            stats_layout->setSpacing(5); // 减小控件之间的间距
-            
-            // 主轴统计信息
-            auto *main_axis_stats = new QWidget();
-            auto *main_axis_layout = new QVBoxLayout(main_axis_stats);
-            main_axis_layout->setSpacing(2); // 进一步缩小内部间距
-            // 关键修改3：缩小字体大小，从12px改为10px
-            main_axis_layout->addWidget(new ElaText("主轴最大值:", 10));
-            main_axis_layout->addWidget(new ElaText("主轴最小值:", 10));
-            stats_layout->addWidget(main_axis_stats);
-            
-            // 牵引统计信息
-            auto *traction_stats = new QWidget();
-            auto *traction_layout = new QVBoxLayout(traction_stats);
-            traction_layout->setSpacing(2); // 进一步缩小内部间距
-            // 关键修改4：缩小字体大小，从12px改为10px
-            traction_layout->addWidget(new ElaText("牵引最大值:", 10));
-            traction_layout->addWidget(new ElaText("牵引最小值:", 10));
-            stats_layout->addWidget(traction_stats);
-            
-            // 设置样式：减小内边距，保持基础样式
-            stats_widget->setStyleSheet("background-color: #f5f5f5; border: 1px solid #ddd; padding: 5px;");
-            // 关键修改5：设置统计栏最小宽度，避免过窄导致文字挤压
-            stats_widget->setMinimumWidth(100); 
-            
-            // 统计组件放到水平布局右侧（占15%）
-            chart_stats_layout->addWidget(stats_widget, 15); // 降低统计栏占比到15%
+            stats_layout->setContentsMargins(10, 10, 10, 10);
+            stats_layout->setSpacing(15);
+            stats_widget->setStyleSheet(R"(
+                background-color: #f5f5f5; 
+                border: 1px solid #ddd; 
+                border-radius: 4px;
+            )");
+            stats_widget->setMinimumWidth(140);
+
+            // 主轴平均值区域（双行）
+            auto *main_axis_widget = new QWidget();
+            auto *main_axis_layout = new QVBoxLayout(main_axis_widget);
+            main_axis_layout->setContentsMargins(0, 0, 0, 0);
+            main_axis_layout->setSpacing(2);
+
+            main_axis_avg_label_ = new ElaText("主轴平均值", 10);
+            main_axis_avg_label_->setAlignment(Qt::AlignCenter);
+            main_axis_layout->addWidget(main_axis_avg_label_);
+
+            main_axis_avg_value_ = new ElaText("--", 16);
+            main_axis_avg_value_->setAlignment(Qt::AlignCenter);
+            main_axis_avg_value_->setStyleSheet("color: #2196F3; font-weight: bold;");
+            main_axis_layout->addWidget(main_axis_avg_value_);
+
+            stats_layout->addWidget(main_axis_widget);
+
+            // 牵引平均值区域（双行）
+            auto *traction_widget = new QWidget();
+            auto *traction_layout = new QVBoxLayout(traction_widget);
+            traction_layout->setContentsMargins(0, 0, 0, 0);
+            traction_layout->setSpacing(2);
+
+            traction_avg_label_ = new ElaText("牵引平均值", 10);
+            traction_avg_label_->setAlignment(Qt::AlignCenter);
+            traction_layout->addWidget(traction_avg_label_);
+
+            traction_avg_value_ = new ElaText("--", 16);
+            traction_avg_value_->setAlignment(Qt::AlignCenter);
+            traction_avg_value_->setStyleSheet("color: #4CAF50; font-weight: bold;");
+            traction_layout->addWidget(traction_avg_value_);
+
+            stats_layout->addWidget(traction_widget);
+
+            chart_stats_layout->addWidget(stats_widget, 15);
         }
 
-        // 垂直布局：先加参数选择栏，再加「图表+统计」水平布局
         center_layout->addLayout(motor_type_layout);
-        center_layout->addLayout(chart_stats_layout); // 替换原来的addWidget(chart_mmsp_widget_)
+        center_layout->addLayout(chart_stats_layout);
     }
 
     stack_->addWidget(center_widget);
 }
+
+// // ========== 以下是界面逻辑代码 ==========
+// {
+//     {
+//     auto *center_widget = new QWidget(this);
+//     auto *center_layout = new QVBoxLayout(center_widget);
+//     center_layout->setContentsMargins(10, 10, 10, 10);
+//     center_layout->setSpacing(10);
+    
+//     {
+//         auto *motor_type_layout = new QHBoxLayout();
+//         auto *param_type_combo = new ElaComboBox(this);
+//         param_type_combo->addItems({"速度", "位置", "加速度", "跟随比率", "编码器分辨率计数器"});
+       
+//         // 下拉框切换：清空图表+重置平均值
+//         connect(param_type_combo, &ElaComboBox::currentIndexChanged, [this](int) {
+//             mmsp_webview_->eval("clearChartData()");
+//             mmsp_datas_ = QJsonArray();
+//             main_axis_avg_value_->setText("--");
+//             traction_avg_value_->setText("--");
+//         });
+
+//         motor_type_layout->addStretch();
+//         motor_type_layout->addWidget(new ElaText("捻距检测：", 16));
+//         motor_type_layout->addWidget(param_type_combo);
+//         motor_type_layout->addStretch();
+
+//         // 加载图表页面
+//         mmsp_webview_->set_virtual_hostname("charts", "./res");
+//         mmsp_webview_->navigate("http://charts/multi-motor-single-param.html");
+
+//         // 定时器：更新数据+计算正确的平均值
+//         auto *update_chart_timer = new QTimer(this);
+//         connect(update_chart_timer, &QTimer::timeout, [this, param_type_combo]() {
+//             const static auto &data = ShmManager::get_instance().get_data()->feedback.motor_fdb;
+//             QJsonObject data_json;
+//             QJsonArray motor_data;
+
+//             // ========== 核心修正：使用枚举值获取正确电机数据 ==========
+//             // 定义正确的电机索引（从枚举来，避免硬编码）
+//             const int main_spindle_idx = MAIN_SPINDLE;          // 主轴索引：1
+//             const int main_drawing_idx = MAIN_DRAWING;          // 牵引索引：2
+            
+//             // 防越界检查：确保索引在有效范围内
+//             if (main_spindle_idx >= MAX_MOTOR_TYPE_NUM || main_drawing_idx >= MAX_MOTOR_TYPE_NUM) {
+//                 qWarning() << "电机索引越界！主轴索引：" << main_spindle_idx << " 牵引索引：" << main_drawing_idx;
+//                 return;
+//             }
+
+//             // 工具函数：保留2位小数
+//             auto roundToTwoDecimals = [](double value) { 
+//                 return QString::number(value, 'f', 2).toDouble(); 
+//             };
+
+//             // 1. 提取主轴（索引1）数据
+//             double main_spindle_value = 0.0;
+//             switch (param_type_combo->currentIndex()) {
+//                 case 0: main_spindle_value = roundToTwoDecimals(data[main_spindle_idx].running_speed); break;
+//                 case 1: main_spindle_value = roundToTwoDecimals(data[main_spindle_idx].position); break;
+//                 case 2: main_spindle_value = roundToTwoDecimals(data[main_spindle_idx].acceleration); break;
+//                 case 3: main_spindle_value = roundToTwoDecimals(data[main_spindle_idx].follow_ratio); break;
+//                 case 4: main_spindle_value = roundToTwoDecimals(data[main_spindle_idx].encoder_resolution_counter); break;
+//                 default: main_spindle_value = 0.0;
+//             }
+//             motor_data.append(main_spindle_value);
+
+//             // 2. 提取牵引（索引2）数据
+//             double main_drawing_value = 0.0;
+//             switch (param_type_combo->currentIndex()) {
+//                 case 0: main_drawing_value = roundToTwoDecimals(data[main_drawing_idx].running_speed); break;
+//                 case 1: main_drawing_value = roundToTwoDecimals(data[main_drawing_idx].position); break;
+//                 case 2: main_drawing_value = roundToTwoDecimals(data[main_drawing_idx].acceleration); break;
+//                 case 3: main_drawing_value = roundToTwoDecimals(data[main_drawing_idx].follow_ratio); break;
+//                 case 4: main_drawing_value = roundToTwoDecimals(data[main_drawing_idx].encoder_resolution_counter); break;
+//                 default: main_drawing_value = 0.0;
+//             }
+//             motor_data.append(main_drawing_value);
+            
+//             // 3. 缓存数据到mmsp_datas_
+//             data_json["motorData"] = motor_data;
+//             mmsp_datas_.append(data_json);
+
+//             // ========== 计算最新10条数据的平均值（基于正确索引） ==========
+//             double main_axis_sum = 0.0, traction_sum = 0.0;
+//             int count = 0;
+//             const int target_count = 10;
+//             int start_idx = qMax(0, mmsp_datas_.size() - target_count);
+
+//             for (int i = start_idx; i < mmsp_datas_.size(); ++i) {
+//                 QJsonObject item = mmsp_datas_[i].toObject();
+//                 if (!item.contains("motorData")) continue;
+                
+//                 QJsonArray motor_arr = item["motorData"].toArray();
+//                 if (motor_arr.size() < 2) continue; // 确保包含主轴+牵引数据
+                
+//                 // 累加正确的数值：motor_arr[0]=主轴(索引1)、motor_arr[1]=牵引(索引2)
+//                 main_axis_sum += motor_arr[0].toDouble();
+//                 traction_sum += motor_arr[1].toDouble();
+//                 count++;
+//             }
+
+//             // 计算平均值（保留2位小数）
+//             double main_axis_avg = 0.0, traction_avg = 0.0;
+//             if (count > 0) {
+//                 main_axis_avg = QString::number(main_axis_sum / count, 'f', 2).toDouble();
+//                 traction_avg = QString::number(traction_sum / count, 'f', 2).toDouble();
+//             }
+
+//             // ========== 更新双行显示（数字大号突出） ==========
+//             main_axis_avg_value_->setText(QString::number(main_axis_avg, 'f', 2));
+//             traction_avg_value_->setText(QString::number(traction_avg, 'f', 2));
+
+//             // 4. 批量更新图表
+//             if (mmsp_datas_.size() > 1000 / sampling_time_) {
+//                 QString data_str = QJsonDocument(mmsp_datas_).toJson(QJsonDocument::Compact);
+//                 mmsp_webview_->eval("updateChartData(" + data_str.toStdString() + ");");
+//                 mmsp_datas_ = QJsonArray();
+//             }
+//         });
+
+//         // 共享内存状态监听
+//         connect(&ShmManager::get_instance(), &ShmManager::loaded, [this, update_chart_timer](bool success) {
+//             if (success) {
+//                 update_chart_timer->start(sampling_time_);
+//             } else {
+//                 update_chart_timer->stop();
+//                 // 重置显示为--
+//                 main_axis_avg_value_->setText("--");
+//                 traction_avg_value_->setText("--");
+//             }
+//         });
+
+//         // ========== 图表+统计栏布局（双行显示样式不变） ==========
+//         auto *chart_stats_layout = new QHBoxLayout();
+        
+//         // 图表区域（左侧85%）
+//         chart_mmsp_widget_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+//         chart_stats_layout->addWidget(chart_mmsp_widget_, 85);
+        
+//         // 统计栏（右侧15%：双行显示平均值）
+//         {
+//             auto *stats_widget = new QWidget();
+//             auto *stats_layout = new QVBoxLayout(stats_widget);
+//             stats_layout->setContentsMargins(10, 10, 10, 10);
+//             stats_layout->setSpacing(15);
+//             stats_widget->setStyleSheet(R"(
+//                 background-color: #f5f5f5; 
+//                 border: 1px solid #ddd; 
+//                 border-radius: 4px;
+//             )");
+//             stats_widget->setMinimumWidth(140);
+
+//             // 主轴平均值区域（双行）
+//             auto *main_axis_widget = new QWidget();
+//             auto *main_axis_layout = new QVBoxLayout(main_axis_widget);
+//             main_axis_layout->setContentsMargins(0, 0, 0, 0);
+//             main_axis_layout->setSpacing(2);
+
+//             main_axis_avg_label_ = new ElaText("主轴平均值", 10);
+//             main_axis_avg_label_->setAlignment(Qt::AlignCenter);
+//             main_axis_layout->addWidget(main_axis_avg_label_);
+
+//             main_axis_avg_value_ = new ElaText("--", 16);
+//             main_axis_avg_value_->setAlignment(Qt::AlignCenter);
+//             main_axis_avg_value_->setStyleSheet("color: #2196F3; font-weight: bold;");
+//             main_axis_layout->addWidget(main_axis_avg_value_);
+
+//             stats_layout->addWidget(main_axis_widget);
+
+//             // 牵引平均值区域（双行）
+//             auto *traction_widget = new QWidget();
+//             auto *traction_layout = new QVBoxLayout(traction_widget);
+//             traction_layout->setContentsMargins(0, 0, 0, 0);
+//             traction_layout->setSpacing(2);
+
+//             traction_avg_label_ = new ElaText("牵引平均值", 10);
+//             traction_avg_label_->setAlignment(Qt::AlignCenter);
+//             traction_layout->addWidget(traction_avg_label_);
+
+//             traction_avg_value_ = new ElaText("--", 16);
+//             traction_avg_value_->setAlignment(Qt::AlignCenter);
+//             traction_avg_value_->setStyleSheet("color: #4CAF50; font-weight: bold;");
+//             traction_layout->addWidget(traction_avg_value_);
+
+//             stats_layout->addWidget(traction_widget);
+
+//             chart_stats_layout->addWidget(stats_widget, 15);
+//         }
+
+//         center_layout->addLayout(motor_type_layout);
+//         center_layout->addLayout(chart_stats_layout);
+//     }
+
+//     stack_->addWidget(center_widget);
+// }
+// }
+// {
+//     auto *center_widget = new QWidget(this);
+//     auto *center_layout = new QVBoxLayout(center_widget);
+    
+//     {
+//         auto *motor_type_layout = new QHBoxLayout();
+
+//         auto *param_type_combo = new ElaComboBox(this);
+//         param_type_combo->addItems({"速度", "位置", "加速度", "跟随比率", "编码器分辨率计数器"});
+       
+//         connect(param_type_combo, &ElaComboBox::currentIndexChanged, [this](int) {
+//             mmsp_webview_->eval("clearChartData()");
+//             mmsp_datas_ = QJsonArray();
+//         });
+
+//         motor_type_layout->addStretch();
+//         motor_type_layout->addWidget(new ElaText("捻距检测：", 16));
+//         motor_type_layout->addWidget(param_type_combo);
+//         motor_type_layout->addStretch();
+
+//         mmsp_webview_->set_virtual_hostname("charts", "./res");
+//         mmsp_webview_->navigate("http://charts/multi-motor-single-param.html");
+
+//         auto *update_chart_timer = new QTimer(this);
+//         connect(update_chart_timer, &QTimer::timeout, [this, param_type_combo]() {
+//             const static auto &data = ShmManager::get_instance().get_data()->feedback.motor_fdb;
+//             QJsonObject data_json;
+//             QJsonArray motor_data;
+
+//             // 1. 采集主轴/牵引电机数据（原有逻辑）
+//             for (int i = 1; i < 3; ++i) { // 只循环前两个电机
+//                 auto roundToTwoDecimals = [](double value) { return QString::number(value, 'f', 2).toDouble(); };
+//                 switch (param_type_combo->currentIndex()) {
+//                     case 0:
+//                         motor_data.append(roundToTwoDecimals(data[i].running_speed));
+//                         break;
+//                     case 1:
+//                         motor_data.append(roundToTwoDecimals(data[i].position));
+//                         break;
+//                     case 2:
+//                         motor_data.append(roundToTwoDecimals(data[i].acceleration));
+//                         break;
+//                     case 3:
+//                         motor_data.append(roundToTwoDecimals(data[i].follow_ratio));
+//                         break;
+//                     case 4:
+//                         motor_data.append(roundToTwoDecimals(data[i].encoder_resolution_counter));
+//                         break;
+//                     default:
+//                         break;
+//                 }
+//             }
+            
+//             // 2. 缓存数据到mmsp_datas_（原有逻辑）
+//             data_json["motorData"] = motor_data;
+//             mmsp_datas_.append(data_json);
+
+//             // ========== 核心：计算最新10条数据的平均值 ==========
+//             double main_axis_sum = 0.0;    // 主轴数值累加
+//             double traction_sum = 0.0;    // 牵引数值累加
+//             int count = 0;                // 实际参与计算的数据条数
+//             const int target_count = 10;  // 取最新10条数据
+
+//             // 确定起始索引（不足10条则取全部）
+//             int start_idx = qMax(0, mmsp_datas_.size() - target_count);
+
+//             // 遍历最新数据累加
+//             for (int i = start_idx; i < mmsp_datas_.size(); ++i) {
+//                 QJsonObject item = mmsp_datas_[i].toObject();
+//                 if (!item.contains("motorData")) continue; // 跳过无效数据
+                
+//                 QJsonArray motor_arr = item["motorData"].toArray();
+//                 if (motor_arr.size() < 2) continue; // 确保包含主轴+牵引数据
+                
+//                 main_axis_sum += motor_arr[0].toDouble();
+//                 traction_sum += motor_arr[1].toDouble();
+//                 count++;
+//             }
+
+//             // 计算平均值（避免除以0，保留2位小数）
+//             double main_axis_avg = 0.0;
+//             double traction_avg = 0.0;
+//             if (count > 0) {
+//                 main_axis_avg = QString::number(main_axis_sum / count, 'f', 2).toDouble();
+//                 traction_avg = QString::number(traction_sum / count, 'f', 2).toDouble();
+//             }
+
+//             // ========== 关键：更新统计栏的平均值/最小值显示 ==========
+//             // 更新主轴平均值
+//             main_axis_avg_text_->setText(QString("主轴平均值: %1").arg(main_axis_avg, 0, 'f', 2));
+//             // 主轴最小值暂显示为--（若有最小值计算逻辑可替换）
+//             main_axis_min_text_->setText("主轴最小值: --");
+//             // 更新牵引平均值
+//             traction_axis_avg_text_->setText(QString("牵引平均值: %1").arg(traction_avg, 0, 'f', 2));
+//             // 牵引最小值暂显示为--（若有最小值计算逻辑可替换）
+//             traction_axis_min_text_->setText("牵引最小值: --");
+
+//             // 3. 批量更新图表（原有逻辑）
+//             if (mmsp_datas_.size() > 1000 / sampling_time) {
+//                 QString data_str{QJsonDocument(mmsp_datas_).toJson(QJsonDocument::Compact)};
+//                 mmsp_webview_->eval("updateChartData(" + data_str.toStdString() + ");");
+//                 mmsp_datas_ = QJsonArray();
+//             }
+//         });
+
+//         connect(&ShmManager::get_instance(), &ShmManager::loaded, [update_chart_timer, this](bool success) {
+//             if (success) {
+//                 update_chart_timer->start(sampling_time);
+//             } else {
+//                 update_chart_timer->stop();
+//                 // 停止定时器后，重置统计栏显示
+//                 main_axis_avg_text_->setText("主轴平均值: --");
+//                 main_axis_min_text_->setText("主轴最小值: --");
+//                 traction_axis_avg_text_->setText("牵引平均值: --");
+//                 traction_axis_min_text_->setText("牵引最小值: --");
+//             }
+//         });
+
+//         // ========== 图表+统计栏布局（修改为显示平均值） ==========
+//         auto *chart_stats_layout = new QHBoxLayout();
+        
+//         // 图表组件（左侧85%）
+//         chart_mmsp_widget_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+//         chart_stats_layout->addWidget(chart_mmsp_widget_, 85);
+        
+//         // 统计栏（右侧15%）
+//         {
+//             auto *stats_widget = new QWidget();
+//             auto *stats_layout = new QVBoxLayout(stats_widget);
+//             stats_layout->setContentsMargins(5, 5, 5, 5); 
+//             stats_layout->setSpacing(5); 
+            
+//             // 主轴统计区域（平均值+最小值）
+//             auto *main_axis_stats = new QWidget();
+//             auto *main_axis_layout = new QVBoxLayout(main_axis_stats);
+//             main_axis_layout->setSpacing(2);
+            
+//             // 主轴平均值文本（保存指针到类成员）
+//             main_axis_avg_text_ = new ElaText("主轴平均值: --", 10);
+//             main_axis_layout->addWidget(main_axis_avg_text_);
+//             // 主轴最小值文本（保存指针到类成员）
+//             main_axis_min_text_ = new ElaText("主轴最小值: --", 10);
+//             main_axis_layout->addWidget(main_axis_min_text_);
+//             stats_layout->addWidget(main_axis_stats);
+            
+//             // 牵引统计区域（平均值+最小值）
+//             auto *traction_stats = new QWidget();
+//             auto *traction_layout = new QVBoxLayout(traction_stats);
+//             traction_layout->setSpacing(2);
+            
+//             // 牵引平均值文本（保存指针到类成员）
+//             traction_axis_avg_text_ = new ElaText("牵引平均值: --", 10);
+//             traction_layout->addWidget(traction_axis_avg_text_);
+//             // 牵引最小值文本（保存指针到类成员）
+//             traction_axis_min_text_ = new ElaText("牵引最小值: --", 10);
+//             traction_layout->addWidget(traction_axis_min_text_);
+//             stats_layout->addWidget(traction_stats);
+            
+//             // 统计栏样式
+//             stats_widget->setStyleSheet("background-color: #f5f5f5; border: 1px solid #ddd; padding: 5px;");
+//             stats_widget->setMinimumWidth(120); // 加宽适配平均值显示
+//             chart_stats_layout->addWidget(stats_widget, 15);
+//         }
+
+//         // 组装布局
+//         center_layout->addLayout(motor_type_layout);
+//         center_layout->addLayout(chart_stats_layout);
+//     }
+
+//     stack_->addWidget(center_widget);
+// }
+// 修改后的捻距检测页面代码段
+// {
+//     auto *center_widget = new QWidget(this);
+//     auto *center_layout = new QVBoxLayout(center_widget);
+    
+//     {
+//         auto *motor_type_layout = new QHBoxLayout();
+
+//         auto *param_type_combo = new ElaComboBox(this);
+//         param_type_combo->addItems({"速度", "位置", "加速度", "跟随比率", "编码器分辨率计数器"});
+       
+//         connect(param_type_combo, &ElaComboBox::currentIndexChanged, [this](int) {
+//             mmsp_webview_->eval("clearChartData()");
+//             mmsp_datas_ = QJsonArray();
+//         });
+
+//         motor_type_layout->addStretch();
+//         motor_type_layout->addWidget(new ElaText("捻距检测：", 16));
+//         motor_type_layout->addWidget(param_type_combo);
+//         motor_type_layout->addStretch();
+
+//         mmsp_webview_->set_virtual_hostname("charts", "./res");
+//         mmsp_webview_->navigate("http://charts/multi-motor-single-param.html");
+
+//         auto *update_chart_timer = new QTimer(this);
+//         connect(update_chart_timer, &QTimer::timeout, [this, param_type_combo]() {
+//             const static auto &data = ShmManager::get_instance().get_data()->feedback.motor_fdb;
+//             QJsonObject data_json;
+//             QJsonArray motor_data;
+
+//             // 只选择主轴和牵引电机的数据（索引0和1）
+//             for (int i = 0; i < 2; ++i) { // 只循环前两个电机
+//                 auto roundToTwoDecimals = [](double value) { return QString::number(value, 'f', 2).toDouble(); };
+//                 switch (param_type_combo->currentIndex()) {
+//                     case 0:
+//                         motor_data.append(roundToTwoDecimals(data[i].running_speed));
+//                         break;
+//                     case 1:
+//                         motor_data.append(roundToTwoDecimals(data[i].position));
+//                         break;
+//                     case 2:
+//                         motor_data.append(roundToTwoDecimals(data[i].acceleration));
+//                         break;
+//                     case 3:
+//                         motor_data.append(roundToTwoDecimals(data[i].follow_ratio));
+//                         break;
+//                     case 4:
+//                         motor_data.append(roundToTwoDecimals(data[i].encoder_resolution_counter));
+//                         break;
+//                     default:
+//                         break;
+//                 }
+//             }
+            
+//             data_json["motorData"] = motor_data;
+//             mmsp_datas_.append(data_json);
+
+
+
+//                         // ========== 新增：计算最新10个数据的平均数 ==========
+//             // 1. 定义变量：累加值、计数、平均数
+//             double main_axis_sum = 0.0;    // 主轴数值累加
+//             double traction_sum = 0.0;    // 牵引数值累加
+//             int count = 0;                // 实际参与计算的数据条数
+//             const int target_count = 10;  // 目标取最新10条
+
+//             // 2. 确定起始索引：取最后10条（不足10条则取全部）
+//             int start_idx = qMax(0, mmsp_datas_.size() - target_count);
+
+//             // 3. 遍历最新的10条数据，累加主轴/牵引数值
+//             for (int i = start_idx; i < mmsp_datas_.size(); ++i) {
+//                 QJsonObject item = mmsp_datas_[i].toObject();
+//                 if (!item.contains("motorData")) continue; // 跳过无效数据
+                
+//                 QJsonArray motor_arr = item["motorData"].toArray();
+//                 if (motor_arr.size() < 2) continue; // 确保包含主轴+牵引数据
+                
+//                 main_axis_sum += motor_arr[0].toDouble();
+//                 traction_sum += motor_arr[1].toDouble();
+//                 count++;
+//             }
+
+//             // 4. 计算平均数（避免除以0）
+//             double main_axis_avg = 0.0;
+//             double traction_avg = 0.0;
+//             if (count > 0) {
+//                 main_axis_avg = main_axis_sum / count;
+//                 traction_avg = traction_sum / count;
+//                 // 保留2位小数（和原始数据格式一致）
+//                 main_axis_avg = QString::number(main_axis_avg, 'f', 2).toDouble();
+//                 traction_avg = QString::number(traction_avg, 'f', 2).toDouble();
+//             }
+
+//             // 【可选】打印平均数（调试用），也可赋值给文本控件显示
+//             qDebug() << "最新" << count << "条数据平均数：";
+//             qDebug() << "主轴平均数：" << main_axis_avg;
+//             qDebug() << "牵引平均数：" << traction_avg;
+
+
+//             if (mmsp_datas_.size() > 1000 / sampling_time) {
+//                 QString data_str{QJsonDocument(mmsp_datas_).toJson(QJsonDocument::Compact)};
+//                 mmsp_webview_->eval("updateChartData(" + data_str.toStdString() + ");");
+//                 mmsp_datas_ = QJsonArray();
+//             }
+//         });
+
+//         connect(&ShmManager::get_instance(), &ShmManager::loaded, [update_chart_timer, this](bool success) {
+//             if (success) {
+//                 update_chart_timer->start(sampling_time);
+//             } else {
+//                 update_chart_timer->stop();
+//             }
+//         });
+
+//         // ========== 关键修改1：调整图表和统计栏的占比，突出图表 ==========
+//         auto *chart_stats_layout = new QHBoxLayout();
+        
+//         // 图表组件（左侧，占85%宽度，原70%）
+//         chart_mmsp_widget_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+//         chart_stats_layout->addWidget(chart_mmsp_widget_, 85); // 提高图表占比到85%
+        
+//         // 添加统计信息显示区域（右侧，占15%宽度，原30%）
+//         {
+//             auto *stats_widget = new QWidget();
+//             auto *stats_layout = new QVBoxLayout(stats_widget);
+//             // 关键修改2：减小统计栏内边距，从10px改为5px，让整体更紧凑
+//             stats_layout->setContentsMargins(5, 5, 5, 5); 
+//             stats_layout->setSpacing(5); // 减小控件之间的间距
+            
+//             // 主轴统计信息
+//             auto *main_axis_stats = new QWidget();
+//             auto *main_axis_layout = new QVBoxLayout(main_axis_stats);
+//             main_axis_layout->setSpacing(2); // 进一步缩小内部间距
+//             // 关键修改3：缩小字体大小，从12px改为10px
+//             main_axis_layout->addWidget(new ElaText("主轴最大值:", 10));
+//             main_axis_layout->addWidget(new ElaText("主轴最小值:", 10));
+//             stats_layout->addWidget(main_axis_stats);
+            
+//             // 牵引统计信息
+//             auto *traction_stats = new QWidget();
+//             auto *traction_layout = new QVBoxLayout(traction_stats);
+//             traction_layout->setSpacing(2); // 进一步缩小内部间距
+//             // 关键修改4：缩小字体大小，从12px改为10px
+//             traction_layout->addWidget(new ElaText("牵引最大值:", 10));
+//             traction_layout->addWidget(new ElaText("牵引最小值:", 10));
+//             stats_layout->addWidget(traction_stats);
+            
+//             // 设置样式：减小内边距，保持基础样式
+//             stats_widget->setStyleSheet("background-color: #f5f5f5; border: 1px solid #ddd; padding: 5px;");
+//             // 关键修改5：设置统计栏最小宽度，避免过窄导致文字挤压
+//             stats_widget->setMinimumWidth(100); 
+            
+//             // 统计组件放到水平布局右侧（占15%）
+//             chart_stats_layout->addWidget(stats_widget, 15); // 降低统计栏占比到15%
+//         }
+
+//         // 垂直布局：先加参数选择栏，再加「图表+统计」水平布局
+//         center_layout->addLayout(motor_type_layout);
+//         center_layout->addLayout(chart_stats_layout); // 替换原来的addWidget(chart_mmsp_widget_)
+//     }
+
+//     stack_->addWidget(center_widget);
+// }
 
 
     {
@@ -459,6 +1072,7 @@ inline void ChartPage::_init_content() {
     }
 
 
+  // ... existing code ...
     {
         auto *center_widget = new QWidget(this);
         auto *center_layout = new QVBoxLayout(center_widget);

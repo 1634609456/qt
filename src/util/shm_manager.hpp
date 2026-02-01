@@ -6,7 +6,9 @@
 #include <QTextStream>
 #include <cstddef>
 #include <random>  
-
+#include <QDebug>
+#include <QTimer>  // 新增：必须包含QTimer头文件，否则编译报错
+#include <ctime>   // 新增：time(nullptr)需要这个头文件
 
 #include "NoSys.h"
 #include "../shm_data.hpp"
@@ -23,7 +25,8 @@ public:
         return shm_data_;
     }
 
-    void load_shared_memory() {
+    // ========== 关键修改：去掉前面的 ShmManager:: ==========
+    void load_shared_memory() {  // 原错误写法：void ShmManager::load_shared_memory()
         int ret{0};
         UINT64 addr;
         ret = YKM_SysLoadLib(0);
@@ -47,93 +50,63 @@ public:
 
         if (dev == "dev") {
             shm_data_ = new ShareMemData{};
-            // shm_data_->io.digital_output[0] = 0b10101010;
-            // shm_data_->io.valve_output[1] = 0b00100000;
-            ShmManager::get_instance().get_data()->feedback.wheel_fdb.master_meters_fdb = 1000.0;
-            ShmManager::get_instance().get_data()->feedback.wheel_fdb.feeding_length_ref = 99999.0;
-
-            // 设置 主轴电机随时间变化的速度 在+-100的随机数
-            std::random_device rd;  // 用于获取种子
-            std::mt19937 gen(rd()); // 使用梅森旋转算法生成伪随机数
-            std::uniform_real_distribution<> dis(-100.0, 100.0); // 生成-100到100之间的随机浮点数
-
-            // 使用当前时间作为基准来设置不同电机的速度
-            auto currentTime = std::chrono::high_resolution_clock::now();
-            auto timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
-                currentTime.time_since_epoch()).count();
-
-            for (int i = 0; i < 20; ++i) {
-                // 基于时间和索引生成不同的速度值
-                double baseSpeed = 100.0 * sin(timestamp * 0.001 + i * 0.5);  // 使用正弦波
-                shm_data_->feedback.motor_fdb[i].running_speed = baseSpeed;
-            }
-            
+            // 原有基础测试数据（保留，简化调用：直接用this->get_data()，无需get_instance()）
+            this->get_data()->feedback.wheel_fdb.master_meters_fdb = 1000.0;
+            this->get_data()->feedback.wheel_fdb.feeding_length_ref = 99999.0;
             shm_data_->io.valve_output[0] = 0b00000100;
+
+            // ========== 极简版随机主轴/牵引速度（定时器实现） ==========
+            // 避免重复创建定时器
+            if (dev_test_timer_ == nullptr) {
+                dev_test_timer_ = new QTimer(this); // 父对象设为this，自动析构
+                // 定时器槽函数：极简随机逻辑
+                connect(dev_test_timer_, &QTimer::timeout, this, [this]() {
+                    // 1. 初始化随机种子（基于当前时间）
+                    srand(static_cast<unsigned int>(time(nullptr)));
+                    // 2. 生成 -100 ~ 100 的随机速度
+                    double main_spindle_speed = (rand() % 200) - 100.0;
+                    double main_drawing_speed = (rand() % 200) - 100.0;
+                    // 3. 赋值给对应电机（MAIN_SPINDLE=主轴，MAIN_DRAWING=牵引）
+                    const int main_spindle_idx = MAIN_SPINDLE;
+                    const int main_drawing_idx = MAIN_DRAWING;
+                    // 防越界检查
+                    if (main_spindle_idx < MAX_MOTOR_TYPE_NUM && main_drawing_idx < MAX_MOTOR_TYPE_NUM) {
+                        this->get_data()->feedback.motor_fdb[main_spindle_idx].running_speed = main_spindle_speed;
+                        this->get_data()->feedback.motor_fdb[main_drawing_idx].running_speed = main_drawing_speed;
+                    }
+                    // 调试日志
+                    qDebug() << "Dev随机数据 → 主轴速度：" << main_spindle_speed << " 牵引速度：" << main_drawing_speed;
+                });
+                // 启动定时器：每隔10ms生成一次随机数据
+                dev_test_timer_->start(10);
+            }
 
             emit loaded(true);
         } else {
+            // 非dev模式：原有共享内存加载逻辑（完全保留）
             ret = NOS_OpenShareMemory(NOS_ECAT_A, rta_name.toStdString().data(), mem_name.toStdString().data(), &addr,
                                       is_x64);
             if (ret == 0) {
                 shm_data_ = reinterpret_cast<ShareMemData *>(addr);
-                // shm_data_->planner_t_machine_status.status = PLANNER_T_MACHINE_STATUS::MotionStatusType::STATUS_ERROR;
-                // qDebug() << "测试3"<< static_cast<int>(shm_data_->planner_t_machine_status.status);
-
-                // qDebug() << "addr" << addr;
-
-                // qDebug() << "shm_data_" << &shm_data_;
                 if (shm_data_ != nullptr) {
                     emit loaded(true);
-                    // qDebug() << "测试1"<< static_cast<int>(shm_data_->planner_t_machine_status.status);
                     return;
                 }
-                
-                // qDebug() << "测试2"<< static_cast<int>(shm_data_->planner_t_machine_status.status);
             }
             emit loaded(false);
         }
     }
 
-
-    // void load_shared_memory() {
-    //     int ret{0};
-    //     UINT64 addr;
-    //     ret = YKM_SysLoadLib(0);
-    //     NOS_BOOL is_x64;
-    //     QString rta_name, mem_name;
-
-    //     QFile file("sys.conf");
-    //     if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-    //         QTextStream in(&file);
-    //         QString system = in.readLine().trimmed();
-    //         rta_name = in.readLine().trimmed();
-    //         mem_name = in.readLine().trimmed();
-    //         is_x64 = (system == "x64") ? NOS_FALSE : NOS_TRUE;
-    //         file.close();
-    //     } else {
-    //         emit loaded(false);
-    //         return;
-    //     }
-
-    //      ret = NOS_OpenShareMemory(NOS_ECAT_A, rta_name.toStdString().data(), mem_name.toStdString().data(), &addr, is_x64);
-    //      if (ret == 0) {
-    //         shm_data_ = reinterpret_cast<ShareMemData *>(addr);
-    //         if (shm_data_) {
-    //             emit loaded(true);
-    //             return;
-    //         }
-    //      }
-    //      emit loaded(false);
-    // }
-
     Q_SIGNAL void loaded(bool success);
 
 private:
-    ShmManager() = default;
+    ShmManager() = default;  // 私有构造函数，单例模式
 
     ShareMemData *shm_data_ = nullptr;
+    QTimer* dev_test_timer_ = nullptr; // dev模式测试用定时器
 };
 
+// 以下原有常量映射代码完全保留，无需修改
 const static QMap<MOTOR_TYPE, QString> motortype2name{{CARDLE_BIN_FAN_MOTOR, "摇篮风仓机"},
                                                       {MAIN_SPINDLE, "主轴"},
                                                       {MAIN_DRAWING, "牵引"},
@@ -279,7 +252,6 @@ const static QMap<INPUT_SIGNAL_NAME, QString> input2name = {
     {WIRE_BIN_BRAKE_CHECK, "收线仓断丝检测"},
     {LOCK_WIRE_DRAWING_CHECK, "锁丝拉丝检测"},
     {WIRE_BIN_AXIS_FAN_FAULT_ALARM, "收线仓轴流风机故障告警"},
-
 };
 
 const static QMap<OUTPUT_SIGNAL_NAME, QString> output2name = {{SAFETY_CIRCUIT_RESET, "安全回路复位"},
