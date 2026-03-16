@@ -520,7 +520,7 @@ inline void ChartPage::_init_content() {
 
             data_json["speedControlData"] = QJsonArray{
                 atm_datas.data[atm_datas.read_index].torsion_speed,
-                atm_datas.data[atm_datas.read_index].required_speed,
+                atm_datas.data[atm_datas.read_index].required_speed * 120,
             };
 
             // qDebug() << "[实际ATM, ATM滤波值， 目标值， 死区上限， 死区下限]" << data_json;
@@ -609,12 +609,21 @@ inline void ChartPage::_init_content() {
                                             atm_datas.data[atm_datas.read_index].goat - atm_datas.data[atm_datas.read_index].dead_zone
             };
 
-            // ========== 速度数据替换为张力数据（ATM+张力图用） ==========
-            data_json["tensionData"] = QJsonArray{
-                static_cast<double>(atm_datas.data[atm_datas.read_index].tension), // 实时张力
-                atm_datas.data[atm_datas.read_index].goat // 张力目标值
-            };
+ // ========== 关键修改：两个张力值都执行公式转换 ==========
+        // 1. 实时张力转换：(原始tension - 15300) * 10065535
+        double rawTension = static_cast<double>(atm_datas.data[atm_datas.read_index].tension);
+        double convertedTension = (rawTension - 15300) * 100 / 65535.0;
+        
+        // // 2. 目标张力转换：(原始goat - 15300) * 10065535（和实时张力同公式）
+        // double rawTensionTarget = static_cast<double>(atm_datas.data[atm_datas.read_index].goat);
+        // double convertedTensionTarget = (rawTensionTarget - 15300) * 100 / 65535.0;
 
+        // 传递转换后的两个张力数据到前端
+        data_json["tensionData"] = QJsonArray{
+            convertedTension,       // 转换后的实时张力
+            // convertedTensionTarget  // 转换后的目标张力
+        };
+ 
             // 用独立的张力数据缓存，不影响原atm_datas_
             tension_datas_.append(data_json);
 
