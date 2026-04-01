@@ -59,6 +59,8 @@ private slots:
 private:
     /** 与参数调试页一致：主状态机命令同时写入 P/M 环形缓冲 */
     void pushMainFsmCommand(MAIN_FSM_EVENT_TYPE event_type);
+    /** 模式状态机（自动/手动等），双缓冲 */
+    void pushModeFsmCommand(MODE_FSM_EVENT_TYPE event_type);
 
     Ui::HomePage *ui;
     RingBuffer<RINGBUFFER> buffer;

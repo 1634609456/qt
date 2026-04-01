@@ -341,14 +341,15 @@ void HomePage::on_pushButton_10_clicked()
     qDebug() << "错误复位按钮";
 }
 
-// 上电（与 data_monitor_page 一致：先 初始化 → 初始化错误 → 配置，再 上电；双缓冲下发）
+// 上电：与 data_monitor_page 一致 — 自动 → 初始化 → 初始化错误 → 配置 → 上电（均双缓冲）
 void HomePage::on_pushButton_11_clicked()
 {
+    pushModeFsmCommand(MODE_EVENT_AUTO);
     pushMainFsmCommand(MAIN_EVENT_INIT);
     pushMainFsmCommand(MAIN_EVENT_INIT_ERROR);
     pushMainFsmCommand(MAIN_EVENT_CONFIG);
     pushMainFsmCommand(MAIN_EVENT_MOTOR_ON);
-    qDebug() << "上电（已前置 初始化 / 初始化错误 / 配置）";
+    qDebug() << "上电（已前置 自动 / 初始化 / 初始化错误 / 配置）";
 }
 
 void HomePage::pushMainFsmCommand(MAIN_FSM_EVENT_TYPE event_type)
@@ -356,6 +357,15 @@ void HomePage::pushMainFsmCommand(MAIN_FSM_EVENT_TYPE event_type)
     COMMOND_GROUPS cmd;
     cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD;
     cmd.main_fsm_event_type = event_type;
+    buffer.push(cmd);
+    buffer_m_.push(cmd);
+}
+
+void HomePage::pushModeFsmCommand(MODE_FSM_EVENT_TYPE event_type)
+{
+    COMMOND_GROUPS cmd;
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MODE_CMD;
+    cmd.mode_fsm_event_type = event_type;
     buffer.push(cmd);
     buffer_m_.push(cmd);
 }
