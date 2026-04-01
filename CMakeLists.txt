@@ -68,6 +68,7 @@ set(UI_FILES
     ui/chart_page.hpp
     ui/config_page.hpp
     ui/param_page.hpp
+    ui/warning_page.hpp
     ${QDEVTOOLS_DIR}/qdevtools.cpp
     ${QDEVTOOLS_DIR}/qdevtool.ui
 )

@@ -6,55 +6,192 @@
 #include <QDebug>
 #include <QTimer>
 #include <cstdlib>
-#include <QMessageBox>      
+#include <QMessageBox>
 #include <QInputDialog>
 #include <qlogging.h>
 #include <qtimer.h>
 #include <winsock.h>
+#include <QGridLayout>
+#include <QFrame>
+#include <QVBoxLayout>
+#include <QLabel>
 
 #include "../../src/util/shm_manager.hpp"
+#include "../meters_display_widget.hpp"
 
 HomePage::HomePage(QWidget *parent)
     : QWidget(parent), 
     ui(new Ui::HomePage), 
-    buffer(nullptr) // 初始化环形缓冲区
+    buffer(nullptr),
+    buffer_m_(nullptr)
 {
   ui->setupUi(this);
 
       // 初始化UI根据当前用户角色
       updateUIBasedOnUserRole();
 
-          // 主轴速度读取
-          auto timer = new QTimer(this);
-          connect(timer, &QTimer::timeout, this, [this]() {
-            // // 模拟数据更新
-            // auto data = rand() % 100;
+      // =========================
+      // 页面拆分：主页只保留你指定的控件
+      // 保留：
+      // - 操作权限按钮（pushButton_19）
+      // - 主状态机按钮：错误复位/上电/下电/停止/运行/急停/急停清除（10/11/12/13/14/15/16）
+      // 计米显示：仅展示数值，无清零/修改按钮
+      //
+      // 迁移到“手动控制 -> 主机参数”：
+      // - 设定/实际速度显示
+      // - 模式状态机（自动/手动）
+      // - PID 参数
+      // - 大小头设置（上/下限位显示与修改）
+      // =========================
+      // 速度相关（整行隐藏）
+      if (ui->lineEdit_2) ui->lineEdit_2->parentWidget()->hide();
+      if (ui->label_4) ui->label_4->parentWidget()->hide();
+      if (ui->pushButton) ui->pushButton->hide();
 
-            // 主轴速度
-            auto data = ShmManager::get_instance()
-                            .get_data()
-                            ->feedback.motor_fdb[MAIN_SPINDLE]
-                            .running_speed;
-            ui->label_5->setText(QString::number(data));
+      // 模式状态机（自动/手动）隐藏
+      if (ui->pushButton_17) ui->pushButton_17->parentWidget()->parentWidget()->hide();
 
-            // 排线电机上限位显示
-            auto upper_limit = ShmManager::get_instance()
-                                 .get_data()
-                                 ->feedback.wheel_fdb.start_length_ref;
-            ui->label_8->setText(QString::number(upper_limit/8388608));
+      // PID 参数相关隐藏（隐藏每一行的父容器）
+      if (ui->lineEdit_3) ui->lineEdit_3->parentWidget()->hide();
+      if (ui->lineEdit_6) ui->lineEdit_6->parentWidget()->hide();
+      if (ui->lineEdit_9) ui->lineEdit_9->parentWidget()->hide();
+      if (ui->lineEdit_12) ui->lineEdit_12->parentWidget()->hide();
 
-            // 排线电机下限位显示
-            auto lower_limit = ShmManager::get_instance()
-                                 .get_data()
-                                 ->feedback.wheel_fdb.finish_length_ref;
-            ui->label_17->setText(QString::number(lower_limit/8388608));
-          });
+      // 大小头设置隐藏（label_14 在该块内，隐藏其父容器即可）
+      if (ui->label_14) ui->label_14->parentWidget()->hide();
+
+      // 主状态机：隐藏“错误”，其余含上电/下电
+      if (ui->pushButton_9) ui->pushButton_9->hide();   // 错误
+
+      // ===== 电机主页卡片布局 =====
+      // 左上：五轴速度 | 右上：权限 + 计米显示（无按钮）
+      // 下方：主状态机（横跨全宽）
+      auto* main_layout = new QVBoxLayout(this);
+      main_layout->setContentsMargins(16, 16, 16, 16);
+      main_layout->setSpacing(16);
+
+      auto* grid = new QGridLayout();
+      grid->setSpacing(16);
+
+      auto make_card = [this](const QString& title) -> QWidget* {
+          auto* card = new QFrame(this);
+          card->setFrameStyle(QFrame::StyledPanel | QFrame::Raised);
+          card->setStyleSheet("QFrame { background-color: #fafafa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 4px; }");
+          auto* v = new QVBoxLayout(card);
+          v->setContentsMargins(12, 10, 12, 10);
+          v->setSpacing(6);
+          auto* title_label = new QLabel(title, this);
+          title_label->setStyleSheet("font-weight: bold; font-size: 14pt; color: #333;");
+          v->addWidget(title_label);
+          return card;
+      };
+
+      // 左上：五轴速度
+      struct AxisInfo { int type; const char* name; };
+      const AxisInfo axes[] = {
+          {MAIN_SPINDLE, "主轴"},
+          {MAIN_TORSION, "虚捻"},
+          {MAIN_DRAWING, "牵引"},
+          {MAIN_WINDING, "收线"},
+          {MAIN_LAYING, "排线"},
+      };
+      auto* speed_card = make_card("五轴速度");
+      auto* speed_layout = qobject_cast<QVBoxLayout*>(speed_card->layout());
+      QLabel* speed_labels[5] = {nullptr};
+      for (int i = 0; i < 5; ++i) {
+          auto* row = new QHBoxLayout();
+          row->addWidget(new QLabel(QString("%1:").arg(axes[i].name), this));
+          speed_labels[i] = new QLabel("--", this);
+          speed_labels[i]->setMinimumWidth(80);
+          speed_labels[i]->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+          row->addWidget(speed_labels[i]);
+          row->addWidget(new QLabel("r/min", this));
+          row->addStretch();
+          speed_layout->addLayout(row);
+      }
+      speed_layout->addStretch();
+      grid->addWidget(speed_card, 0, 0);
+
+      // 右上：权限 + 计米显示（纯展示，无清零/修改按钮）
+      auto* right_card = new QFrame(this);
+      right_card->setFrameStyle(QFrame::StyledPanel | QFrame::Raised);
+      right_card->setStyleSheet("QFrame { background-color: #fafafa; border: 1px solid #e0e0e0; border-radius: 8px; }");
+      auto* right_layout = new QVBoxLayout(right_card);
+      right_layout->setContentsMargins(12, 10, 12, 10);
+      right_layout->setSpacing(10);
+      auto* perm_title = new QLabel("权限", right_card);
+      perm_title->setStyleSheet("font-weight: bold; font-size: 14pt; color: #333;");
+      right_layout->addWidget(perm_title);
+      ui->pushButton_19->setParent(right_card);
+      right_layout->addWidget(ui->pushButton_19);
+      right_layout->addSpacing(16);
+      auto* meter_title = new QLabel("计米显示", right_card);
+      meter_title->setStyleSheet("font-weight: bold; font-size: 14pt; color: #333;");
+      right_layout->addWidget(meter_title);
+      auto* meters_display = new MetersDisplayWidget(right_card);
+      right_layout->addWidget(meters_display);
+      right_layout->addStretch();
+      grid->addWidget(right_card, 0, 1);
+
+      // 下方：主状态机（横跨整行）
+      auto* fsm_card = make_card("主状态机");
+      auto* fsm_layout = qobject_cast<QVBoxLayout*>(fsm_card->layout());
+      auto* fsm_btn_layout = new QVBoxLayout();
+      auto* fsm_row1 = new QHBoxLayout();
+      ui->pushButton_10->setParent(fsm_card);
+      ui->pushButton_11->setParent(fsm_card);
+      ui->pushButton_12->setParent(fsm_card);
+      fsm_row1->addWidget(ui->pushButton_10);
+      fsm_row1->addWidget(ui->pushButton_11);
+      fsm_row1->addWidget(ui->pushButton_12);
+      fsm_row1->addStretch();
+      fsm_btn_layout->addLayout(fsm_row1);
+      auto* fsm_row2 = new QHBoxLayout();
+      ui->pushButton_13->setParent(fsm_card);
+      ui->pushButton_14->setParent(fsm_card);
+      ui->pushButton_15->setParent(fsm_card);
+      ui->pushButton_16->setParent(fsm_card);
+      fsm_row2->addWidget(ui->pushButton_13);
+      fsm_row2->addWidget(ui->pushButton_14);
+      fsm_row2->addWidget(ui->pushButton_15);
+      fsm_row2->addWidget(ui->pushButton_16);
+      fsm_row2->addStretch();
+      fsm_btn_layout->addLayout(fsm_row2);
+      fsm_layout->addLayout(fsm_btn_layout);
+      fsm_layout->addStretch();
+      grid->addWidget(fsm_card, 1, 0, 1, 2);  // 主状态机横跨两列
+
+      grid->setColumnStretch(0, 1);
+      grid->setColumnStretch(1, 1);
+      grid->setRowStretch(0, 1);
+      grid->setRowStretch(1, 0);  // 主状态机保持紧凑
+      main_layout->addLayout(grid);
+
+      const QList<QWidget*> direct_children = findChildren<QWidget*>(QString(), Qt::FindDirectChildrenOnly);
+      for (QWidget* w : direct_children) {
+          if (w != speed_card && w != right_card && w != fsm_card) {
+              w->hide();
+          }
+      }
+
+      auto timer = new QTimer(this);
+      connect(timer, &QTimer::timeout, this, [this, speed_labels]() {
+          auto* d = ShmManager::get_instance().get_data();
+          if (!d) return;
+
+          const int axis_types[] = {MAIN_SPINDLE, MAIN_TORSION, MAIN_DRAWING, MAIN_WINDING, MAIN_LAYING};
+          for (int i = 0; i < 5; ++i) {
+              double sp = d->feedback.motor_fdb[axis_types[i]].running_speed;
+              speed_labels[i]->setText(QString::number(sp, 'f', 2));
+          }
+      });
 
   connect(
       &ShmManager::get_instance(), &ShmManager::loaded, [this, timer](bool success) {
 
         if (success) {
           buffer.set_buffer(&ShmManager::get_instance().get_data()->buffer_P);
+          buffer_m_.set_buffer(&ShmManager::get_instance().get_data()->buffer_M);
 
           timer->start(200);
         }
@@ -144,6 +281,7 @@ void HomePage::on_pushButton_14_clicked()
     cmd.main_fsm_event_type = MAIN_EVENT_CONTROL_ON;
     buffer.push(cmd);
 
+    Q_EMIT mainRunStateForDbCollection(true);
     qDebug() << "运行按钮";
 }
 
@@ -155,6 +293,7 @@ void HomePage::on_pushButton_13_clicked()
     cmd.main_fsm_event_type = MAIN_EVENT_CONTROL_OFF;
     buffer.push(cmd);
 
+    Q_EMIT mainRunStateForDbCollection(false);
     qDebug() << "停止按钮";
 }
 
@@ -202,15 +341,23 @@ void HomePage::on_pushButton_10_clicked()
     qDebug() << "错误复位按钮";
 }
 
-// 上电
+// 上电（与 data_monitor_page 一致：先 初始化 → 初始化错误 → 配置，再 上电；双缓冲下发）
 void HomePage::on_pushButton_11_clicked()
+{
+    pushMainFsmCommand(MAIN_EVENT_INIT);
+    pushMainFsmCommand(MAIN_EVENT_INIT_ERROR);
+    pushMainFsmCommand(MAIN_EVENT_CONFIG);
+    pushMainFsmCommand(MAIN_EVENT_MOTOR_ON);
+    qDebug() << "上电（已前置 初始化 / 初始化错误 / 配置）";
+}
+
+void HomePage::pushMainFsmCommand(MAIN_FSM_EVENT_TYPE event_type)
 {
     COMMOND_GROUPS cmd;
     cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD;
-    cmd.main_fsm_event_type = MAIN_EVENT_MOTOR_ON;
+    cmd.main_fsm_event_type = event_type;
     buffer.push(cmd);
-
-    qDebug() << "上电按钮";
+    buffer_m_.push(cmd);
 }
 
 // 下电
@@ -352,6 +499,9 @@ void HomePage::on_pushButton_19_clicked()
     
     // 更新界面控件状态
     updateUIBasedOnUserRole();
+
+    // 通知主窗口更新左侧“手动控制”显示/隐藏
+    Q_EMIT operatorModeChanged(UserManager::getInstance().isOperator());
 }
 
 
@@ -376,5 +526,17 @@ void HomePage::on_pushButton_7_clicked()
         return;
     }
     ShmManager::get_instance().get_data()->feedback.wheel_fdb.finish_length_ref = ui->lineEdit_16->text().toDouble()*8388608+ ui->label_17->text().toDouble()*8388608;
+}
+
+// 计米清零（原“计米参数设置”里的清零逻辑）
+void HomePage::on_pushButton_20_clicked()
+{
+    if (ShmManager::get_instance().get_data() == nullptr) {
+        QMessageBox::warning(this, tr("未连接"), tr("未连接到共享内存，请先加载共享内存"));
+        return;
+    }
+
+    ShmManager::get_instance().get_data()->feedback.wheel_fdb.master_meters_fdb = 0.0;
+    qDebug() << "计米清零";
 }
 

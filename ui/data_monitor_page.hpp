@@ -5,6 +5,7 @@
 #include <QTableWidget>
 #include <QTimer>
 #include <QVBoxLayout>
+#include <QGridLayout>
 #include <mutex>
 
 #include "../src/delegate/light_delegate.hpp"
@@ -114,6 +115,8 @@ inline MotorCard::MotorCard(QWidget *parent) : QWidget(parent) {
     }
 }
 
+#include "meters_settings_widget.hpp"
+
 class DataMonitorPage : public QWidget {
     Q_OBJECT
 
@@ -180,11 +183,13 @@ inline void DataMonitorPage::_init_content() {
 
             pivot_->appendPivot("电机");
             pivot_->appendPivot("IO");
+            pivot_->appendPivot("计米参数");
             pivot_->setPivotSpacing(8);
             pivot_->setCurrentIndex(0);
 
             stack_->addWidget(motor_view);
             stack_->addWidget(io_view);
+            stack_->addWidget(new MetersSettingsWidget(this));
 
             connect(pivot_, &ElaPivot::pivotClicked, stack_, &QStackedWidget::setCurrentIndex);
 

@@ -1,3 +1,5 @@
+#pragma once
+
 enum class UserRole {
     Guest,      // 游客
     Operator    // 操作员

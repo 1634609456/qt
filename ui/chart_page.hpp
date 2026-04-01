@@ -10,6 +10,7 @@
 #undef min
 #endif
 
+#include <QDateTime>
 #include <QDir>
 #include <QFile>
 #include <QJsonArray>
@@ -55,8 +56,18 @@ public:
     ChartPage(QWidget *parent = nullptr);
     ~ChartPage();
 
+public slots:
+    /** 与主状态机运行/停止联动：自动连接库并 50ms 周期写入（数据监控页） */
+    void setMainFsmDbCollection(bool active);
+
 private:
     void _init_content();
+    void ensureDbCollectionInfrastructure();
+    /** 停止采集：关闭写入器并将 db/twister_collecting.db 重命名为 twister_日期_时-分.db */
+    void finalizeDbCollectionOnStop();
+
+    QTimer *db_collect_timer_{nullptr};
+    bool db_collect_handler_connected_{false};
 
     QStackedWidget *stack_;
     ElaPivot *pivot_;
@@ -183,6 +194,93 @@ inline ChartPage::~ChartPage() {
     delete container_other_widget_;
     delete container_test_widget_;
     delete container_tension_widget_;
+}
+
+inline void ChartPage::finalizeDbCollectionOnStop() {
+    if (!db_writer_.has_value() && !db_atm_writer_.has_value()) {
+        return;
+    }
+    db_writer_.reset();
+    db_atm_writer_.reset();
+
+    const QString src = QStringLiteral("db/twister_collecting.db");
+    if (!QFile::exists(src)) {
+        return;
+    }
+    const QDateTime now = QDateTime::currentDateTime();
+    // 形如 twister_20260401_14-27（Windows 文件名不可用 ':'，用 '-' 代替）
+    QString base = QStringLiteral("db/twister_%1_%2")
+                       .arg(now.toString(QStringLiteral("yyyyMMdd")), now.toString(QStringLiteral("HH-mm")));
+    QString dst = base + QStringLiteral(".db");
+    for (int n = 0; QFile::exists(dst); ++n) {
+        dst = base + QStringLiteral("_%1.db").arg(n);
+    }
+    if (!QFile::rename(src, dst)) {
+        qWarning() << "rename db failed:" << src << "->" << dst;
+    }
+}
+
+inline void ChartPage::ensureDbCollectionInfrastructure() {
+    if (!db_collect_timer_) {
+        db_collect_timer_ = new QTimer(this);
+    }
+    if (!db_writer_.has_value() && !db_atm_writer_.has_value()) {
+        QDir db_dir("db");
+        if (!db_dir.exists()) {
+            db_dir.mkpath(".");
+        }
+        const QString collecting = QStringLiteral("db/twister_collecting.db");
+        if (QFile::exists(collecting)) {
+            QFile::remove(collecting);
+        }
+        db_writer_.emplace(collecting.toStdString());
+        db_atm_writer_.emplace(collecting.toStdString());
+    }
+    if (!db_collect_handler_connected_) {
+        connect(db_collect_timer_, &QTimer::timeout, this, [this]() {
+            auto datas = datas_.pop_all();
+            auto atm_datas = atm_buff_datas_.pop_all();
+            for (const auto &item : datas) {
+                db_writer_->push({
+                    0,
+                    item.motor_id,
+                    item.running_speed,
+                    item.acceleration,
+                    item.position,
+                    item.follow_ratio,
+                    item.encoder_resolution_counter,
+                    static_cast<size_t>(item.create_at)
+                });
+            }
+            for (const auto &item : atm_datas) {
+                db_atm_writer_->push({
+                    0,
+                    item.spindle_speed,
+                    item.torsion_speed,
+                    item.ATM_sensor,
+                    item.filter_data,
+                    item.required_speed,
+                    item.bias,
+                    item.winding_length,
+                    item.dead_zone,
+                    item.goat,
+                    item.tension,
+                    static_cast<size_t>(item.create_at)
+                });
+            }
+        });
+        db_collect_handler_connected_ = true;
+    }
+}
+
+inline void ChartPage::setMainFsmDbCollection(bool active) {
+    if (active) {
+        ensureDbCollectionInfrastructure();
+        db_collect_timer_->start(50);
+    } else {
+        db_collect_timer_->stop();
+        finalizeDbCollectionOnStop();
+    }
 }
 
 inline void ChartPage::_init_content() {
@@ -723,85 +821,26 @@ inline void ChartPage::_init_content() {
 
     
     auto *collect_btn = new ElaToggleButton("连接数据库", this);
+    //隐藏按钮，后续根据需求再显示
+    collect_btn->hide();
     {
         collect_btn->setFixedWidth(128);
         collect_btn->move(1040, 12);
 
-        auto *collect_timer = new QTimer(this);
-
-        connect(collect_btn, &ElaToggleButton::toggled, [this, collect_btn, collect_timer](bool checked) {
+        connect(collect_btn, &ElaToggleButton::toggled, [this, collect_btn](bool checked) {
             if (!db_writer_.has_value() && !db_atm_writer_.has_value()) {
-                // 第一次点击：连接数据库
-
-                // 创建文件夹
-                QDir db_dir("db");
-                if (!db_dir.exists()) {
-                    db_dir.mkpath(".");
-                }
-
-                auto db_file_name = QString("db/twister_%1 .db").arg(QDateTime::currentDateTime().toString("yyyyMMdd"));
-
-                // 电机数据库
-                db_writer_.emplace(db_file_name.toStdString());
-
-                // atm数据库
-                 db_atm_writer_.emplace(db_file_name.toStdString());
-
+                ensureDbCollectionInfrastructure();
                 collect_btn->setText("采集数据");
-                collect_btn->setIsToggled(false);  // 重置按钮状态
-
-
-                // 设置定时器回调
-                connect(collect_timer, &QTimer::timeout, [this]() {
-
-                    // qDebug() << "采集数据 1";
-                    auto datas = datas_.pop_all();
-                    // qDebug() << "datas 数据长度" << datas.size();
-                    auto atm_datas = atm_buff_datas_.pop_all();
-                    // qDebug() << "atm_datas 数据长度" << atm_datas.size();
-                    for (const auto &item : datas) {
-                        // qDebug() << "进入datas循环";
-                        db_writer_->push({
-                            0,
-                            item.motor_id,
-                            item.running_speed,
-                            item.acceleration,
-                            item.position,
-                            item.follow_ratio,
-                            item.encoder_resolution_counter,
-                            static_cast<size_t>(item.create_at)
-                        });
-                    }
-
-                    for (const auto &item : atm_datas) {
-                        // qDebug() << "进入atm_datas循环";
-
-                        db_atm_writer_->push({
-                            0,
-                            item.spindle_speed,
-                            item.torsion_speed,
-                            item.ATM_sensor,
-                            item.filter_data,
-                            item.required_speed,
-                            item.bias,
-                            item.winding_length,
-                            item.dead_zone,
-                            item.goat,
-                            item.tension,
-                            static_cast<size_t>(item.create_at)
-                        });
-                    }
-                });
-            }  else {
-                // 后续点击：控制数据采集
-                if (checked) {
-                    collect_btn->setText("数据采集中...");
-                    // 时间间隔50ms
-                    collect_timer->start(50);
-                } else {
-                    collect_btn->setText("采集数据");
-                    collect_timer->stop();
-                }
+                collect_btn->setIsToggled(false);
+                return;
+            }
+            if (checked) {
+                collect_btn->setText("数据采集中...");
+                db_collect_timer_->start(50);
+            } else {
+                collect_btn->setText("采集数据");
+                db_collect_timer_->stop();
+                finalizeDbCollectionOnStop();
             }
         });
     }
@@ -809,6 +848,8 @@ inline void ChartPage::_init_content() {
 
      // 添加停止电机按钮
     auto *stop_motor_btn = new ElaPushButton("停止电机", this);
+    //隐藏按钮，后续根据需求再显示
+    stop_motor_btn->hide();
     {
         stop_motor_btn->setFixedWidth(128);
         stop_motor_btn->move(1200, 12);
@@ -836,18 +877,24 @@ inline void ChartPage::_init_content() {
     auto *pid_layout = new QHBoxLayout(pid_widget);
     {
         auto *Kp_input = new ElaLineEdit(this);
+        //隐藏pid输入框，后续根据需求再显示
+        Kp_input->hide();
         {
             Kp_input->setPlaceholderText("Kp");
             Kp_input->setFixedSize(100, 32);
         }
 
         auto *Ki_input = new ElaLineEdit(this);
+        //隐藏pid输入框，后续根据需求再显示
+        Ki_input->hide();
         {
             Ki_input->setPlaceholderText("Ki");
             Ki_input->setFixedSize(100, 32);
         }
 
         auto *Kd_input = new ElaLineEdit(this);
+            //隐藏pid输入框，后续根据需求再显示
+            Kd_input->hide();
         {
             Kd_input->setPlaceholderText("Kd");
             Kd_input->setFixedSize(100, 32);
@@ -855,6 +902,9 @@ inline void ChartPage::_init_content() {
 
         auto *apply_btn = new ElaPushButton("应用PID", this);
         apply_btn->setFixedSize(80, 32);
+
+        // 默认隐藏应用pid 输入框
+        apply_btn->hide(); 
         connect(apply_btn, &ElaPushButton::clicked, [this, Kp_input, Ki_input, Kd_input]() {
             double Kp = Kp_input->text().toDouble();
             double Ki = Ki_input->text().toDouble();

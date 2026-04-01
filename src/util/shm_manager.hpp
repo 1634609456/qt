@@ -28,6 +28,7 @@ public:
     // ========== 关键修改：去掉前面的 ShmManager:: ==========
     void load_shared_memory() {  // 原错误写法：void ShmManager::load_shared_memory()
         int ret{0};
+        int read_logger(0);  // 日志相关
         UINT64 addr;
         ret = YKM_SysLoadLib(0);
         NOS_BOOL is_x64;
@@ -103,6 +104,14 @@ public:
                     return;
                 }
             }
+
+            // read_logger = NOS_OpenLogger(NOS_ECAT_A, rta_name.toStdString().data(), 0, is_x64);
+            // char log_msg[1024];
+            // UINT32 revd_size;
+            // NOS_ReadLogger(0, log_msg, 1024, &revd_size);
+            // //打印log_msg日志信息
+            // qWarning() << "共享内存log_msg日志：" << QString::fromStdString(log_msg);
+
             emit loaded(false);
         }
     }
