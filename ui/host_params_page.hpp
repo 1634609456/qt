@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 #include <QGridLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
@@ -11,7 +13,9 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
-#include "../src/util/password_manager/password_manager.h"
+#include "ElaMessageBar.h"
+
+#include "../src/util/ring_buffer.hpp"
 #include "../src/util/shm_manager.hpp"
 #include "../src/util/user_role.h"
 
@@ -36,33 +40,62 @@
  * - 速度设定：`data->config.motor_config[MAIN_SPINDLE].running_speed`
  * - PID 参数：`data->pid = ...`
  * - 上/下限位：`data->feedback.wheel_fdb.start_length_ref / finish_length_ref`
- * - 状态机命令：通过 `buffer_P` 下发（RingBuffer<RINGBUFFER>）
+ * - 模式/状态机命令：与参数调试页一致，`buffer_P` + `buffer_M` 双写下发
  *
  * 如果后端希望改为“命令接口/协议”方式：
  * - UI 不需要改，只需要把下面这些写入点替换成后端接口即可。
  */
 class HostParamsPage : public QWidget {
 public:
-    explicit HostParamsPage(QWidget* parent = nullptr) : QWidget(parent), buffer_(nullptr) {
+    explicit HostParamsPage(QWidget* parent = nullptr)
+        : QWidget(parent), buffer_p_(nullptr), buffer_m_(nullptr) {
         init_ui();
         init_refresh();
 
         connect(&ShmManager::get_instance(), &ShmManager::loaded, [this](bool success) {
             if (success) {
-                buffer_.set_buffer(&ShmManager::get_instance().get_data()->buffer_P);
+                sync_ring_buffers_from_shm();
                 refresh_timer_->start(200);
             } else {
                 refresh_timer_->stop();
             }
         });
+        // 共享内存若在页面创建前已加载完成，会错过 `loaded` 信号，需补绑环形缓冲
+        sync_ring_buffers_from_shm();
+        if (ShmManager::get_instance().get_data()) {
+            refresh_timer_->start(200);
+        }
 
         // 初始化一次权限状态（当前手动控制页只在操作员显示，但这里也做保险）
         update_enabled_state();
     }
 
 private:
-    // ===== 数据下发缓冲区（与主页一致：用 buffer_P） =====
-    RingBuffer<RINGBUFFER> buffer_;
+    void sync_ring_buffers_from_shm() {
+        auto* d = ShmManager::get_instance().get_data();
+        if (!d) {
+            return;
+        }
+        buffer_p_.set_buffer(&d->buffer_P);
+        buffer_m_.set_buffer(&d->buffer_M);
+    }
+
+    /** 与 data_monitor_page 一致：模式命令写入 P/M 双缓冲 */
+    bool push_mode_cmd(MODE_FSM_EVENT_TYPE mode_event) {
+        if (!ShmManager::get_instance().get_data()) {
+            QMessageBox::warning(this, tr("未连接"), tr("未连接到共享内存，请先加载共享内存"));
+            return false;
+        }
+        COMMOND_GROUPS cmd;
+        cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MODE_CMD;
+        cmd.mode_fsm_event_type = mode_event;
+        buffer_p_.push(cmd);
+        buffer_m_.push(cmd);
+        return true;
+    }
+
+    RingBuffer<RINGBUFFER> buffer_p_;
+    RingBuffer<RINGBUFFER> buffer_m_;
 
     // ===== 顶部状态显示（复用主页逻辑） =====
     QLabel* actual_speed_value_{nullptr};  // 实际速度
@@ -97,11 +130,6 @@ private:
     QLineEdit* edge_adv_ki_{nullptr};
     QLineEdit* edge_adv_kd_{nullptr};
     QPushButton* edge_adv_confirm_{nullptr};
-
-    QLineEdit* pid_kp_{nullptr};
-    QLineEdit* pid_ki_{nullptr};
-    QLineEdit* pid_kd_{nullptr};
-    QPushButton* pid_confirm_{nullptr};
 
     // ===== 大小头设置 =====
     QLineEdit* upper_limit_modify_{nullptr};
@@ -189,20 +217,22 @@ private:
                         QMessageBox::warning(this, tr("权限不足"), tr("只有操作员可以操作！"));
                         return;
                     }
-                    COMMOND_GROUPS cmd;
-                    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MODE_CMD;
-                    cmd.mode_fsm_event_type = MODE_EVENT_AUTO;
-                    buffer_.push(cmd);
+                    if (!push_mode_cmd(MODE_EVENT_AUTO)) {
+                        return;
+                    }
+                    ElaMessageBar::success(ElaMessageBarType::Top, QStringLiteral("提示"),
+                                           QStringLiteral("自动模式命令下发成功！"), 3000, this);
                 });
                 connect(mode_manual_btn_, &QPushButton::clicked, this, [this]() {
                     if (!UserManager::getInstance().isOperator()) {
                         QMessageBox::warning(this, tr("权限不足"), tr("只有操作员可以操作！"));
                         return;
                     }
-                    COMMOND_GROUPS cmd;
-                    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MODE_CMD;
-                    cmd.mode_fsm_event_type = MODE_EVENT_MANUAL;
-                    buffer_.push(cmd);
+                    if (!push_mode_cmd(MODE_EVENT_MANUAL)) {
+                        return;
+                    }
+                    ElaMessageBar::success(ElaMessageBarType::Top, QStringLiteral("提示"),
+                                           QStringLiteral("手动模式命令下发成功！"), 3000, this);
                 });
 
                 left->addWidget(box);
