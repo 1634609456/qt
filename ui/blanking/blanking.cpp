@@ -17,6 +17,10 @@ Blanking::Blanking(QWidget *parent)
     ,buffer_M(nullptr) 
 {
     ui->setupUi(this);
+    applyWireWindPressWheelButtonColors();
+    applyPickWheelLiftPairButtonColors();
+    applyPickWheelAdvanceRetreatButtonColors();
+    applyCradleBinFrontDoorButtonColors();
 
         auto timer = new QTimer(this);
         connect(timer, &QTimer::timeout, this, [this]() {
@@ -52,32 +56,6 @@ Blanking::Blanking(QWidget *parent)
                 } else {
             ui->pushButton_33->setStyleSheet("background-color: gray; color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;");
                 }
- 
-
-                //双向阀升，取轮升降 - 监控
-                if ((ShmManager::get_instance().get_data()->io.valve_output[4] >> 0) & 1) { 
-                    ui->pushButton_30->setStyleSheet("background-color: green; color: white; border: none; padding: 5px; border-radius: 3px;");
-                } else {
-                    ui->pushButton_30->setStyleSheet("background-color: gray; color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;");
-                }
-                
-                //双向阀降，取轮升降 - 监控
-                if (ShmManager::get_instance().get_data()->io.valve_output[4] >> 1 & 1) {
-                    ui->pushButton_31->setStyleSheet("background-color: green; color: white; border: none; padding: 5px; border-radius: 3px;");
-                } else {
-                    ui->pushButton_31->setStyleSheet("background-color: gray; color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;");
-                }
-
-                // 收线轮压轮气缸升/降：仅按 IO 反馈变色
-                {
-                    const UINT8 q0 = ShmManager::get_instance().get_data()->io.valve_output[0];
-                    const int lift_bit = static_cast<int>(BIDIRECTIONAL_VALVE_LIFT_WIRE_WIND_PRESS_WHEEL_CYLINDER);
-                    const int low_bit = static_cast<int>(BIDIRECTIONAL_VALVE_LOW_WIRE_WIND_PRESS_WHEEL_CYLINDER);
-                    updateWireWindPressWheelButtonStyles((q0 >> lift_bit) & 1, (q0 >> low_bit) & 1);
-                }
-                // 取轮进退：仅按 IO 反馈变色（bit6=1 上使能绿，=0 下使能红）
-                updatePickWheelAdvanceRetreatButtonStyle(
-                    (ShmManager::get_instance().get_data()->io.valve_output[4] >> 6) & 1);
             }
         });
 
@@ -478,6 +456,24 @@ void Blanking::push_mode_fsm_manual_if_auto_dual() {
     buffer_M.push(mode_cmd);
 }
 
+void Blanking::push_mode_fsm_ensure_manual_dual() {
+    auto* d = ShmManager::get_instance().get_data();
+    if (!d) {
+        QMessageBox::warning(this, tr("未连接"), tr("未连接到共享内存，请先加载共享内存"));
+        return;
+    }
+    buffer.set_buffer(&d->buffer_P);
+    buffer_M.set_buffer(&d->buffer_M);
+    if (d->feedback.fsm_fdb.mode == MANUAL) {
+        return;
+    }
+    COMMOND_GROUPS mode_cmd{};
+    mode_cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MODE_CMD;
+    mode_cmd.mode_fsm_event_type = MODE_EVENT_MANUAL;
+    buffer.push(mode_cmd);
+    buffer_M.push(mode_cmd);
+}
+
 void Blanking::push_io_manual_dual(const COMMOND_GROUPS& cmd) {
     auto* d = ShmManager::get_instance().get_data();
     if (!d) {
@@ -490,28 +486,98 @@ void Blanking::push_io_manual_dual(const COMMOND_GROUPS& cmd) {
     buffer_M.push(cmd);
 }
 
-void Blanking::updateWireWindPressWheelButtonStyles(bool lift_on, bool low_on)
+void Blanking::applyWireWindPressWheelButtonColors()
 {
-    static const char* const kLiftOn =
+    static const char* const kGreen =
         "background-color: rgb(0, 255, 0); color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;";
-    static const char* const kLowOn =
-        "background-color: rgb(220, 40, 40); color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;";
-    static const char* const kOff =
+    static const char* const kGray =
         "background-color: gray; color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;";
-    ui->pushButton_28->setStyleSheet(lift_on ? kLiftOn : kOff);
-    ui->pushButton_29->setStyleSheet(low_on ? kLowOn : kOff);
+    switch (wire_wind_press_wheel_ui_highlight_) {
+    case WireWindPressWheelUiHighlight::LiftGreen:
+        ui->pushButton_28->setStyleSheet(kGreen);
+        ui->pushButton_29->setStyleSheet(kGray);
+        break;
+    case WireWindPressWheelUiHighlight::LowGreen:
+        ui->pushButton_28->setStyleSheet(kGray);
+        ui->pushButton_29->setStyleSheet(kGreen);
+        break;
+    case WireWindPressWheelUiHighlight::Neutral:
+    default:
+        ui->pushButton_28->setStyleSheet(kGray);
+        ui->pushButton_29->setStyleSheet(kGray);
+        break;
+    }
 }
 
-void Blanking::updatePickWheelAdvanceRetreatButtonStyle(bool upper_enable)
+void Blanking::applyPickWheelAdvanceRetreatButtonColors()
 {
-    static const char* const kUpper =
+    static const char* const kGreen =
         "background-color: rgb(0, 255, 0); color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;";
-    static const char* const kLower =
+    static const char* const kRed =
         "background-color: rgb(220, 40, 40); color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;";
-    ui->pushButton_32->setStyleSheet(upper_enable ? kUpper : kLower);
+    static const char* const kGray =
+        "background-color: gray; color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;";
+    switch (pick_wheel_advance_ui_highlight_) {
+    case PickWheelAdvanceRetreatUiHighlight::UpperGreen:
+        ui->pushButton_32->setStyleSheet(kGreen);
+        break;
+    case PickWheelAdvanceRetreatUiHighlight::LowerRed:
+        ui->pushButton_32->setStyleSheet(kRed);
+        break;
+    case PickWheelAdvanceRetreatUiHighlight::Neutral:
+    default:
+        ui->pushButton_32->setStyleSheet(kGray);
+        break;
+    }
 }
 
-//收线轮压轮气缸阀 - 升（双向阀升，收线轮压轮气缸；同 data_monitor_page IO 控制）
+void Blanking::applyPickWheelLiftPairButtonColors()
+{
+    static const char* const kGreen =
+        "background-color: rgb(0, 255, 0); color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;";
+    static const char* const kGray =
+        "background-color: gray; color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;";
+    switch (pick_wheel_lift_pair_ui_highlight_) {
+    case PickWheelLiftPairUiHighlight::LiftGreen:
+        ui->pushButton_30->setStyleSheet(kGreen);
+        ui->pushButton_31->setStyleSheet(kGray);
+        break;
+    case PickWheelLiftPairUiHighlight::LowGreen:
+        ui->pushButton_30->setStyleSheet(kGray);
+        ui->pushButton_31->setStyleSheet(kGreen);
+        break;
+    case PickWheelLiftPairUiHighlight::Neutral:
+    default:
+        ui->pushButton_30->setStyleSheet(kGray);
+        ui->pushButton_31->setStyleSheet(kGray);
+        break;
+    }
+}
+
+void Blanking::applyCradleBinFrontDoorButtonColors()
+{
+    static const char* const kGreen =
+        "background-color: rgb(0, 255, 0); color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;";
+    static const char* const kGray =
+        "background-color: gray; color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;";
+    switch (cradle_bin_front_door_ui_highlight_) {
+    case CradleBinFrontDoorUiHighlight::OpenGreen:
+        ui->pushButton_34->setStyleSheet(kGreen);
+        ui->pushButton_35->setStyleSheet(kGray);
+        break;
+    case CradleBinFrontDoorUiHighlight::CloseGreen:
+        ui->pushButton_34->setStyleSheet(kGray);
+        ui->pushButton_35->setStyleSheet(kGreen);
+        break;
+    case CradleBinFrontDoorUiHighlight::Neutral:
+    default:
+        ui->pushButton_34->setStyleSheet(kGray);
+        ui->pushButton_35->setStyleSheet(kGray);
+        break;
+    }
+}
+
+//收线轮压轮气缸阀 - 升（自动→手动；与降互锁，同 data_monitor IO）
 void Blanking::on_pushButton_28_clicked()
 {
     push_mode_fsm_manual_if_auto_dual();
@@ -542,10 +608,13 @@ void Blanking::on_pushButton_28_clicked()
         qDebug() << "收线压轮气缸 升 - 关闭状态 → 开";
     }
     push_io_manual_dual(cmd);
+
+    wire_wind_press_wheel_ui_highlight_ = WireWindPressWheelUiHighlight::LiftGreen;
+    applyWireWindPressWheelButtonColors();
 }
 
 
-//收线轮压轮气缸阀 - 降（双向阀降，收线轮压轮气缸）
+//收线轮压轮气缸阀 - 降（自动→手动；与升互锁）
 void Blanking::on_pushButton_29_clicked()
 {
     push_mode_fsm_manual_if_auto_dual();
@@ -576,91 +645,85 @@ void Blanking::on_pushButton_29_clicked()
         qDebug() << "收线压轮气缸 降 - 关闭状态 → 开";
     }
     push_io_manual_dual(cmd);
+
+    wire_wind_press_wheel_ui_highlight_ = WireWindPressWheelUiHighlight::LowGreen;
+    applyWireWindPressWheelButtonColors();
 }
 
 
-//双向阀升，取轮升降
+//双向阀升，取轮升降（自动→手动；与降互锁；同收线压轮气缸阀格式）
 void Blanking::on_pushButton_30_clicked()
 {
-    //查询当前状态
-    if (ShmManager::get_instance().get_data()->io.valve_output[4] >> 0 & 1) {
-
-        qDebug() << "双向阀升，取轮升降 - 开启状态";
-
-        //  buffer_M.push({
-        // .cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD,
-        // .io_manual_control = {
-        //     .output_signal_name = VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LIFT_PICK_WHEEL_LIFT,
-        //     .value = YKE_BOOL::YKE_FALSE
-        // }});
-        
-        COMMOND_GROUPS cmd;
-        cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
-        cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LIFT_PICK_WHEEL_LIFT;
-        cmd.io_manual_control.value = YKE_BOOL::YKE_FALSE;
-        buffer_M.push(cmd);
-    } else {
-    
-        qDebug() << "双向阀升，取轮升降 - 关闭状态";
-
-        //  buffer_M.push({
-        // .cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD,
-        // .io_manual_control = {
-        //     .output_signal_name = VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LIFT_PICK_WHEEL_LIFT,
-        //     .value = YKE_BOOL::YKE_TRUE
-        // }});
-
-        COMMOND_GROUPS cmd;
-        cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
-        cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LIFT_PICK_WHEEL_LIFT;
-        cmd.io_manual_control.value = YKE_BOOL::YKE_TRUE;
-        buffer_M.push(cmd);
+    push_mode_fsm_manual_if_auto_dual();
+    auto* d = ShmManager::get_instance().get_data();
+    if (!d) {
+        return;
     }
+    const UINT8 q = d->io.valve_output[4];
+    const bool lift_on = (q >> 0) & 1;
+
+    // 互锁：升动作前先将「降」输出下使能（关）
+    {
+        COMMOND_GROUPS off_low{};
+        off_low.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+        off_low.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LOW_PICK_WHEEL_LIFT;
+        off_low.io_manual_control.value = YKE_BOOL::YKE_FALSE;
+        push_io_manual_dual(off_low);
+    }
+
+    COMMOND_GROUPS cmd{};
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+    cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LIFT_PICK_WHEEL_LIFT;
+    cmd.io_manual_control.value = lift_on ? YKE_BOOL::YKE_FALSE : YKE_BOOL::YKE_TRUE;
+    if (lift_on) {
+        qDebug() << "双向阀升，取轮升降 - 开启状态 → 关";
+    } else {
+        qDebug() << "双向阀升，取轮升降 - 关闭状态 → 开";
+    }
+    push_io_manual_dual(cmd);
+
+    pick_wheel_lift_pair_ui_highlight_ = PickWheelLiftPairUiHighlight::LiftGreen;
+    applyPickWheelLiftPairButtonColors();
 }
 
 
-
-//双向阀降，取轮升降
+//双向阀降，取轮升降（自动→手动；与升互锁；同收线压轮气缸阀格式）
 void Blanking::on_pushButton_31_clicked()
 {
-     //查询当前状态
-    if (ShmManager::get_instance().get_data()->io.valve_output[4] >> 1 & 1) {
-
-        qDebug() << "双向阀降，取轮升降 - 开启状态";
-
-        //  buffer_M.push({
-        // .cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD,
-        // .io_manual_control = {
-        //     .output_signal_name = VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LOW_PICK_WHEEL_LIFT,
-        //     .value = YKE_BOOL::YKE_FALSE
-        // }});
-
-        COMMOND_GROUPS cmd;
-        cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
-        cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LOW_PICK_WHEEL_LIFT;
-        cmd.io_manual_control.value = YKE_BOOL::YKE_FALSE;
-        buffer_M.push(cmd);
-    } else {
-    
-        qDebug() << "双向阀降，取轮升降 - 关闭状态";
-
-        //  buffer_M.push({
-        // .cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD,
-        // .io_manual_control = {
-        //     .output_signal_name = VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LOW_PICK_WHEEL_LIFT,
-        //     .value = YKE_BOOL::YKE_TRUE
-        // }});
-
-        COMMOND_GROUPS cmd;
-        cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
-        cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LOW_PICK_WHEEL_LIFT;
-        cmd.io_manual_control.value = YKE_BOOL::YKE_TRUE;
-        buffer_M.push(cmd);
+    push_mode_fsm_manual_if_auto_dual();
+    auto* d = ShmManager::get_instance().get_data();
+    if (!d) {
+        return;
     }
+    const UINT8 q = d->io.valve_output[4];
+    const bool low_on = (q >> 1) & 1;
+
+    // 互锁：降动作前先将「升」输出下使能（关）
+    {
+        COMMOND_GROUPS off_lift{};
+        off_lift.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+        off_lift.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LIFT_PICK_WHEEL_LIFT;
+        off_lift.io_manual_control.value = YKE_BOOL::YKE_FALSE;
+        push_io_manual_dual(off_lift);
+    }
+
+    COMMOND_GROUPS cmd{};
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+    cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LOW_PICK_WHEEL_LIFT;
+    cmd.io_manual_control.value = low_on ? YKE_BOOL::YKE_FALSE : YKE_BOOL::YKE_TRUE;
+    if (low_on) {
+        qDebug() << "双向阀降，取轮升降 - 开启状态 → 关";
+    } else {
+        qDebug() << "双向阀降，取轮升降 - 关闭状态 → 开";
+    }
+    push_io_manual_dual(cmd);
+
+    pick_wheel_lift_pair_ui_highlight_ = PickWheelLiftPairUiHighlight::LowGreen;
+    applyPickWheelLiftPairButtonColors();
 }
 
 
-//取轮进退：根据当前 IO（valve_output[4] bit6）取反发令；上次指令须在反馈上到位后才算完成，期间重复点击无效
+//取轮进退（自动→手动；按 valve_output[4] bit6 翻转；同收线压轮 IO 双缓冲格式）
 void Blanking::on_pushButton_32_clicked()
 {
     push_mode_fsm_manual_if_auto_dual();
@@ -668,17 +731,7 @@ void Blanking::on_pushButton_32_clicked()
     if (!d) {
         return;
     }
-    buffer_M.set_buffer(&d->buffer_M);
-
     const bool bit = (d->io.valve_output[4] >> 6) & 1;
-
-    if (pick_wheel_advance_pending_) {
-        if (bit != pick_wheel_advance_target_bit_) {
-            qDebug() << "取轮进退 - 等待 IO 反馈到位，本次忽略";
-            return;
-        }
-        pick_wheel_advance_pending_ = false;
-    }
 
     const YKE_BOOL val = bit ? YKE_BOOL::YKE_FALSE : YKE_BOOL::YKE_TRUE;
     if (val == YKE_BOOL::YKE_TRUE) {
@@ -687,13 +740,88 @@ void Blanking::on_pushButton_32_clicked()
         qDebug() << "取轮进退 - 下使能";
     }
 
-    COMMOND_GROUPS cmd;
+    COMMOND_GROUPS cmd{};
     cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
     cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::PICK_WHEEL_ADVANCE_RETREAT;
     cmd.io_manual_control.value = val;
-    buffer_M.push(cmd);
+    push_io_manual_dual(cmd);
 
-    pick_wheel_advance_pending_ = true;
-    pick_wheel_advance_target_bit_ = !bit;
+    pick_wheel_advance_ui_highlight_ = (val == YKE_BOOL::YKE_TRUE) ? PickWheelAdvanceRetreatUiHighlight::UpperGreen
+                                                                    : PickWheelAdvanceRetreatUiHighlight::LowerRed;
+    applyPickWheelAdvanceRetreatButtonColors();
+}
+
+
+//摇篮仓前门开（双向阀开，摇篮仓前对开门；与关互锁；非手动先切手动）
+void Blanking::on_pushButton_34_clicked()
+{
+    push_mode_fsm_ensure_manual_dual();
+    auto* d = ShmManager::get_instance().get_data();
+    if (!d) {
+        return;
+    }
+    const int open_e = static_cast<int>(BIDIRECTIONAL_VALVE_OPEN_CRADLE_BIN_FRONT_DOOR_OPEN);
+    const int close_e = static_cast<int>(BIDIRECTIONAL_VALVE_CLOSE_CRADLE_BIN_FRONT_DOOR_OPEN);
+    const UINT8 qb = d->io.valve_output[open_e / 8];
+    const bool open_on = (qb >> (open_e % 8)) & 1;
+
+    {
+        COMMOND_GROUPS off_close{};
+        off_close.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+        off_close.io_manual_control.output_signal_name = close_e;
+        off_close.io_manual_control.value = YKE_BOOL::YKE_FALSE;
+        push_io_manual_dual(off_close);
+    }
+
+    COMMOND_GROUPS cmd{};
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+    cmd.io_manual_control.output_signal_name = open_e;
+    cmd.io_manual_control.value = open_on ? YKE_BOOL::YKE_FALSE : YKE_BOOL::YKE_TRUE;
+    if (open_on) {
+        qDebug() << "摇篮仓前门开 - 开启状态 → 关";
+    } else {
+        qDebug() << "摇篮仓前门开 - 关闭状态 → 开";
+    }
+    push_io_manual_dual(cmd);
+
+    cradle_bin_front_door_ui_highlight_ = CradleBinFrontDoorUiHighlight::OpenGreen;
+    applyCradleBinFrontDoorButtonColors();
+}
+
+
+//摇篮仓前门关（双向阀关，摇篮仓前对开门；与开互锁；非手动先切手动）
+void Blanking::on_pushButton_35_clicked()
+{
+    push_mode_fsm_ensure_manual_dual();
+    auto* d = ShmManager::get_instance().get_data();
+    if (!d) {
+        return;
+    }
+    const int open_e = static_cast<int>(BIDIRECTIONAL_VALVE_OPEN_CRADLE_BIN_FRONT_DOOR_OPEN);
+    const int close_e = static_cast<int>(BIDIRECTIONAL_VALVE_CLOSE_CRADLE_BIN_FRONT_DOOR_OPEN);
+    const UINT8 qb = d->io.valve_output[close_e / 8];
+    const bool close_on = (qb >> (close_e % 8)) & 1;
+
+    {
+        COMMOND_GROUPS off_open{};
+        off_open.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+        off_open.io_manual_control.output_signal_name = open_e;
+        off_open.io_manual_control.value = YKE_BOOL::YKE_FALSE;
+        push_io_manual_dual(off_open);
+    }
+
+    COMMOND_GROUPS cmd{};
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+    cmd.io_manual_control.output_signal_name = close_e;
+    cmd.io_manual_control.value = close_on ? YKE_BOOL::YKE_FALSE : YKE_BOOL::YKE_TRUE;
+    if (close_on) {
+        qDebug() << "摇篮仓前门关 - 开启状态 → 关";
+    } else {
+        qDebug() << "摇篮仓前门关 - 关闭状态 → 开";
+    }
+    push_io_manual_dual(cmd);
+
+    cradle_bin_front_door_ui_highlight_ = CradleBinFrontDoorUiHighlight::CloseGreen;
+    applyCradleBinFrontDoorButtonColors();
 }
 

@@ -57,6 +57,8 @@ class Blanking : public QWidget
         void on_pushButton_30_clicked();
         void on_pushButton_31_clicked();
         void on_pushButton_32_clicked();
+        void on_pushButton_34_clicked();
+        void on_pushButton_35_clicked();
 
 
     public:
@@ -68,11 +70,21 @@ class Blanking : public QWidget
         RingBuffer<RINGBUFFER> buffer;
         RingBuffer<RINGBUFFER> buffer_M;
 
-        /** 取轮进退：已下发指令，等待 valve_output[4] bit6 与 target 一致后才允许下一次 */
-        bool pick_wheel_advance_pending_ = false;
-        bool pick_wheel_advance_target_bit_ = false;
+        /** 取轮进退：颜色由最近点击的上/下使能决定，定时器不覆盖 */
+        enum class PickWheelAdvanceRetreatUiHighlight { Neutral, UpperGreen, LowerRed };
+        PickWheelAdvanceRetreatUiHighlight pick_wheel_advance_ui_highlight_ = PickWheelAdvanceRetreatUiHighlight::Neutral;
 
+        /** 收线轮压轮气缸升/降：颜色由最近点击的一侧决定，定时器不覆盖 */
+        enum class WireWindPressWheelUiHighlight { Neutral, LiftGreen, LowGreen };
+        WireWindPressWheelUiHighlight wire_wind_press_wheel_ui_highlight_ = WireWindPressWheelUiHighlight::Neutral;
 
+        /** 双向阀升/降取轮升降：同上，由最近点击的一侧决定 */
+        enum class PickWheelLiftPairUiHighlight { Neutral, LiftGreen, LowGreen };
+        PickWheelLiftPairUiHighlight pick_wheel_lift_pair_ui_highlight_ = PickWheelLiftPairUiHighlight::Neutral;
+
+        /** 摇篮仓前门开/关：颜色由最近点击决定（与收线压轮阀一致） */
+        enum class CradleBinFrontDoorUiHighlight { Neutral, OpenGreen, CloseGreen };
+        CradleBinFrontDoorUiHighlight cradle_bin_front_door_ui_highlight_ = CradleBinFrontDoorUiHighlight::Neutral;
 
     //电机操作执行函数
     void executeOperation( int motorType, SpindleOperation operation, double speed, double acceleration, double position);
@@ -83,14 +95,23 @@ class Blanking : public QWidget
     /** 与 data_monitor_page「手动」一致：当前为自动模式时切手动，双缓冲各推一条 */
     void push_mode_fsm_manual_if_auto_dual();
 
+    /** 模式非手动时切为手动（双缓冲各推一条 MODE_EVENT_MANUAL） */
+    void push_mode_fsm_ensure_manual_dual();
+
     /** 与 data_monitor_page IO 控制一致：IO 手动命令写入 buffer_P + buffer_M */
     void push_io_manual_dual(const COMMOND_GROUPS& cmd);
 
-    /** 收线轮压轮气缸升/降：由定时器按 valve_output[0] 反馈着色（升绿、降红、未激活灰） */
-    void updateWireWindPressWheelButtonStyles(bool lift_on, bool low_on);
+    /** 收线轮压轮气缸升/降：按 wire_wind_press_wheel_ui_highlight_ 刷新按钮颜色 */
+    void applyWireWindPressWheelButtonColors();
 
-    /** 取轮进退：由定时器按 valve_output[4] bit6 反馈着色（上使能绿、下使能红） */
-    void updatePickWheelAdvanceRetreatButtonStyle(bool upper_enable);
+    /** 取轮进退：按 pick_wheel_advance_ui_highlight_ 刷新按钮颜色 */
+    void applyPickWheelAdvanceRetreatButtonColors();
+
+    /** 双向阀升/降取轮升降：按 pick_wheel_lift_pair_ui_highlight_ 刷新按钮颜色 */
+    void applyPickWheelLiftPairButtonColors();
+
+    /** 摇篮仓前门开/关按钮配色 */
+    void applyCradleBinFrontDoorButtonColors();
     };
 
 #endif // BLANKING_H
