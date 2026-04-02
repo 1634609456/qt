@@ -57,28 +57,6 @@ class Blanking : public QWidget
         void on_pushButton_30_clicked();
         void on_pushButton_31_clicked();
         void on_pushButton_32_clicked();
-        void on_pushButton_100_pressed();
-        void on_pushButton_100_released();
-        void on_pushButton_101_pressed();
-        void on_pushButton_101_released();
-        void on_pushButton_102_clicked();
-        void on_pushButton_103_clicked();
-        void on_pushButton_104_clicked();
-        void on_pushButton_105_clicked();
-        void on_pushButton_106_clicked();
-        void on_pushButton_107_clicked();
-        void on_pushButton_108_clicked();
-        void on_pushButton_109_pressed();
-        void on_pushButton_109_released();
-        void on_pushButton_110_pressed();
-        void on_pushButton_110_released();
-        void on_pushButton_111_clicked();
-        void on_pushButton_112_clicked();
-        void on_pushButton_113_clicked();
-        void on_pushButton_114_clicked();
-        void on_pushButton_115_clicked();
-        void on_pushButton_116_clicked();
-        void on_pushButton_117_clicked();
 
 
     public:
@@ -90,6 +68,10 @@ class Blanking : public QWidget
         RingBuffer<RINGBUFFER> buffer;
         RingBuffer<RINGBUFFER> buffer_M;
 
+        /** 取轮进退：已下发指令，等待 valve_output[4] bit6 与 target 一致后才允许下一次 */
+        bool pick_wheel_advance_pending_ = false;
+        bool pick_wheel_advance_target_bit_ = false;
+
 
 
     //电机操作执行函数
@@ -97,6 +79,18 @@ class Blanking : public QWidget
 
     //颜色操作函数
     void setEnableButtonState(QPushButton* enableButton, QPushButton* disableButton, bool isEnabled);
+
+    /** 与 data_monitor_page「手动」一致：当前为自动模式时切手动，双缓冲各推一条 */
+    void push_mode_fsm_manual_if_auto_dual();
+
+    /** 与 data_monitor_page IO 控制一致：IO 手动命令写入 buffer_P + buffer_M */
+    void push_io_manual_dual(const COMMOND_GROUPS& cmd);
+
+    /** 收线轮压轮气缸升/降：由定时器按 valve_output[0] 反馈着色（升绿、降红、未激活灰） */
+    void updateWireWindPressWheelButtonStyles(bool lift_on, bool low_on);
+
+    /** 取轮进退：由定时器按 valve_output[4] bit6 反馈着色（上使能绿、下使能红） */
+    void updatePickWheelAdvanceRetreatButtonStyle(bool upper_enable);
     };
 
 #endif // BLANKING_H

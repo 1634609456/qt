@@ -49,6 +49,8 @@ public:
             return;
         }
 
+
+        //测试模式：dev，生成随机数据
         if (dev == "dev") {
             shm_data_ = new ShareMemData{};
             // 原有基础测试数据（保留，简化调用：直接用this->get_data()，无需get_instance()）
@@ -56,7 +58,7 @@ public:
             this->get_data()->feedback.wheel_fdb.feeding_length_ref = 99999.0;
             this->get_data()->feedback.wheel_fdb.start_length_ref = 8388608.0 * 5;
             this->get_data()->feedback.wheel_fdb.finish_length_ref = 8388608.0 * -5;
-            shm_data_->io.valve_output[0] = 0b00000100;
+            // shm_data_->io.valve_output[0] = 0b00000100;
 
             // ========== 极简版随机主轴/牵引速度（定时器实现） ==========
             // 避免重复创建定时器

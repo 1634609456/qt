@@ -40,19 +40,6 @@ Blanking::Blanking(QWidget *parent)
         ui->lineEdit_16->setText(QString::number(getMotorNum(CENTER_ADVANCE_RETREAT_MOTOR, "position"), 'f'));
 
 
-
-        //压线机构升降  -- 显示
-        ui->lineEdit_68->setText(QString::number(getMotorNum(CENTER_ADVANCE_RETREAT_MOTOR, "speed"), 'f'));
-        ui->lineEdit_69->setText(QString::number(getMotorNum(CENTER_ADVANCE_RETREAT_MOTOR, "acceleration"), 'f'));
-        ui->lineEdit_70->setText(QString::number(getMotorNum(CENTER_ADVANCE_RETREAT_MOTOR, "position"), 'f'));
-
-
-        //空工字轮工位旋转  -- 显示
-        ui->lineEdit_74->setText(QString::number(getMotorNum(CENTER_ADVANCE_RETREAT_MOTOR, "speed"), 'f'));
-        ui->lineEdit_75->setText(QString::number(getMotorNum(CENTER_ADVANCE_RETREAT_MOTOR, "acceleration"), 'f'));
-        ui->lineEdit_76->setText(QString::number(getMotorNum(CENTER_ADVANCE_RETREAT_MOTOR, "position"), 'f'));
-
-
     
             if (ShmManager::get_instance().get_data()) {
                 
@@ -66,20 +53,6 @@ Blanking::Blanking(QWidget *parent)
             ui->pushButton_33->setStyleSheet("background-color: gray; color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;");
                 }
  
-
-                //收线压轮气缸 升 - 监控
-                if ((ShmManager::get_instance().get_data()->io.valve_output[0] >> 2) & 1 ) {
-                    ui->pushButton_28->setStyleSheet("background-color: green; color: white; border: none; padding: 5px; border-radius: 3px;");
-                } else {
-                    ui->pushButton_28->setStyleSheet("background-color: gray; color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;");
-                }
-
-                //收线压轮气缸 降 - 监控
-                if ((ShmManager::get_instance().get_data()->io.valve_output[0] >> 3) & 1) {
-                    ui->pushButton_29->setStyleSheet("background-color: green; color: white; border: none; padding: 5px; border-radius: 3px;");
-                } else {
-                    ui->pushButton_29->setStyleSheet("background-color: gray; color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;");
-                }
 
                 //双向阀升，取轮升降 - 监控
                 if ((ShmManager::get_instance().get_data()->io.valve_output[4] >> 0) & 1) { 
@@ -95,24 +68,41 @@ Blanking::Blanking(QWidget *parent)
                     ui->pushButton_31->setStyleSheet("background-color: gray; color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;");
                 }
 
-                // 取轮进退 - 监控
-                if (ShmManager::get_instance().get_data()->io.valve_output[4] >> 6 & 1) {
-                    ui->pushButton_32->setStyleSheet("background-color: green; color: white; border: none; padding: 5px; border-radius: 3px;");
-                } else {
-                    ui->pushButton_32->setStyleSheet("background-color: gray; color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;");
+                // 收线轮压轮气缸升/降：仅按 IO 反馈变色
+                {
+                    const UINT8 q0 = ShmManager::get_instance().get_data()->io.valve_output[0];
+                    const int lift_bit = static_cast<int>(BIDIRECTIONAL_VALVE_LIFT_WIRE_WIND_PRESS_WHEEL_CYLINDER);
+                    const int low_bit = static_cast<int>(BIDIRECTIONAL_VALVE_LOW_WIRE_WIND_PRESS_WHEEL_CYLINDER);
+                    updateWireWindPressWheelButtonStyles((q0 >> lift_bit) & 1, (q0 >> low_bit) & 1);
                 }
+                // 取轮进退：仅按 IO 反馈变色（bit6=1 上使能绿，=0 下使能红）
+                updatePickWheelAdvanceRetreatButtonStyle(
+                    (ShmManager::get_instance().get_data()->io.valve_output[4] >> 6) & 1);
             }
         });
 
+  auto sync_ring_buffers = [this]() {
+      auto* d = ShmManager::get_instance().get_data();
+      if (!d) {
+          return;
+      }
+      buffer.set_buffer(&d->buffer_P);
+      buffer_M.set_buffer(&d->buffer_M);
+  };
+
   connect(
-      &ShmManager::get_instance(), &ShmManager::loaded, [this, timer](bool success) {
+      &ShmManager::get_instance(), &ShmManager::loaded, [this, timer, sync_ring_buffers](bool success) {
 
         if (success) {
-          buffer.set_buffer(&ShmManager::get_instance().get_data()->buffer_P);
-          buffer_M.set_buffer(&ShmManager::get_instance().get_data()->buffer_M);
+          sync_ring_buffers();
           timer->start(500);
         }
       });
+  // 页面晚于 loaded(true) 创建时会错过信号，必须先绑环形缓冲，否则 push 空指针崩溃
+  sync_ring_buffers();
+  if (ShmManager::get_instance().get_data()) {
+      timer->start(500);
+  }
 }
 
 void Blanking::executeOperation(int motorType, SpindleOperation operation, double speed, double acceleration, double position) {
@@ -470,229 +460,122 @@ void Blanking::on_pushButton_27_clicked()
 }
 
 
-
-//压线机构升降  -- 正点动
-void Blanking::on_pushButton_100_pressed()
-{
-    
+void Blanking::push_mode_fsm_manual_if_auto_dual() {
+    auto* d = ShmManager::get_instance().get_data();
+    if (!d) {
+        QMessageBox::warning(this, tr("未连接"), tr("未连接到共享内存，请先加载共享内存"));
+        return;
+    }
+    buffer.set_buffer(&d->buffer_P);
+    buffer_M.set_buffer(&d->buffer_M);
+    if (d->feedback.fsm_fdb.mode != AUTO) {
+        return;
+    }
+    COMMOND_GROUPS mode_cmd{};
+    mode_cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MODE_CMD;
+    mode_cmd.mode_fsm_event_type = MODE_EVENT_MANUAL;
+    buffer.push(mode_cmd);
+    buffer_M.push(mode_cmd);
 }
 
-
-
-void Blanking::on_pushButton_100_released()
-{
-
+void Blanking::push_io_manual_dual(const COMMOND_GROUPS& cmd) {
+    auto* d = ShmManager::get_instance().get_data();
+    if (!d) {
+        QMessageBox::warning(this, tr("未连接"), tr("未连接到共享内存，请先加载共享内存"));
+        return;
+    }
+    buffer.set_buffer(&d->buffer_P);
+    buffer_M.set_buffer(&d->buffer_M);
+    buffer.push(cmd);
+    buffer_M.push(cmd);
 }
 
-
-void Blanking::on_pushButton_101_pressed()
+void Blanking::updateWireWindPressWheelButtonStyles(bool lift_on, bool low_on)
 {
-
-}
-void Blanking::on_pushButton_101_released()
-{
-
-}
-
-
-void Blanking::on_pushButton_102_clicked()
-{
-
+    static const char* const kLiftOn =
+        "background-color: rgb(0, 255, 0); color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;";
+    static const char* const kLowOn =
+        "background-color: rgb(220, 40, 40); color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;";
+    static const char* const kOff =
+        "background-color: gray; color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;";
+    ui->pushButton_28->setStyleSheet(lift_on ? kLiftOn : kOff);
+    ui->pushButton_29->setStyleSheet(low_on ? kLowOn : kOff);
 }
 
-
-void Blanking::on_pushButton_103_clicked()
+void Blanking::updatePickWheelAdvanceRetreatButtonStyle(bool upper_enable)
 {
-
+    static const char* const kUpper =
+        "background-color: rgb(0, 255, 0); color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;";
+    static const char* const kLower =
+        "background-color: rgb(220, 40, 40); color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;";
+    ui->pushButton_32->setStyleSheet(upper_enable ? kUpper : kLower);
 }
 
-
-void Blanking::on_pushButton_104_clicked()
-{
-
-}
-
-
-void Blanking::on_pushButton_105_clicked()
-{
-
-}
-
-
-void Blanking::on_pushButton_106_clicked()
-{
-
-}
-
-
-void Blanking::on_pushButton_107_clicked()
-{
-
-}
-
-
-void Blanking::on_pushButton_108_clicked()
-{
-
-}
-
-
-
-//空轮定位 -- 正点动
-void Blanking::on_pushButton_109_pressed()
-{
-    qDebug() << "空工字轮工位旋转  --  正点动" << ui->lineEdit_77->text() << ui->lineEdit_78->text() << ui->lineEdit_79->text();
-    executeOperation(    FREE_WHEEL_LOCATOR, SpindleOperation::FORWARD_JOGING, ui->lineEdit_77->text().toDouble(), ui->lineEdit_78->text().toDouble(), ui->lineEdit_79->text().toDouble());
-}
-
-void Blanking::on_pushButton_109_released()
-{
-    qDebug() << "空工字轮工位旋转  --  正点动释放";
-    executeOperation(    FREE_WHEEL_LOCATOR, SpindleOperation::STOP, 0.0, 0.0, 0.0);
-}
-
-
-void Blanking::on_pushButton_110_pressed()
-{
-    qDebug() << "空工字轮工位旋转  --  反点动" << ui->lineEdit_77->text() << ui->lineEdit_78->text() << ui->lineEdit_79->text();
-    executeOperation(    FREE_WHEEL_LOCATOR, SpindleOperation::REVERSE_JOGING, ui->lineEdit_77->text().toDouble(), ui->lineEdit_78->text().toDouble(), ui->lineEdit_79->text().toDouble());
-}
-
-void Blanking::on_pushButton_110_released()
-{
-    qDebug() << "空工字轮工位旋转  --  反点动释放";
-    executeOperation(    FREE_WHEEL_LOCATOR, SpindleOperation::STOP, 0.0, 0.0, 0.0);
-}
-
-
-void Blanking::on_pushButton_111_clicked()
-{
-    qDebug() << "空工字轮工位旋转 -- 回零" << ui->lineEdit_77->text() << ui->lineEdit_78->text() << ui->lineEdit_79->text();
-    executeOperation(    FREE_WHEEL_LOCATOR, SpindleOperation::RETURN_TO_ZERO, ui->lineEdit_77->text().toDouble(), ui->lineEdit_78->text().toDouble(), ui->lineEdit_79->text().toDouble());
-}
-
-
-void Blanking::on_pushButton_112_clicked()
-{
-    qDebug() << "空工字轮工位旋转 -- 松闸" << ui->lineEdit_77->text() << ui->lineEdit_78->text() << ui->lineEdit_79->text();
-    executeOperation(    FREE_WHEEL_LOCATOR, SpindleOperation::RELEASE_BRAKE, ui->lineEdit_77->text().toDouble(), ui->lineEdit_78->text().toDouble(), ui->lineEdit_79->text().toDouble());
-}
-
-
-void Blanking::on_pushButton_113_clicked()
-{
-    qDebug() << "空工字轮工位旋转 -- 抱闸" << ui->lineEdit_77->text() << ui->lineEdit_78->text() << ui->lineEdit_79->text();
-    executeOperation(    FREE_WHEEL_LOCATOR, SpindleOperation::ENGAGE_BRAKE, ui->lineEdit_77->text().toDouble(), ui->lineEdit_78->text().toDouble(), ui->lineEdit_79->text().toDouble());
-}
-
-
-void Blanking::on_pushButton_114_clicked()
-{
-    qDebug() << "空工字轮工位旋转 -- 停止";
-    executeOperation(    FREE_WHEEL_LOCATOR, SpindleOperation::STOP, 0.0, 0.0, 0.0);
-}
-
-
-void Blanking::on_pushButton_115_clicked()
-{
-    qDebug() << "空工字轮工位旋转 -- 上使能" << ui->lineEdit_77->text() << ui->lineEdit_78->text() << ui->lineEdit_79->text();
-    executeOperation(    FREE_WHEEL_LOCATOR, SpindleOperation::MANUAL_MOTOR_ON, ui->lineEdit_77->text().toDouble(), ui->lineEdit_78->text().toDouble(), ui->lineEdit_79->text().toDouble());
-    setEnableButtonState(ui->pushButton_115, ui->pushButton_117, true);
-}
-
-
-void Blanking::on_pushButton_116_clicked()
-{
-    qDebug() << "空工字轮工位旋转 -- 下使能" << ui->lineEdit_77->text() << ui->lineEdit_78->text() << ui->lineEdit_79->text();
-    executeOperation(    FREE_WHEEL_LOCATOR, SpindleOperation::MANUAL_MOTOR_OFF, ui->lineEdit_77->text().toDouble(), ui->lineEdit_78->text().toDouble(), ui->lineEdit_79->text().toDouble());
-    setEnableButtonState(ui->pushButton_115, ui->pushButton_117, false);
-}
-
-
-void Blanking::on_pushButton_117_clicked()
-{
-    qDebug() << "空工字轮工位旋转 -- 绝对移动" << ui->lineEdit_77->text() << ui->lineEdit_78->text() << ui->lineEdit_79->text();
-    executeOperation(    FREE_WHEEL_LOCATOR, SpindleOperation::ABSOLUTE_POSITION_MOTION, ui->lineEdit_77->text().toDouble(), ui->lineEdit_78->text().toDouble(), ui->lineEdit_79->text().toDouble());
-}
-
-
-//收线轮压轮气缸阀 - 升
+//收线轮压轮气缸阀 - 升（双向阀升，收线轮压轮气缸；同 data_monitor_page IO 控制）
 void Blanking::on_pushButton_28_clicked()
 {
-    //查询当前状态
-    if (ShmManager::get_instance().get_data()->io.valve_output[0] >> VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LIFT_WIRE_WIND_PRESS_WHEEL_CYLINDER & 1) {
-
-        qDebug() << "收线压轮气缸 升 - 开启状态";
-
-        //  buffer_M.push({
-        // .cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD,
-        // .io_manual_control = {
-        //     .output_signal_name = VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LIFT_WIRE_WIND_PRESS_WHEEL_CYLINDER,   
-        //     .value = YKE_BOOL::YKE_FALSE
-        // }});
-
-        COMMOND_GROUPS cmd;
-        cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
-        cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LIFT_WIRE_WIND_PRESS_WHEEL_CYLINDER;
-        cmd.io_manual_control.value = YKE_BOOL::YKE_FALSE;
-        buffer_M.push(cmd);
-    } else {
-        
-        qDebug() << "收线压轮气缸 升 - 关闭状态";
-
-        //  buffer_M.push({
-        // .cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD,
-        // .io_manual_control = {
-        //     .output_signal_name = VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LIFT_WIRE_WIND_PRESS_WHEEL_CYLINDER,
-        //     .value = YKE_BOOL::YKE_TRUE
-        // }});
-        COMMOND_GROUPS cmd;
-        cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
-        cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LIFT_WIRE_WIND_PRESS_WHEEL_CYLINDER;
-        cmd.io_manual_control.value = YKE_BOOL::YKE_TRUE;
-        buffer_M.push(cmd);
+    push_mode_fsm_manual_if_auto_dual();
+    auto* d = ShmManager::get_instance().get_data();
+    if (!d) {
+        return;
     }
+    const UINT8 q4 = d->io.valve_output[0];
+    const int lift_bit = static_cast<int>(BIDIRECTIONAL_VALVE_LIFT_WIRE_WIND_PRESS_WHEEL_CYLINDER);
+    const bool lift_on = (q4 >> lift_bit) & 1;
+
+    // 互锁：升动作前先将「降」输出下使能（关）
+    {
+        COMMOND_GROUPS off_low{};
+        off_low.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+        off_low.io_manual_control.output_signal_name = static_cast<int>(BIDIRECTIONAL_VALVE_LOW_WIRE_WIND_PRESS_WHEEL_CYLINDER);
+        off_low.io_manual_control.value = YKE_BOOL::YKE_FALSE;
+        push_io_manual_dual(off_low);
+    }
+
+    COMMOND_GROUPS cmd{};
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+    cmd.io_manual_control.output_signal_name = static_cast<int>(BIDIRECTIONAL_VALVE_LIFT_WIRE_WIND_PRESS_WHEEL_CYLINDER);
+    cmd.io_manual_control.value = lift_on ? YKE_BOOL::YKE_FALSE : YKE_BOOL::YKE_TRUE;
+    if (lift_on) {
+        qDebug() << "收线压轮气缸 升 - 开启状态 → 关";
+    } else {
+        qDebug() << "收线压轮气缸 升 - 关闭状态 → 开";
+    }
+    push_io_manual_dual(cmd);
 }
 
 
-//收线轮压轮气缸阀 - 降
+//收线轮压轮气缸阀 - 降（双向阀降，收线轮压轮气缸）
 void Blanking::on_pushButton_29_clicked()
 {
-    //查询当前状态
-    if (ShmManager::get_instance().get_data()->io.valve_output[0] >> VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LOW_WIRE_WIND_PRESS_WHEEL_CYLINDER & 1) {
-
-        qDebug() << "收线压轮气缸 降 - 开启状态";
-
-        //  buffer_M.push({
-        // .cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD,
-        // .io_manual_control = {
-        //     .output_signal_name = VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LOW_WIRE_WIND_PRESS_WHEEL_CYLINDER,
-        //     .value = YKE_BOOL::YKE_FALSE
-        // }});
-
-        COMMOND_GROUPS cmd;
-        cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
-        cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LOW_WIRE_WIND_PRESS_WHEEL_CYLINDER;
-        cmd.io_manual_control.value = YKE_BOOL::YKE_FALSE;
-        buffer_M.push(cmd);
-
-    } else {
-    
-        qDebug() << "收线压轮气缸 降 - 关闭状态";
-
-        //  buffer_M.push({
-        // .cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD,
-        // .io_manual_control = {
-        //     .output_signal_name = VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LOW_WIRE_WIND_PRESS_WHEEL_CYLINDER,
-        //     .value = YKE_BOOL::YKE_TRUE
-        // }});
-
-        COMMOND_GROUPS cmd;
-        cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
-        cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::BIDIRECTIONAL_VALVE_LOW_WIRE_WIND_PRESS_WHEEL_CYLINDER;
-        cmd.io_manual_control.value = YKE_BOOL::YKE_TRUE;
-        buffer_M.push(cmd);
+    push_mode_fsm_manual_if_auto_dual();
+    auto* d = ShmManager::get_instance().get_data();
+    if (!d) {
+        return;
     }
+    const UINT8 q4 = d->io.valve_output[0];
+    const int low_bit = static_cast<int>(BIDIRECTIONAL_VALVE_LOW_WIRE_WIND_PRESS_WHEEL_CYLINDER);
+    const bool low_on = (q4 >> low_bit) & 1;
+
+    // 互锁：降动作前先将「升」输出下使能（关）
+    {
+        COMMOND_GROUPS off_lift{};
+        off_lift.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+        off_lift.io_manual_control.output_signal_name = static_cast<int>(BIDIRECTIONAL_VALVE_LIFT_WIRE_WIND_PRESS_WHEEL_CYLINDER);
+        off_lift.io_manual_control.value = YKE_BOOL::YKE_FALSE;
+        push_io_manual_dual(off_lift);
+    }
+
+    COMMOND_GROUPS cmd{};
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+    cmd.io_manual_control.output_signal_name = static_cast<int>(BIDIRECTIONAL_VALVE_LOW_WIRE_WIND_PRESS_WHEEL_CYLINDER);
+    cmd.io_manual_control.value = low_on ? YKE_BOOL::YKE_FALSE : YKE_BOOL::YKE_TRUE;
+    if (low_on) {
+        qDebug() << "收线压轮气缸 降 - 开启状态 → 关";
+    } else {
+        qDebug() << "收线压轮气缸 降 - 关闭状态 → 开";
+    }
+    push_io_manual_dual(cmd);
 }
 
 
@@ -777,42 +660,40 @@ void Blanking::on_pushButton_31_clicked()
 }
 
 
-//取轮进退 PICK_WHEEL_ADVANCE_RETREAT
+//取轮进退：根据当前 IO（valve_output[4] bit6）取反发令；上次指令须在反馈上到位后才算完成，期间重复点击无效
 void Blanking::on_pushButton_32_clicked()
 {
-     //查询当前状态
-    if (ShmManager::get_instance().get_data()->io.valve_output[4] >> 6 & 1) {
-
-        qDebug() << "取轮进退 - 开启状态";
-
-        //  buffer_M.push({
-        // .cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD,
-        // .io_manual_control = {
-        //     .output_signal_name = VALVE_OUTPUT_NAME::PICK_WHEEL_ADVANCE_RETREAT,
-        //     .value = YKE_BOOL::YKE_FALSE
-        // }});
-
-        COMMOND_GROUPS cmd;
-        cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
-        cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::PICK_WHEEL_ADVANCE_RETREAT;
-        cmd.io_manual_control.value = YKE_BOOL::YKE_FALSE;
-        buffer_M.push(cmd);
-    } else {
-    
-        qDebug() << "取轮进退 - 关闭状态";
-
-        //  buffer_M.push({
-        // .cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD,
-        // .io_manual_control = {
-        //     .output_signal_name = VALVE_OUTPUT_NAME::PICK_WHEEL_ADVANCE_RETREAT,
-        //     .value = YKE_BOOL::YKE_TRUE
-        // }});
-
-        COMMOND_GROUPS cmd;
-        cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
-        cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::PICK_WHEEL_ADVANCE_RETREAT;
-        cmd.io_manual_control.value = YKE_BOOL::YKE_TRUE;
-        buffer_M.push(cmd);
+    push_mode_fsm_manual_if_auto_dual();
+    auto* d = ShmManager::get_instance().get_data();
+    if (!d) {
+        return;
     }
+    buffer_M.set_buffer(&d->buffer_M);
+
+    const bool bit = (d->io.valve_output[4] >> 6) & 1;
+
+    if (pick_wheel_advance_pending_) {
+        if (bit != pick_wheel_advance_target_bit_) {
+            qDebug() << "取轮进退 - 等待 IO 反馈到位，本次忽略";
+            return;
+        }
+        pick_wheel_advance_pending_ = false;
+    }
+
+    const YKE_BOOL val = bit ? YKE_BOOL::YKE_FALSE : YKE_BOOL::YKE_TRUE;
+    if (val == YKE_BOOL::YKE_TRUE) {
+        qDebug() << "取轮进退 - 上使能";
+    } else {
+        qDebug() << "取轮进退 - 下使能";
+    }
+
+    COMMOND_GROUPS cmd;
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+    cmd.io_manual_control.output_signal_name = VALVE_OUTPUT_NAME::PICK_WHEEL_ADVANCE_RETREAT;
+    cmd.io_manual_control.value = val;
+    buffer_M.push(cmd);
+
+    pick_wheel_advance_pending_ = true;
+    pick_wheel_advance_target_bit_ = !bit;
 }
 
