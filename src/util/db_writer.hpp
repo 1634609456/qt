@@ -64,6 +64,8 @@ public:
             if (worker_.joinable()) {
                 worker_.join();
             }
+            // worker 退出前可能已向全局池提交了 insert，必须等任务结束再析构 sqlite_
+            db_thread_pool.wait_for_all();
 
         } catch (const std::exception &e) {
             throw std::runtime_error(e.what());

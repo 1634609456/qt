@@ -186,16 +186,28 @@ HomePage::HomePage(QWidget *parent)
           }
       });
 
+  auto sync_ring_buffers = [this]() {
+      auto* d = ShmManager::get_instance().get_data();
+      if (!d) {
+          return;
+      }
+      buffer.set_buffer(&d->buffer_P);
+      buffer_m_.set_buffer(&d->buffer_M);
+  };
+
   connect(
-      &ShmManager::get_instance(), &ShmManager::loaded, [this, timer](bool success) {
+      &ShmManager::get_instance(), &ShmManager::loaded, [this, timer, sync_ring_buffers](bool success) {
 
         if (success) {
-          buffer.set_buffer(&ShmManager::get_instance().get_data()->buffer_P);
-          buffer_m_.set_buffer(&ShmManager::get_instance().get_data()->buffer_M);
-
+          sync_ring_buffers();
           timer->start(200);
         }
       });
+  // 共享内存若在 HomePage 创建前已加载，会错过 loaded，需补绑缓冲避免 push 空指针
+  sync_ring_buffers();
+  if (ShmManager::get_instance().get_data()) {
+      timer->start(200);
+  }
 }
 
 HomePage::~HomePage()
@@ -276,11 +288,7 @@ void HomePage::updateUIBasedOnUserRole()
 // 运行
 void HomePage::on_pushButton_14_clicked()
 {
-    COMMOND_GROUPS cmd;
-    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD;
-    cmd.main_fsm_event_type = MAIN_EVENT_CONTROL_ON;
-    buffer.push(cmd);
-
+    pushMainFsmCommand(MAIN_EVENT_CONTROL_ON);
     Q_EMIT mainRunStateForDbCollection(true);
     qDebug() << "运行按钮";
 }
@@ -288,11 +296,7 @@ void HomePage::on_pushButton_14_clicked()
 // 停止
 void HomePage::on_pushButton_13_clicked()
 {
-    COMMOND_GROUPS cmd;
-    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD;
-    cmd.main_fsm_event_type = MAIN_EVENT_CONTROL_OFF;
-    buffer.push(cmd);
-
+    pushMainFsmCommand(MAIN_EVENT_CONTROL_OFF);
     Q_EMIT mainRunStateForDbCollection(false);
     qDebug() << "停止按钮";
 }
@@ -300,44 +304,28 @@ void HomePage::on_pushButton_13_clicked()
 // 急停
 void HomePage::on_pushButton_15_clicked()
 {
-    COMMOND_GROUPS cmd;
-    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD;
-    cmd.main_fsm_event_type = MAIN_EVENT_EME_STOP;
-    buffer.push(cmd);
-
+    pushMainFsmCommand(MAIN_EVENT_EME_STOP);
     qDebug() << "急停按钮";
 }
 
 // 急停清除
 void HomePage::on_pushButton_16_clicked()
 {
-    COMMOND_GROUPS cmd;
-    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD;
-    cmd.main_fsm_event_type = MAIN_EVENT_EME_STOP_CLEAR;
-    buffer.push(cmd);
-
+    pushMainFsmCommand(MAIN_EVENT_EME_STOP_CLEAR);
     qDebug() << "急停清除按钮";
 }
 
 // 错误
 void HomePage::on_pushButton_9_clicked()
 {
-    COMMOND_GROUPS cmd;
-    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD;
-    cmd.main_fsm_event_type = MAIN_EVENT_ERROR;
-    buffer.push(cmd);
-
+    pushMainFsmCommand(MAIN_EVENT_ERROR);
     qDebug() << "错误按钮";
 }
 
 // 错误复位
 void HomePage::on_pushButton_10_clicked()
 {
-    COMMOND_GROUPS cmd;
-    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD;
-    cmd.main_fsm_event_type = MAIN_EVENT_ERROR_RESET;
-    buffer.push(cmd);
-
+    pushMainFsmCommand(MAIN_EVENT_ERROR_RESET);
     qDebug() << "错误复位按钮";
 }
 
@@ -354,6 +342,9 @@ void HomePage::on_pushButton_11_clicked()
 
 void HomePage::pushMainFsmCommand(MAIN_FSM_EVENT_TYPE event_type)
 {
+    if (!ShmManager::get_instance().get_data()) {
+        return;
+    }
     COMMOND_GROUPS cmd;
     cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD;
     cmd.main_fsm_event_type = event_type;
@@ -363,6 +354,9 @@ void HomePage::pushMainFsmCommand(MAIN_FSM_EVENT_TYPE event_type)
 
 void HomePage::pushModeFsmCommand(MODE_FSM_EVENT_TYPE event_type)
 {
+    if (!ShmManager::get_instance().get_data()) {
+        return;
+    }
     COMMOND_GROUPS cmd;
     cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MODE_CMD;
     cmd.mode_fsm_event_type = event_type;
@@ -373,33 +367,21 @@ void HomePage::pushModeFsmCommand(MODE_FSM_EVENT_TYPE event_type)
 // 下电
 void HomePage::on_pushButton_12_clicked()
 {
-    COMMOND_GROUPS cmd;
-    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MAIN_CMD;
-    cmd.main_fsm_event_type = MAIN_EVENT_MOTOR_OFF;
-    buffer.push(cmd);
-
+    pushMainFsmCommand(MAIN_EVENT_MOTOR_OFF);
     qDebug() << "下电按钮";
 }
 
 // 自动
 void HomePage::on_pushButton_17_clicked()
 {
-    COMMOND_GROUPS cmd;
-    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MODE_CMD;
-    cmd.mode_fsm_event_type = MODE_EVENT_AUTO;
-    buffer.push(cmd);
-
+    pushModeFsmCommand(MODE_EVENT_AUTO);
     qDebug() << "自动按钮";
 }
 
 // 手动
 void HomePage::on_pushButton_18_clicked()
 {
-    COMMOND_GROUPS cmd;
-    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::MODE_CMD;
-    cmd.mode_fsm_event_type = MODE_EVENT_MANUAL;
-    buffer.push(cmd);
-
+    pushModeFsmCommand(MODE_EVENT_MANUAL);
     qDebug() << "手动按钮";
 }
 
