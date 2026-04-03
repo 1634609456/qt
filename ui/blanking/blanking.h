@@ -59,6 +59,10 @@ class Blanking : public QWidget
         void on_pushButton_32_clicked();
         void on_pushButton_34_clicked();
         void on_pushButton_35_clicked();
+        void on_pushButton_36_clicked();
+        void on_pushButton_37_clicked();
+        void on_pushButton_38_clicked();
+        void on_pushButton_39_clicked();
 
 
     public:
@@ -70,7 +74,8 @@ class Blanking : public QWidget
         RingBuffer<RINGBUFFER> buffer;
         RingBuffer<RINGBUFFER> buffer_M;
 
-        /** 取轮进退：颜色由最近点击的上/下使能决定，定时器不覆盖 */
+        /** 取轮进退：点击交替上/下使能；下次是否发上使能 */
+        bool pick_wheel_advance_next_upper_enable_ = true;
         enum class PickWheelAdvanceRetreatUiHighlight { Neutral, UpperGreen, LowerRed };
         PickWheelAdvanceRetreatUiHighlight pick_wheel_advance_ui_highlight_ = PickWheelAdvanceRetreatUiHighlight::Neutral;
 
@@ -85,6 +90,14 @@ class Blanking : public QWidget
         /** 摇篮仓前门开/关：颜色由最近点击决定（与收线压轮阀一致） */
         enum class CradleBinFrontDoorUiHighlight { Neutral, OpenGreen, CloseGreen };
         CradleBinFrontDoorUiHighlight cradle_bin_front_door_ui_highlight_ = CradleBinFrontDoorUiHighlight::Neutral;
+
+        /** 摇篮仓后门开/关 */
+        enum class CradleBinRearDoorUiHighlight { Neutral, OpenGreen, CloseGreen };
+        CradleBinRearDoorUiHighlight cradle_bin_rear_door_ui_highlight_ = CradleBinRearDoorUiHighlight::Neutral;
+
+        /** 摇篮仓上盖开/关 */
+        enum class CradleBinTopCoverUiHighlight { Neutral, OpenGreen, CloseGreen };
+        CradleBinTopCoverUiHighlight cradle_bin_top_cover_ui_highlight_ = CradleBinTopCoverUiHighlight::Neutral;
 
     //电机操作执行函数
     void executeOperation( int motorType, SpindleOperation operation, double speed, double acceleration, double position);
@@ -112,6 +125,12 @@ class Blanking : public QWidget
 
     /** 摇篮仓前门开/关按钮配色 */
     void applyCradleBinFrontDoorButtonColors();
+
+    /** 摇篮仓后门开/关按钮配色 */
+    void applyCradleBinRearDoorButtonColors();
+
+    /** 摇篮仓盖开/关（上盖）按钮配色 */
+    void applyCradleBinTopCoverButtonColors();
     };
 
 #endif // BLANKING_H

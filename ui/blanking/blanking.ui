@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1328</width>
-    <height>827</height>
+    <height>720</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -1009,9 +1009,9 @@
   <widget class="QPushButton" name="pushButton_28">
    <property name="geometry">
     <rect>
-     <x>910</x>
-     <y>460</y>
-     <width>131</width>
+     <x>900</x>
+     <y>360</y>
+     <width>130</width>
      <height>50</height>
     </rect>
    </property>
@@ -1025,9 +1025,9 @@
   <widget class="QPushButton" name="pushButton_29">
    <property name="geometry">
     <rect>
-     <x>910</x>
-     <y>530</y>
-     <width>131</width>
+     <x>900</x>
+     <y>424</y>
+     <width>130</width>
      <height>50</height>
     </rect>
    </property>
@@ -1041,9 +1041,9 @@
   <widget class="QPushButton" name="pushButton_30">
    <property name="geometry">
     <rect>
-     <x>1050</x>
-     <y>460</y>
-     <width>131</width>
+     <x>1048</x>
+     <y>360</y>
+     <width>130</width>
      <height>50</height>
     </rect>
    </property>
@@ -1057,9 +1057,9 @@
   <widget class="QPushButton" name="pushButton_31">
    <property name="geometry">
     <rect>
-     <x>1050</x>
-     <y>530</y>
-     <width>131</width>
+     <x>1048</x>
+     <y>424</y>
+     <width>130</width>
      <height>50</height>
     </rect>
    </property>
@@ -1073,9 +1073,9 @@
   <widget class="QPushButton" name="pushButton_32">
    <property name="geometry">
     <rect>
-     <x>1190</x>
-     <y>460</y>
-     <width>121</width>
+     <x>1196</x>
+     <y>360</y>
+     <width>130</width>
      <height>50</height>
     </rect>
    </property>
@@ -1089,10 +1089,10 @@
   <widget class="QPushButton" name="pushButton_33">
    <property name="geometry">
     <rect>
-     <x>910</x>
-     <y>610</y>
-     <width>131</width>
-     <height>51</height>
+     <x>1196</x>
+     <y>424</y>
+     <width>130</width>
+     <height>50</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -1105,9 +1105,9 @@
   <widget class="QPushButton" name="pushButton_34">
    <property name="geometry">
     <rect>
-     <x>910</x>
-     <y>680</y>
-     <width>131</width>
+     <x>900</x>
+     <y>488</y>
+     <width>130</width>
      <height>50</height>
     </rect>
    </property>
@@ -1121,9 +1121,9 @@
   <widget class="QPushButton" name="pushButton_35">
    <property name="geometry">
     <rect>
-     <x>1050</x>
-     <y>680</y>
-     <width>131</width>
+     <x>1048</x>
+     <y>488</y>
+     <width>130</width>
      <height>50</height>
     </rect>
    </property>
@@ -1132,6 +1132,70 @@
    </property>
    <property name="text">
     <string>摇篮仓前门关</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_36">
+   <property name="geometry">
+    <rect>
+     <x>900</x>
+     <y>552</y>
+     <width>130</width>
+     <height>50</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="text">
+    <string>摇篮仓后门开</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_37">
+   <property name="geometry">
+    <rect>
+     <x>1048</x>
+     <y>552</y>
+     <width>130</width>
+     <height>50</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="text">
+    <string>摇篮仓后门关</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_38">
+   <property name="geometry">
+    <rect>
+     <x>900</x>
+     <y>616</y>
+     <width>130</width>
+     <height>50</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="text">
+    <string>摇篮仓盖开</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_39">
+   <property name="geometry">
+    <rect>
+     <x>1048</x>
+     <y>616</y>
+     <width>130</width>
+     <height>50</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="text">
+    <string>摇篮仓盖关</string>
    </property>
   </widget>
  </widget>

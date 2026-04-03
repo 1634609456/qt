@@ -21,6 +21,8 @@ Blanking::Blanking(QWidget *parent)
     applyPickWheelLiftPairButtonColors();
     applyPickWheelAdvanceRetreatButtonColors();
     applyCradleBinFrontDoorButtonColors();
+    applyCradleBinRearDoorButtonColors();
+    applyCradleBinTopCoverButtonColors();
 
         auto timer = new QTimer(this);
         connect(timer, &QTimer::timeout, this, [this]() {
@@ -577,6 +579,52 @@ void Blanking::applyCradleBinFrontDoorButtonColors()
     }
 }
 
+void Blanking::applyCradleBinRearDoorButtonColors()
+{
+    static const char* const kGreen =
+        "background-color: rgb(0, 255, 0); color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;";
+    static const char* const kGray =
+        "background-color: gray; color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;";
+    switch (cradle_bin_rear_door_ui_highlight_) {
+    case CradleBinRearDoorUiHighlight::OpenGreen:
+        ui->pushButton_36->setStyleSheet(kGreen);
+        ui->pushButton_37->setStyleSheet(kGray);
+        break;
+    case CradleBinRearDoorUiHighlight::CloseGreen:
+        ui->pushButton_36->setStyleSheet(kGray);
+        ui->pushButton_37->setStyleSheet(kGreen);
+        break;
+    case CradleBinRearDoorUiHighlight::Neutral:
+    default:
+        ui->pushButton_36->setStyleSheet(kGray);
+        ui->pushButton_37->setStyleSheet(kGray);
+        break;
+    }
+}
+
+void Blanking::applyCradleBinTopCoverButtonColors()
+{
+    static const char* const kGreen =
+        "background-color: rgb(0, 255, 0); color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;";
+    static const char* const kGray =
+        "background-color: gray; color: white; font-weight: bold; border: none; padding: 5px; border-radius: 3px;";
+    switch (cradle_bin_top_cover_ui_highlight_) {
+    case CradleBinTopCoverUiHighlight::OpenGreen:
+        ui->pushButton_38->setStyleSheet(kGreen);
+        ui->pushButton_39->setStyleSheet(kGray);
+        break;
+    case CradleBinTopCoverUiHighlight::CloseGreen:
+        ui->pushButton_38->setStyleSheet(kGray);
+        ui->pushButton_39->setStyleSheet(kGreen);
+        break;
+    case CradleBinTopCoverUiHighlight::Neutral:
+    default:
+        ui->pushButton_38->setStyleSheet(kGray);
+        ui->pushButton_39->setStyleSheet(kGray);
+        break;
+    }
+}
+
 //收线轮压轮气缸阀 - 升（自动→手动；与降互锁，同 data_monitor IO）
 void Blanking::on_pushButton_28_clicked()
 {
@@ -723,7 +771,7 @@ void Blanking::on_pushButton_31_clicked()
 }
 
 
-//取轮进退（自动→手动；按 valve_output[4] bit6 翻转；同收线压轮 IO 双缓冲格式）
+//取轮进退：第 1/3/5… 次上使能(绿)，第 2/4/6… 次下使能(红)；不读 IO 翻转
 void Blanking::on_pushButton_32_clicked()
 {
     push_mode_fsm_manual_if_auto_dual();
@@ -731,9 +779,10 @@ void Blanking::on_pushButton_32_clicked()
     if (!d) {
         return;
     }
-    const bool bit = (d->io.valve_output[4] >> 6) & 1;
 
-    const YKE_BOOL val = bit ? YKE_BOOL::YKE_FALSE : YKE_BOOL::YKE_TRUE;
+    const YKE_BOOL val = pick_wheel_advance_next_upper_enable_ ? YKE_BOOL::YKE_TRUE : YKE_BOOL::YKE_FALSE;
+    pick_wheel_advance_next_upper_enable_ = !pick_wheel_advance_next_upper_enable_;
+
     if (val == YKE_BOOL::YKE_TRUE) {
         qDebug() << "取轮进退 - 上使能";
     } else {
@@ -823,5 +872,153 @@ void Blanking::on_pushButton_35_clicked()
 
     cradle_bin_front_door_ui_highlight_ = CradleBinFrontDoorUiHighlight::CloseGreen;
     applyCradleBinFrontDoorButtonColors();
+}
+
+
+//摇篮仓后门开（双向阀开，摇篮仓后对开门；与关互锁；非手动先切手动）
+void Blanking::on_pushButton_36_clicked()
+{
+    push_mode_fsm_ensure_manual_dual();
+    auto* d = ShmManager::get_instance().get_data();
+    if (!d) {
+        return;
+    }
+    const int open_e = static_cast<int>(BIDIRECTIONAL_VALVE_OPEN_CRADLE_BIN_REAR_DOOR_OPEN);
+    const int close_e = static_cast<int>(BIDIRECTIONAL_VALVE_CLOSE_CRADLE_BIN_REAR_DOOR_OPEN);
+    const UINT8 qb = d->io.valve_output[open_e / 8];
+    const bool open_on = (qb >> (open_e % 8)) & 1;
+
+    {
+        COMMOND_GROUPS off_close{};
+        off_close.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+        off_close.io_manual_control.output_signal_name = close_e;
+        off_close.io_manual_control.value = YKE_BOOL::YKE_FALSE;
+        push_io_manual_dual(off_close);
+    }
+
+    COMMOND_GROUPS cmd{};
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+    cmd.io_manual_control.output_signal_name = open_e;
+    cmd.io_manual_control.value = open_on ? YKE_BOOL::YKE_FALSE : YKE_BOOL::YKE_TRUE;
+    if (open_on) {
+        qDebug() << "摇篮仓后门开 - 开启状态 → 关";
+    } else {
+        qDebug() << "摇篮仓后门开 - 关闭状态 → 开";
+    }
+    push_io_manual_dual(cmd);
+
+    cradle_bin_rear_door_ui_highlight_ = CradleBinRearDoorUiHighlight::OpenGreen;
+    applyCradleBinRearDoorButtonColors();
+}
+
+
+//摇篮仓后门关（双向阀关，摇篮仓后对开门；与开互锁；非手动先切手动）
+void Blanking::on_pushButton_37_clicked()
+{
+    push_mode_fsm_ensure_manual_dual();
+    auto* d = ShmManager::get_instance().get_data();
+    if (!d) {
+        return;
+    }
+    const int open_e = static_cast<int>(BIDIRECTIONAL_VALVE_OPEN_CRADLE_BIN_REAR_DOOR_OPEN);
+    const int close_e = static_cast<int>(BIDIRECTIONAL_VALVE_CLOSE_CRADLE_BIN_REAR_DOOR_OPEN);
+    const UINT8 qb = d->io.valve_output[close_e / 8];
+    const bool close_on = (qb >> (close_e % 8)) & 1;
+
+    {
+        COMMOND_GROUPS off_open{};
+        off_open.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+        off_open.io_manual_control.output_signal_name = open_e;
+        off_open.io_manual_control.value = YKE_BOOL::YKE_FALSE;
+        push_io_manual_dual(off_open);
+    }
+
+    COMMOND_GROUPS cmd{};
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+    cmd.io_manual_control.output_signal_name = close_e;
+    cmd.io_manual_control.value = close_on ? YKE_BOOL::YKE_FALSE : YKE_BOOL::YKE_TRUE;
+    if (close_on) {
+        qDebug() << "摇篮仓后门关 - 开启状态 → 关";
+    } else {
+        qDebug() << "摇篮仓后门关 - 关闭状态 → 开";
+    }
+    push_io_manual_dual(cmd);
+
+    cradle_bin_rear_door_ui_highlight_ = CradleBinRearDoorUiHighlight::CloseGreen;
+    applyCradleBinRearDoorButtonColors();
+}
+
+
+//摇篮仓盖开（双向阀开，摇篮仓上盖；与关互锁；非手动先切手动）
+void Blanking::on_pushButton_38_clicked()
+{
+    push_mode_fsm_ensure_manual_dual();
+    auto* d = ShmManager::get_instance().get_data();
+    if (!d) {
+        return;
+    }
+    const int open_e = static_cast<int>(BIDIRECTIONAL_VALVE_OPEN_CRADLE_BIN_TOP_COVER);
+    const int close_e = static_cast<int>(BIDIRECTIONAL_VALVE_CLOSE_CRADLE_BIN_TOP_COVER);
+    const UINT8 qb = d->io.valve_output[open_e / 8];
+    const bool open_on = (qb >> (open_e % 8)) & 1;
+
+    {
+        COMMOND_GROUPS off_close{};
+        off_close.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+        off_close.io_manual_control.output_signal_name = close_e;
+        off_close.io_manual_control.value = YKE_BOOL::YKE_FALSE;
+        push_io_manual_dual(off_close);
+    }
+
+    COMMOND_GROUPS cmd{};
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+    cmd.io_manual_control.output_signal_name = open_e;
+    cmd.io_manual_control.value = open_on ? YKE_BOOL::YKE_FALSE : YKE_BOOL::YKE_TRUE;
+    if (open_on) {
+        qDebug() << "摇篮仓盖开 - 开启状态 → 关";
+    } else {
+        qDebug() << "摇篮仓盖开 - 关闭状态 → 开";
+    }
+    push_io_manual_dual(cmd);
+
+    cradle_bin_top_cover_ui_highlight_ = CradleBinTopCoverUiHighlight::OpenGreen;
+    applyCradleBinTopCoverButtonColors();
+}
+
+
+//摇篮仓盖关（双向阀关，摇篮仓上盖；与开互锁；非手动先切手动）
+void Blanking::on_pushButton_39_clicked()
+{
+    push_mode_fsm_ensure_manual_dual();
+    auto* d = ShmManager::get_instance().get_data();
+    if (!d) {
+        return;
+    }
+    const int open_e = static_cast<int>(BIDIRECTIONAL_VALVE_OPEN_CRADLE_BIN_TOP_COVER);
+    const int close_e = static_cast<int>(BIDIRECTIONAL_VALVE_CLOSE_CRADLE_BIN_TOP_COVER);
+    const UINT8 qb = d->io.valve_output[close_e / 8];
+    const bool close_on = (qb >> (close_e % 8)) & 1;
+
+    {
+        COMMOND_GROUPS off_open{};
+        off_open.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+        off_open.io_manual_control.output_signal_name = open_e;
+        off_open.io_manual_control.value = YKE_BOOL::YKE_FALSE;
+        push_io_manual_dual(off_open);
+    }
+
+    COMMOND_GROUPS cmd{};
+    cmd.cmd_type = COMMOND_GROUPS::CMD_TYPE::IO_MANUAL_CONTROL_CMD;
+    cmd.io_manual_control.output_signal_name = close_e;
+    cmd.io_manual_control.value = close_on ? YKE_BOOL::YKE_FALSE : YKE_BOOL::YKE_TRUE;
+    if (close_on) {
+        qDebug() << "摇篮仓盖关 - 开启状态 → 关";
+    } else {
+        qDebug() << "摇篮仓盖关 - 关闭状态 → 开";
+    }
+    push_io_manual_dual(cmd);
+
+    cradle_bin_top_cover_ui_highlight_ = CradleBinTopCoverUiHighlight::CloseGreen;
+    applyCradleBinTopCoverButtonColors();
 }
 
